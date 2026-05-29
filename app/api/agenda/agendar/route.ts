@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
 
   let meetLink: string | null = null
   let googleEventId: string | null = null
+  let googleErro: string | null = null
 
   // Cria evento no Google Calendar
   if (config.google_access_token) {
@@ -161,15 +162,24 @@ export async function POST(request: NextRequest) {
           dataHoraInicio: dataHoraInicio.toISOString(),
           dataHoraFim: dataHoraFim.toISOString(),
         })
-        meetLink = evento.conferenceData?.entryPoints?.find((e: { entryPointType: string; uri: string }) => e.entryPointType === 'video')?.uri ?? null
-        googleEventId = evento.id ?? null
-
-        await supabase
-          .from('agendamentos')
-          .update({ google_event_id: googleEventId, meet_link: meetLink })
-          .eq('id', agendamento.id)
+        if (evento.error) {
+          googleErro = `${evento.error.code}: ${evento.error.message}`
+        } else {
+          meetLink = evento.conferenceData?.entryPoints?.find((e: { entryPointType: string; uri: string }) => e.entryPointType === 'video')?.uri ?? null
+          googleEventId = evento.id ?? null
+          await supabase
+            .from('agendamentos')
+            .update({ google_event_id: googleEventId, meet_link: meetLink })
+            .eq('id', agendamento.id)
+        }
+      } else {
+        googleErro = 'token_invalido_ou_expirado'
       }
-    } catch { /* ignora erros do Calendar */ }
+    } catch (e) {
+      googleErro = e instanceof Error ? e.message : 'erro_desconhecido'
+    }
+  } else {
+    googleErro = 'google_nao_conectado'
   }
 
   // Envia WhatsApp de confirmação
@@ -210,5 +220,10 @@ export async function POST(request: NextRequest) {
     ok: true,
     agendamento: { id: agendamento.id, data_hora: agendamento.data_hora },
     meet_link: meetLink,
+    _debug: {
+      google_token_presente: !!config.google_access_token,
+      google_erro: googleErro,
+      whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,
+    },
   })
 }

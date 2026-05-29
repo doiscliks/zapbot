@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, MessageSquare, LogOut, Kanban, BookOpen, TrendingUp,
-  Users, Menu, X, Filter, Send, Bell, Smartphone, Settings, Zap,
+  Users, Menu, X, Filter, Send, Bell, Smartphone, Settings, Zap, CalendarDays,
 } from 'lucide-react'
 
 const navItems = [
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/remarketing', label: 'Remarketing', icon: Bell },
   { href: '/fluxos', label: 'Fluxos', icon: Zap },
   { href: '/kanban', label: 'Kanban', icon: Kanban },
+  { href: '/agenda', label: 'Agenda', icon: CalendarDays },
   { href: '/funil', label: 'Funil', icon: Filter },
   { href: '/ads', label: 'Ads', icon: TrendingUp },
   { href: '/treinamento', label: 'Treinamento', icon: BookOpen },

@@ -47,15 +47,15 @@ export async function GET(request: NextRequest) {
 
   const supabase = getSupabase()
 
-  // Upsert garante que funciona mesmo se a linha ainda não existir
-  await supabase.from('agenda_config').upsert({
-    user_id: userId,
-    slug: userId.slice(0, 12),
-    titulo: 'Agendar Reunião',
-    google_access_token: tokens.access_token,
-    google_refresh_token: tokens.refresh_token || null,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: 'user_id' })
+  // Atualiza apenas os tokens — nunca toca no slug ou outras configurações
+  await supabase
+    .from('agenda_config')
+    .update({
+      google_access_token: tokens.access_token,
+      google_refresh_token: tokens.refresh_token || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
 
   return NextResponse.redirect(`${appUrl}/agenda/config?google=ok`)
 }

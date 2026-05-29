@@ -58,10 +58,11 @@ export async function GET(request: NextRequest) {
     .gte('data_hora', `${data}T00:00:00`)
     .lte('data_hora', `${data}T23:59:59`)
 
+  // Converte horários ocupados para horário de Brasília para comparar com os slots
   const horasOcupadas = new Set(
     (ocupados ?? []).map((a) => {
       const d = new Date(a.data_hora)
-      return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+      return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false })
     })
   )
 
@@ -70,8 +71,8 @@ export async function GET(request: NextRequest) {
 
   const disponiveis = slots.filter((slot) => {
     if (horasOcupadas.has(slot)) return false
-    const [sh, sm] = slot.split(':').map(Number)
-    const slotDate = new Date(ano, mes - 1, dia, sh, sm)
+    // Interpreta o slot como horário de Brasília para verificar antecedência
+    const slotDate = new Date(`${data}T${slot}:00-03:00`)
     if (slotDate.getTime() - agora.getTime() < antecedenciaMs) return false
     return true
   })

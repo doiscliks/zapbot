@@ -108,9 +108,9 @@ export async function POST(request: NextRequest) {
   if (!config) return NextResponse.json({ error: 'Agenda não encontrada' }, { status: 404 })
 
   // Verifica se o slot ainda está disponível
-  const [ano, mes, dia] = data.split('-').map(Number)
   const [sh, sm] = hora.split(':').map(Number)
-  const dataHoraInicio = new Date(ano, mes - 1, dia, sh, sm)
+  // Interpreta o horário como horário de Brasília (UTC-3) para armazenar corretamente em UTC
+  const dataHoraInicio = new Date(`${data}T${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}:00-03:00`)
   const dataHoraFim = new Date(dataHoraInicio.getTime() + config.duracao_minutos * 60000)
 
   const { data: conflito } = await supabase
@@ -199,8 +199,8 @@ export async function POST(request: NextRequest) {
       const uazapiToken = configApp?.find((c: { chave: string }) => c.chave === 'uazapi_token')?.valor || ''
 
       if (instancia?.token && uazapiUrl && uazapiToken) {
-        const dataFormatada = dataHoraInicio.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
-        const horaFormatada = `${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}`
+        const dataFormatada = dataHoraInicio.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'America/Sao_Paulo' })
+        const horaFormatada = dataHoraInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo', hour12: false })
 
         let msg = `Olá, ${nome.trim()}! ✅\n\n`
         msg += `Seu agendamento foi confirmado:\n`

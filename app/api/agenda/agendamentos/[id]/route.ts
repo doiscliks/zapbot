@@ -102,8 +102,9 @@ async function executarCancelamento(
     if (!config) return
 
     const dataObj = new Date(ag.data_hora)
-    const dataFormatada = dataObj.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
-    const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    const opts = { timeZone: 'America/Sao_Paulo' } as const
+    const dataFormatada = dataObj.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', ...opts })
+    const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, ...opts })
 
     // Deleta evento do Google Calendar
     if (config.google_access_token && ag.google_event_id) {

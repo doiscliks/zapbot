@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Loader2, Save, Calendar, Link2, CheckCircle, AlertCircle, ExternalLink, Smartphone, XCircle, Bell } from 'lucide-react'
+import { Loader2, Save, Calendar, Link2, CheckCircle, AlertCircle, ExternalLink, Smartphone, XCircle, Bell, Plus, Trash2 } from 'lucide-react'
 
 const DIAS = [
   { label: 'Dom', value: 0 }, { label: 'Seg', value: 1 }, { label: 'Ter', value: 2 },
@@ -35,6 +35,7 @@ export default function AgendaConfigPage() {
     hora_fim: '18:00',
     antecedencia_minima_horas: 24,
     dias_antecedencia_maxima: 30,
+    periodos: [{ inicio: '09:00', fim: '18:00' }] as { inicio: string; fim: string }[],
     ativo: true,
     whatsapp_instancia_id: '',
     mensagem_cancelamento: 'Olá, {nome}! Seu agendamento do dia {data} às {hora} foi cancelado. Entre em contato para remarcar.',
@@ -179,16 +180,56 @@ export default function AgendaConfigPage() {
               </div>
             </div>
 
-            {/* Horários */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>Início</label>
-                <input type="time" value={form.hora_inicio} onChange={e => setForm(f => ({ ...f, hora_inicio: e.target.value }))} className={inputClass} style={inputStyle} />
+            {/* Períodos de horário */}
+            <div>
+              <label className="block text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: '#6B7280' }}>Horários disponíveis</label>
+              <div className="space-y-2">
+                {form.periodos.map((p, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={p.inicio}
+                      onChange={e => {
+                        const next = [...form.periodos]
+                        next[i] = { ...next[i], inicio: e.target.value }
+                        setForm(f => ({ ...f, periodos: next }))
+                      }}
+                      className="flex-1 px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 bg-white"
+                      style={inputStyle}
+                    />
+                    <span className="text-sm font-medium" style={{ color: '#9CA3AF' }}>às</span>
+                    <input
+                      type="time"
+                      value={p.fim}
+                      onChange={e => {
+                        const next = [...form.periodos]
+                        next[i] = { ...next[i], fim: e.target.value }
+                        setForm(f => ({ ...f, periodos: next }))
+                      }}
+                      className="flex-1 px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 bg-white"
+                      style={inputStyle}
+                    />
+                    {form.periodos.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, periodos: f.periodos.filter((_, j) => j !== i) }))}
+                        className="p-2 rounded-lg transition-colors hover:bg-red-50 hover:text-red-500 shrink-0"
+                        style={{ color: '#9CA3AF' }}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div>
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>Fim</label>
-                <input type="time" value={form.hora_fim} onChange={e => setForm(f => ({ ...f, hora_fim: e.target.value }))} className={inputClass} style={inputStyle} />
-              </div>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, periodos: [...f.periodos, { inicio: '14:00', fim: '18:00' }] }))}
+                className="mt-2 flex items-center gap-1.5 text-xs font-semibold transition-colors"
+                style={{ color: '#12C6D6' }}
+              >
+                <Plus size={14} /> Adicionar período
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

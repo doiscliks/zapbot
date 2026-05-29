@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const supabase = getSupabase()
   const { data } = await supabase
     .from('agenda_config')
-    .select('id, titulo, slug, descricao, duracao_minutos, dias_semana, hora_inicio, hora_fim, antecedencia_minima_horas, dias_antecedencia_maxima, whatsapp_instancia_id, google_calendar_id, ativo, google_access_token, mensagem_cancelamento, lembrete_antecedencia_horas')
+    .select('id, titulo, slug, descricao, duracao_minutos, dias_semana, periodos, antecedencia_minima_horas, dias_antecedencia_maxima, whatsapp_instancia_id, google_calendar_id, ativo, google_access_token, mensagem_cancelamento, lembrete_antecedencia_horas')
     .eq('user_id', userId)
     .single()
 
@@ -45,6 +45,10 @@ export async function POST(request: NextRequest) {
 
   if (!slug) return NextResponse.json({ error: 'Slug inválido' }, { status: 400 })
 
+  const periodos = Array.isArray(body.periodos) && body.periodos.length > 0
+    ? body.periodos
+    : [{ inicio: '09:00', fim: '18:00' }]
+
   const campos = {
     user_id: userId,
     titulo: (body.titulo || 'Agendar Reunião').trim(),
@@ -52,8 +56,7 @@ export async function POST(request: NextRequest) {
     descricao: body.descricao?.trim() || null,
     duracao_minutos: Number(body.duracao_minutos) || 60,
     dias_semana: body.dias_semana || [1, 2, 3, 4, 5],
-    hora_inicio: body.hora_inicio || '09:00',
-    hora_fim: body.hora_fim || '18:00',
+    periodos,
     antecedencia_minima_horas: Number(body.antecedencia_minima_horas) || 24,
     dias_antecedencia_maxima: Number(body.dias_antecedencia_maxima) || 30,
     whatsapp_instancia_id: body.whatsapp_instancia_id || null,
@@ -66,7 +69,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('agenda_config')
     .upsert(campos, { onConflict: 'user_id' })
-    .select('id, titulo, slug, descricao, duracao_minutos, dias_semana, hora_inicio, hora_fim, antecedencia_minima_horas, dias_antecedencia_maxima, whatsapp_instancia_id, mensagem_cancelamento, lembrete_antecedencia_horas, ativo')
+    .select('id, titulo, slug, descricao, duracao_minutos, dias_semana, periodos, antecedencia_minima_horas, dias_antecedencia_maxima, whatsapp_instancia_id, mensagem_cancelamento, lembrete_antecedencia_horas, ativo')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

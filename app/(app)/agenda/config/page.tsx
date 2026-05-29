@@ -47,8 +47,11 @@ export default function AgendaConfigPage() {
           setForm(f => ({ ...f, ...data }))
           setGoogleConectado(!!data.google_conectado)
         }
+        // Se veio de um OAuth bem-sucedido, força o estado mesmo que a API ainda não reflita
+        if (googleStatus === 'ok') setGoogleConectado(true)
       })
       .finally(() => setLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function toggleDia(dia: number) {

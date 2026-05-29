@@ -46,7 +46,9 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = getSupabase()
-  await supabase
+
+  // Tenta update primeiro; se não existir, faz upsert
+  const { count } = await supabase
     .from('agenda_config')
     .update({
       google_access_token: tokens.access_token,
@@ -54,6 +56,19 @@ export async function GET(request: NextRequest) {
       updated_at: new Date().toISOString(),
     })
     .eq('user_id', userId)
+    .select('id', { count: 'exact', head: true })
+
+  if (!count) {
+    // Nenhuma linha encontrada — cria com valores mínimos
+    await supabase.from('agenda_config').upsert({
+      user_id: userId,
+      slug: userId.slice(0, 12),
+      titulo: 'Agendar Reunião',
+      google_access_token: tokens.access_token,
+      google_refresh_token: tokens.refresh_token || null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' })
+  }
 
   return NextResponse.redirect(`${appUrl}/agenda/config?google=ok`)
 }

@@ -79,12 +79,12 @@ async function criarEventoCalendar(accessToken: string, calendarId: string, even
   return res.json()
 }
 
-async function enviarWhatsApp(uazapiUrl: string, uazapiToken: string, instanceToken: string, telefone: string, texto: string) {
-  const baseUrl = uazapiUrl.replace(/\/send\/text.*/, '')
-  await fetch(`${baseUrl}/send/text`, {
+async function enviarWhatsApp(uazapiBase: string, instanceToken: string, telefone: string, texto: string) {
+  const base = uazapiBase.replace(/\/+$/, '').replace(/\/send\/.*$/, '')
+  await fetch(`${base}/send/text`, {
     method: 'POST',
-    headers: { apikey: uazapiToken, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ number: telefone, textMessage: { text: texto }, options: { instanceId: instanceToken } }),
+    headers: { 'Content-Type': 'application/json', token: instanceToken },
+    body: JSON.stringify({ number: telefone, text: texto }),
   }).catch(() => {})
 }
 
@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
         if (assunto) msg += `📋 Assunto: ${assunto.trim()}\n`
         if (meetLink) msg += `\n🎥 Link do Google Meet:\n${meetLink}`
 
-        await enviarWhatsApp(uazapiUrl, uazapiToken, instancia.token, telefone.trim(), msg)
+        await enviarWhatsApp(uazapiUrl, instancia.token, telefone.trim(), msg)
         await supabase.from('agendamentos').update({ whatsapp_enviado: true }).eq('id', agendamento.id)
       }
     } catch { /* ignora erros do WhatsApp */ }

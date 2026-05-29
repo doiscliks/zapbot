@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zapbot-orcin.vercel.app'
 
   if (error || !code || !userId) {
-    return NextResponse.redirect(`${appUrl}/agenda/config?google=erro`)
+    const msg = encodeURIComponent(error || (!code ? 'sem_code' : 'sem_userId'))
+    return NextResponse.redirect(`${appUrl}/agenda/config?google=erro&msg=${msg}`)
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID!
@@ -40,7 +41,8 @@ export async function GET(request: NextRequest) {
   const tokens = await tokenRes.json()
 
   if (!tokens.access_token) {
-    return NextResponse.redirect(`${appUrl}/agenda/config?google=erro`)
+    const msg = encodeURIComponent(tokens.error_description || tokens.error || 'token_failed')
+    return NextResponse.redirect(`${appUrl}/agenda/config?google=erro&msg=${msg}`)
   }
 
   const supabase = getSupabase()

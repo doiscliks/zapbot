@@ -16,6 +16,7 @@ const inputStyle = { borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as R
 export default function AgendaConfigPage() {
   const searchParams = useSearchParams()
   const googleStatus = searchParams.get('google')
+  const googleMsg = searchParams.get('msg')
 
   const [loading, setLoading] = useState(true)
   const [salvando, setSalvando] = useState(false)
@@ -100,7 +101,7 @@ export default function AgendaConfigPage() {
       )}
       {googleStatus === 'erro' && (
         <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-xl mb-5">
-          <AlertCircle size={15} /> Erro ao conectar o Google. Tente novamente.
+          <AlertCircle size={15} /> Erro ao conectar o Google{googleMsg ? `: ${googleMsg}` : '. Tente novamente.'}
         </div>
       )}
 

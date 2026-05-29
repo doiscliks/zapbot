@@ -21,7 +21,33 @@ interface Config {
   duracao_minutos: number
   dias_semana: number[]
   dias_antecedencia_maxima: number
+  periodos?: { inicio: string; fim: string }[]
   ativo: boolean
+}
+
+function addMinutos(hora: string, min: number) {
+  const [h, m] = hora.split(':').map(Number)
+  const total = h * 60 + m + min
+  return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`
+}
+
+function getAllSlots(periodos: { inicio: string; fim: string }[], duracao: number): string[] {
+  const all: string[] = []
+  for (const p of periodos) {
+    const [hI, mI] = p.inicio.split(':').map(Number)
+    const [hF, mF] = p.fim.split(':').map(Number)
+    for (let t = hI * 60 + mI; t + duracao <= hF * 60 + mF; t += duracao) {
+      all.push(`${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`)
+    }
+  }
+  return all
+}
+
+// Detecta se há um intervalo entre dois slots (gap maior que a duração)
+function isGap(slotA: string, slotB: string, duracao: number) {
+  const [hA, mA] = slotA.split(':').map(Number)
+  const [hB, mB] = slotB.split(':').map(Number)
+  return (hB * 60 + mB) - (hA * 60 + mA) > duracao
 }
 
 type Step = 'data' | 'hora' | 'form' | 'confirmado'
@@ -309,10 +335,10 @@ export default function AgendarPage() {
                 </div>
               )}
 
-              {/* ── Horários ── */}
+              {/* ── Horários — estilo Google Calendar ── */}
               {step === 'hora' && (
                 <div>
-                  <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center gap-3 mb-5">
                     <button onClick={() => { setStep('data'); setHoraSel(null) }}
                       className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-gray-50"
                       style={{ color: '#6B7280', border: '1px solid #E9EEF2' }}>
@@ -320,42 +346,110 @@ export default function AgendarPage() {
                     </button>
                     <div>
                       <h2 className="text-lg font-bold" style={{ color: '#1F2937' }}>Selecione um horário</h2>
-                      <p className="text-sm" style={{ color: '#9CA3AF' }}>
+                      <p className="text-sm capitalize" style={{ color: '#9CA3AF' }}>
                         {dataSel && formatDataLonga(dataSel)}
                       </p>
                     </div>
                   </div>
 
                   {loadingSlots && (
-                    <div className="flex justify-center py-12">
-                      <Loader2 size={24} className="animate-spin" style={{ color: '#12C6D6' }} />
+                    <div className="flex justify-center py-10">
+                      <Loader2 size={22} className="animate-spin" style={{ color: '#12C6D6' }} />
                     </div>
                   )}
 
-                  {!loadingSlots && slots.length === 0 && (
-                    <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: '#F8FAFC' }}>
-                      <Clock size={32} className="mx-auto mb-3" style={{ color: '#D1D5DB' }} />
-                      <p className="font-medium text-sm" style={{ color: '#6B7280' }}>Sem horários disponíveis neste dia.</p>
-                      <button onClick={() => setStep('data')} className="mt-3 text-sm font-semibold" style={{ color: '#12C6D6' }}>
-                        Escolher outra data
-                      </button>
-                    </div>
-                  )}
+                  {!loadingSlots && (() => {
+                    const periodos = config?.periodos ?? [{ inicio: '09:00', fim: '18:00' }]
+                    const duracao = config?.duracao_minutos ?? 60
+                    const todosSlots = getAllSlots(periodos, duracao)
 
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {slots.map(slot => (
-                      <button key={slot}
-                        onClick={() => { setHoraSel(slot); setStep('form') }}
-                        className="py-3 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
-                        style={horaSel === slot
-                          ? { background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', color: 'white', boxShadow: '0 4px 12px rgba(18,198,214,0.35)' }
-                          : { backgroundColor: '#F0FAFB', color: '#1F2937', border: '1.5px solid #E9EEF2' }
-                        }
-                      >
-                        {slot}
-                      </button>
-                    ))}
-                  </div>
+                    if (todosSlots.length === 0) return (
+                      <div className="text-center py-10 rounded-2xl" style={{ backgroundColor: '#F8FAFC' }}>
+                        <Clock size={28} className="mx-auto mb-2" style={{ color: '#D1D5DB' }} />
+                        <p className="text-sm font-medium" style={{ color: '#6B7280' }}>Sem horários configurados neste dia.</p>
+                      </div>
+                    )
+
+                    return (
+                      <div className="space-y-1.5">
+                        {todosSlots.map((slot, i) => {
+                          const disponivel = slots.includes(slot)
+                          const selecionado = horaSel === slot
+                          const fim = addMinutos(slot, duracao)
+                          const prev = todosSlots[i - 1]
+                          const gap = prev ? isGap(prev, slot, duracao) : false
+
+                          return (
+                            <div key={slot}>
+                              {/* Separador de intervalo entre períodos */}
+                              {gap && (
+                                <div className="flex items-center gap-2 py-2 px-1">
+                                  <div className="flex-1 h-px" style={{ backgroundColor: '#E9EEF2' }} />
+                                  <span className="text-[11px] font-medium px-2" style={{ color: '#9CA3AF' }}>intervalo</span>
+                                  <div className="flex-1 h-px" style={{ backgroundColor: '#E9EEF2' }} />
+                                </div>
+                              )}
+
+                              <button
+                                disabled={!disponivel}
+                                onClick={() => disponivel && (setHoraSel(slot), setStep('form'))}
+                                className="w-full flex items-stretch rounded-xl overflow-hidden transition-all duration-150"
+                                style={{
+                                  ...(selecionado
+                                    ? { background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 4px 14px rgba(18,198,214,0.35)' }
+                                    : disponivel
+                                    ? { backgroundColor: '#F0FAFB', border: '1.5px solid rgba(18,198,214,0.25)' }
+                                    : { backgroundColor: '#F8FAFC', border: '1px solid #F1F5F9', cursor: 'not-allowed', opacity: 0.6 }),
+                                }}
+                              >
+                                {/* Barra lateral colorida */}
+                                <div className="w-1 shrink-0 rounded-l-xl"
+                                  style={{ backgroundColor: selecionado ? 'rgba(255,255,255,0.4)' : disponivel ? '#12C6D6' : '#D1D5DB' }}
+                                />
+
+                                <div className="flex items-center gap-4 px-4 py-3 flex-1">
+                                  {/* Hora */}
+                                  <div className="text-left shrink-0 w-24">
+                                    <p className="text-sm font-bold" style={{ color: selecionado ? 'white' : disponivel ? '#1F2937' : '#9CA3AF' }}>
+                                      {slot}
+                                    </p>
+                                    <p className="text-xs" style={{ color: selecionado ? 'rgba(255,255,255,0.8)' : '#9CA3AF' }}>
+                                      até {fim}
+                                    </p>
+                                  </div>
+
+                                  {/* Status */}
+                                  <div className="flex-1 text-left">
+                                    {disponivel ? (
+                                      <span className="text-sm font-semibold" style={{ color: selecionado ? 'white' : '#12C6D6' }}>
+                                        {selecionado ? '✓ Selecionado' : 'Disponível'}
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs font-medium" style={{ color: '#9CA3AF' }}>Agendado</span>
+                                    )}
+                                  </div>
+
+                                  {/* Duração */}
+                                  <span className="text-xs shrink-0" style={{ color: selecionado ? 'rgba(255,255,255,0.7)' : '#9CA3AF' }}>
+                                    {duracao}min
+                                  </span>
+                                </div>
+                              </button>
+                            </div>
+                          )
+                        })}
+
+                        {slots.length === 0 && (
+                          <div className="mt-4 text-center">
+                            <p className="text-sm" style={{ color: '#9CA3AF' }}>Todos os horários já estão agendados.</p>
+                            <button onClick={() => setStep('data')} className="mt-2 text-sm font-semibold" style={{ color: '#12C6D6' }}>
+                              Escolher outra data
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               )}
 

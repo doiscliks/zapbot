@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const supabase = getSupabase()
   const { data } = await supabase
     .from('agenda_config')
-    .select('titulo, descricao, duracao_minutos, dias_semana, dias_antecedencia_maxima, ativo')
+    .select('titulo, descricao, duracao_minutos, dias_semana, dias_antecedencia_maxima, periodos, ativo')
     .eq('slug', slug)
     .single()
 

@@ -55,7 +55,10 @@ async function criarEventoCalendar(accessToken: string, calendarId: string, even
     ].filter(Boolean).join('\n'),
     start: { dateTime: evento.dataHoraInicio, timeZone: 'America/Sao_Paulo' },
     end:   { dateTime: evento.dataHoraFim,   timeZone: 'America/Sao_Paulo' },
-    attendees: evento.email ? [{ email: evento.email }] : [],
+    attendees: [
+      { email: 'projetodoisclicks@gmail.com', responseStatus: 'accepted' },
+      ...(evento.email ? [{ email: evento.email }] : []),
+    ],
     conferenceData: {
       createRequest: {
         requestId: `zapbot-${Date.now()}`,

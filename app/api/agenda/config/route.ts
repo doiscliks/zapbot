@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const supabase = getSupabase()
   const { data } = await supabase
     .from('agenda_config')
-    .select('id, titulo, slug, descricao, duracao_minutos, dias_semana, hora_inicio, hora_fim, antecedencia_minima_horas, dias_antecedencia_maxima, whatsapp_instancia_id, google_calendar_id, ativo, google_access_token')
+    .select('id, titulo, slug, descricao, duracao_minutos, dias_semana, hora_inicio, hora_fim, antecedencia_minima_horas, dias_antecedencia_maxima, whatsapp_instancia_id, google_calendar_id, ativo, google_access_token, mensagem_cancelamento, lembrete_antecedencia_horas')
     .eq('user_id', userId)
     .single()
 
@@ -57,6 +57,8 @@ export async function POST(request: NextRequest) {
     antecedencia_minima_horas: Number(body.antecedencia_minima_horas) || 24,
     dias_antecedencia_maxima: Number(body.dias_antecedencia_maxima) || 30,
     whatsapp_instancia_id: body.whatsapp_instancia_id || null,
+    mensagem_cancelamento: body.mensagem_cancelamento?.trim() || 'Olá, {nome}! Seu agendamento do dia {data} às {hora} foi cancelado. Entre em contato para remarcar.',
+    lembrete_antecedencia_horas: Number(body.lembrete_antecedencia_horas) || 0,
     ativo: body.ativo !== false,
     updated_at: new Date().toISOString(),
   }
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('agenda_config')
     .upsert(campos, { onConflict: 'user_id' })
-    .select('id, titulo, slug, descricao, duracao_minutos, dias_semana, hora_inicio, hora_fim, antecedencia_minima_horas, dias_antecedencia_maxima, whatsapp_instancia_id, ativo')
+    .select('id, titulo, slug, descricao, duracao_minutos, dias_semana, hora_inicio, hora_fim, antecedencia_minima_horas, dias_antecedencia_maxima, whatsapp_instancia_id, mensagem_cancelamento, lembrete_antecedencia_horas, ativo')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

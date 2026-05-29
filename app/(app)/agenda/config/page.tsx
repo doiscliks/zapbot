@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Loader2, Save, Calendar, Link2, CheckCircle, AlertCircle, ExternalLink, Smartphone } from 'lucide-react'
+import { Loader2, Save, Calendar, Link2, CheckCircle, AlertCircle, ExternalLink, Smartphone, XCircle, Bell } from 'lucide-react'
 
 const DIAS = [
   { label: 'Dom', value: 0 }, { label: 'Seg', value: 1 }, { label: 'Ter', value: 2 },
@@ -37,6 +37,8 @@ export default function AgendaConfigPage() {
     dias_antecedencia_maxima: 30,
     ativo: true,
     whatsapp_instancia_id: '',
+    mensagem_cancelamento: 'Olá, {nome}! Seu agendamento do dia {data} às {hora} foi cancelado. Entre em contato para remarcar.',
+    lembrete_antecedencia_horas: 0,
   })
   const [instancias, setInstancias] = useState<{ id: string; nome: string }[]>([])
 
@@ -219,6 +221,55 @@ export default function AgendaConfigPage() {
               <option key={i.id} value={i.id}>{i.nome}</option>
             ))}
           </select>
+        </div>
+
+        {/* Mensagem de cancelamento */}
+        <div className="p-5" style={cardStyle}>
+          <div className="flex items-center gap-2 mb-3">
+            <XCircle size={16} style={{ color: '#FF7A66' }} />
+            <h2 className="font-semibold text-sm" style={{ color: '#1F2937' }}>Mensagem de cancelamento</h2>
+          </div>
+          <p className="text-xs mb-3" style={{ color: '#6B7280' }}>
+            Enviada ao cliente via WhatsApp quando o agendamento for cancelado. O evento também será removido do Google Calendar.
+          </p>
+          <textarea
+            rows={3}
+            value={form.mensagem_cancelamento}
+            onChange={e => setForm(f => ({ ...f, mensagem_cancelamento: e.target.value }))}
+            className={`${inputClass} resize-none`} style={inputStyle}
+          />
+          <p className="text-xs mt-1.5" style={{ color: '#9CA3AF' }}>
+            Variáveis disponíveis: <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code> <code className="bg-gray-100 px-1 rounded">{'{data}'}</code> <code className="bg-gray-100 px-1 rounded">{'{hora}'}</code>
+          </p>
+        </div>
+
+        {/* Lembrete antecedência */}
+        <div className="p-5" style={cardStyle}>
+          <div className="flex items-center gap-2 mb-3">
+            <Bell size={16} style={{ color: '#12C6D6' }} />
+            <h2 className="font-semibold text-sm" style={{ color: '#1F2937' }}>Lembrete automático via WhatsApp</h2>
+          </div>
+          <p className="text-xs mb-3" style={{ color: '#6B7280' }}>
+            Envia uma mensagem de lembrete ao cliente antes da reunião. Selecione 0 para desativar.
+          </p>
+          <select
+            value={form.lembrete_antecedencia_horas}
+            onChange={e => setForm(f => ({ ...f, lembrete_antecedencia_horas: Number(e.target.value) }))}
+            className={inputClass} style={inputStyle}
+          >
+            <option value={0}>Não enviar lembrete</option>
+            <option value={1}>1 hora antes</option>
+            <option value={2}>2 horas antes</option>
+            <option value={6}>6 horas antes</option>
+            <option value={12}>12 horas antes</option>
+            <option value={24}>24 horas antes (1 dia)</option>
+            <option value={48}>48 horas antes (2 dias)</option>
+          </select>
+          {form.lembrete_antecedencia_horas > 0 && (
+            <p className="text-xs mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: '#F0FAFB', color: '#12C6D6' }}>
+              ✓ O cliente receberá um lembrete {form.lembrete_antecedencia_horas}h antes da reunião com o link do Google Meet.
+            </p>
+          )}
         </div>
 
         {/* Google Calendar */}

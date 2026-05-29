@@ -3,6 +3,10 @@
     {
       "path": "/api/relatorio/ads",
       "schedule": "50 2 * * *"
+    },
+    {
+      "path": "/api/agenda/lembretes",
+      "schedule": "0 * * * *"
     }
   ]
 }

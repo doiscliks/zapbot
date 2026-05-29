@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Loader2, Save, Calendar, Link2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react'
+import { Loader2, Save, Calendar, Link2, CheckCircle, AlertCircle, ExternalLink, Smartphone } from 'lucide-react'
 
 const DIAS = [
   { label: 'Dom', value: 0 }, { label: 'Seg', value: 1 }, { label: 'Ter', value: 2 },
@@ -36,10 +36,16 @@ export default function AgendaConfigPage() {
     antecedencia_minima_horas: 24,
     dias_antecedencia_maxima: 30,
     ativo: true,
+    whatsapp_instancia_id: '',
   })
+  const [instancias, setInstancias] = useState<{ id: string; nome: string }[]>([])
 
   useEffect(() => {
     setAppUrl(window.location.origin)
+    fetch('/api/instancias')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setInstancias(data) })
+      .catch(() => {})
     fetch('/api/agenda/config')
       .then(r => r.json())
       .then(data => {
@@ -194,6 +200,25 @@ export default function AgendaConfigPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* WhatsApp */}
+        <div className="p-5" style={cardStyle}>
+          <div className="flex items-center gap-2 mb-3">
+            <Smartphone size={16} style={{ color: '#12C6D6' }} />
+            <h2 className="font-semibold text-sm" style={{ color: '#1F2937' }}>Confirmação via WhatsApp</h2>
+          </div>
+          <p className="text-xs mb-3" style={{ color: '#6B7280' }}>Instância que enviará a mensagem de confirmação ao cliente após o agendamento.</p>
+          <select
+            value={form.whatsapp_instancia_id}
+            onChange={e => setForm(f => ({ ...f, whatsapp_instancia_id: e.target.value }))}
+            className={inputClass} style={inputStyle}
+          >
+            <option value="">Não enviar WhatsApp</option>
+            {instancias.map(i => (
+              <option key={i.id} value={i.id}>{i.nome}</option>
+            ))}
+          </select>
         </div>
 
         {/* Google Calendar */}

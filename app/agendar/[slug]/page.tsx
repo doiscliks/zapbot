@@ -68,10 +68,12 @@ export default function AgendarPage() {
     if (!dataSel || !horaSel) return
     setEnviando(true)
     setErro(null)
+    const telefoneCompleto = form.telefone.startsWith('55') ? form.telefone : `55${form.telefone}`
+
     const res = await fetch('/api/agenda/agendar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, ...form, data: dataSel, hora: horaSel }),
+      body: JSON.stringify({ slug, ...form, telefone: telefoneCompleto, data: dataSel, hora: horaSel }),
     })
     const data = await res.json()
     if (!res.ok) { setErro(data.error ?? 'Erro ao agendar'); setEnviando(false); return }
@@ -373,29 +375,65 @@ export default function AgendarPage() {
                   </div>
 
                   <form onSubmit={handleAgendar} className="space-y-4">
-                    {[
-                      { key: 'nome', label: 'Nome completo', placeholder: 'Seu nome', icon: User, type: 'text', required: true },
-                      { key: 'telefone', label: 'WhatsApp', placeholder: '5511999999999', icon: Phone, type: 'tel', required: true },
-                      { key: 'email', label: 'E-mail', placeholder: 'seu@email.com', icon: Mail, type: 'email', required: false },
-                    ].map(({ key, label, placeholder, icon: Icon, type, required }) => (
-                      <div key={key}>
-                        <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
-                          {label} {required && <span style={{ color: '#12C6D6' }}>*</span>}
-                        </label>
-                        <div className="relative">
-                          <Icon size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
-                          <input
-                            type={type}
-                            required={required}
-                            value={form[key as keyof typeof form]}
-                            onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                            placeholder={placeholder}
-                            className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 bg-white transition-all"
-                            style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}
-                          />
-                        </div>
+                    {/* Nome */}
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
+                        Nome completo <span style={{ color: '#12C6D6' }}>*</span>
+                      </label>
+                      <div className="relative">
+                        <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
+                        <input
+                          type="text" required
+                          value={form.nome}
+                          onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
+                          placeholder="Seu nome completo"
+                          className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 bg-white transition-all"
+                          style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}
+                        />
                       </div>
-                    ))}
+                    </div>
+
+                    {/* WhatsApp com prefixo +55 */}
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
+                        WhatsApp <span style={{ color: '#12C6D6' }}>*</span>
+                      </label>
+                      <div className="flex items-center border rounded-xl overflow-hidden focus-within:ring-2 bg-white transition-all"
+                        style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}>
+                        <div className="flex items-center gap-1.5 px-3 py-3 shrink-0 border-r" style={{ borderColor: '#E9EEF2', backgroundColor: '#F8FAFC' }}>
+                          <Phone size={14} style={{ color: '#9CA3AF' }} />
+                          <span className="text-sm font-semibold" style={{ color: '#6B7280' }}>+55</span>
+                        </div>
+                        <input
+                          type="tel" required
+                          value={form.telefone}
+                          onChange={e => setForm(f => ({ ...f, telefone: e.target.value.replace(/\D/g, '') }))}
+                          placeholder="11999999999"
+                          maxLength={11}
+                          className="flex-1 px-3 py-3 text-sm focus:outline-none bg-transparent"
+                          style={{ color: '#1F2937' }}
+                        />
+                      </div>
+                      <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>DDD + número, sem espaços</p>
+                    </div>
+
+                    {/* E-mail */}
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
+                        E-mail
+                      </label>
+                      <div className="relative">
+                        <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
+                        <input
+                          type="email"
+                          value={form.email}
+                          onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                          placeholder="seu@email.com"
+                          className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 bg-white transition-all"
+                          style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}
+                        />
+                      </div>
+                    </div>
 
                     <div>
                       <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>

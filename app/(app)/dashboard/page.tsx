@@ -291,49 +291,49 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
-          </div>
 
-          {/* Taxa de resposta — card horizontal full width */}
-          {(() => {
-            const totalResp = atendimento.reduce((s, d) => s + d.comResposta, 0)
-            const totalGeral = atendimento.reduce((s, d) => s + d.comResposta + d.semResposta, 0)
-            const taxa = totalGeral > 0 ? Math.round((totalResp / totalGeral) * 100) : 0
-            const r = 28
-            const circ = 2 * Math.PI * r
-            const dash = (taxa / 100) * circ
-            return (
-              <div className="rounded-2xl px-5 py-4 flex items-center gap-6 w-fit max-w-full animate-fade-in-up" style={cardStyle}>
-                <div>
-                  <p className="font-semibold text-sm" style={{ color: '#1F2937' }}>Taxa de resposta geral</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#9CA3AF' }}>Período selecionado — ao menos 3 mensagens</p>
-                </div>
-                <div className="relative shrink-0">
-                  <svg width="72" height="72" viewBox="0 0 72 72">
-                    <circle cx="36" cy="36" r={r} fill="none" stroke="#E9EEF2" strokeWidth="8" />
-                    <circle cx="36" cy="36" r={r} fill="none"
-                      stroke={taxa >= 50 ? '#12C6D6' : '#FF7A66'}
-                      strokeWidth="8" strokeLinecap="round"
-                      strokeDasharray={`${dash} ${circ}`}
-                      transform="rotate(-90 36 36)"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-base font-bold" style={{ color: '#1F2937' }}>{taxa}%</span>
+            {/* Taxa de resposta — ao lado do Kanban */}
+            {(() => {
+              const totalResp = atendimento.reduce((s, d) => s + d.comResposta, 0)
+              const totalGeral = atendimento.reduce((s, d) => s + d.comResposta + d.semResposta, 0)
+              const taxa = totalGeral > 0 ? Math.round((totalResp / totalGeral) * 100) : 0
+              const r = 28
+              const circ = 2 * Math.PI * r
+              const dash = (taxa / 100) * circ
+              return (
+                <div className="rounded-2xl p-6 flex items-center gap-6 animate-fade-in-up" style={cardStyle}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm" style={{ color: '#1F2937' }}>Taxa de resposta geral</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#9CA3AF' }}>Período selecionado — ao menos 3 mensagens</p>
+                  </div>
+                  <div className="relative shrink-0">
+                    <svg width="72" height="72" viewBox="0 0 72 72">
+                      <circle cx="36" cy="36" r={r} fill="none" stroke="#E9EEF2" strokeWidth="8" />
+                      <circle cx="36" cy="36" r={r} fill="none"
+                        stroke={taxa >= 50 ? '#12C6D6' : '#FF7A66'}
+                        strokeWidth="8" strokeLinecap="round"
+                        strokeDasharray={`${dash} ${circ}`}
+                        transform="rotate(-90 36 36)"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-base font-bold" style={{ color: '#1F2937' }}>{taxa}%</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-6 text-sm shrink-0" style={{ color: '#6B7280' }}>
+                    <span className="flex flex-col">
+                      <span className="font-bold text-xl" style={{ color: '#12C6D6' }}>{totalResp}</span>
+                      Responderam
+                    </span>
+                    <span className="flex flex-col">
+                      <span className="font-bold text-xl" style={{ color: '#FF7A66' }}>{totalGeral - totalResp}</span>
+                      Sem resposta
+                    </span>
                   </div>
                 </div>
-                <div className="flex gap-6 text-sm" style={{ color: '#6B7280' }}>
-                  <span className="flex flex-col">
-                    <span className="font-bold text-xl" style={{ color: '#12C6D6' }}>{totalResp}</span>
-                    Responderam
-                  </span>
-                  <span className="flex flex-col">
-                    <span className="font-bold text-xl" style={{ color: '#FF7A66' }}>{totalGeral - totalResp}</span>
-                    Sem resposta
-                  </span>
-                </div>
-              </div>
-            )
-          })()}
+              )
+            })()}
+          </div>
 
           {/* Bar charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

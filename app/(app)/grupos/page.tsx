@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Copy, Plus, Trash2, Link2, ChevronDown, ChevronUp, Check, ToggleLeft, ToggleRight, Pencil, X, RefreshCw } from 'lucide-react'
-import { GruposRotatorComLinks, GruposLink } from '@/types'
+import { Copy, Plus, Trash2, Link2, ChevronDown, ChevronUp, Check, ToggleLeft, ToggleRight, Pencil, X, RefreshCw, Users as UsersIcon, ShieldCheck, Loader2 } from 'lucide-react'
+import { GruposRotatorComLinks, GruposLink, GrupoDisponivel } from '@/types'
 
 export default function GruposPage() {
   const [rotators, setRotators] = useState<GruposRotatorComLinks[]>([])
@@ -37,6 +37,53 @@ export default function GruposPage() {
 
   // Feedback de cópia
   const [copiado, setCopiado] = useState<string | null>(null)
+
+  // Seletor automático de grupos do telefone
+  const [pickerRotator, setPickerRotator] = useState<string | null>(null)
+  const [gruposDisp, setGruposDisp] = useState<GrupoDisponivel[]>([])
+  const [carregandoDisp, setCarregandoDisp] = useState(false)
+  const [erroDisp, setErroDisp] = useState<string | null>(null)
+  const [mostrarTodos, setMostrarTodos] = useState(false)
+  const [adicionandoGrupo, setAdicionandoGrupo] = useState<string | null>(null)
+
+  async function abrirPicker(rotatorId: string) {
+    if (pickerRotator === rotatorId) { setPickerRotator(null); return }
+    setPickerRotator(rotatorId)
+    setGruposDisp([])
+    setErroDisp(null)
+    setMostrarTodos(false)
+    setCarregandoDisp(true)
+    try {
+      const res = await fetch(`/api/grupos/disponiveis?rotator_id=${rotatorId}`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro ao buscar grupos')
+      setGruposDisp(Array.isArray(data) ? data : [])
+    } catch (e: unknown) {
+      setErroDisp(e instanceof Error ? e.message : 'Erro ao buscar grupos')
+    } finally {
+      setCarregandoDisp(false)
+    }
+  }
+
+  async function adicionarDoGrupo(rotatorId: string, g: GrupoDisponivel) {
+    try {
+      setAdicionandoGrupo(g.jid)
+      setErroDisp(null)
+      const res = await fetch(`/api/grupos/${rotatorId}/adicionar-grupo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupJid: g.jid, nome: g.nome }),
+      })
+      const link = await res.json()
+      if (!res.ok) throw new Error(link.error || 'Erro ao adicionar grupo')
+      setRotators((prev) => prev.map((r) => r.id === rotatorId ? { ...r, links: [...r.links, link] } : r))
+      setGruposDisp((prev) => prev.map((x) => x.jid === g.jid ? { ...x, jaAdicionado: true } : x))
+    } catch (e: unknown) {
+      setErroDisp(e instanceof Error ? e.message : 'Erro ao adicionar grupo')
+    } finally {
+      setAdicionandoGrupo(null)
+    }
+  }
 
   const origem =
     typeof window !== 'undefined' ? window.location.origin : ''
@@ -524,7 +571,84 @@ export default function GruposPage() {
                       </div>
                     ))}
 
-                    {/* Formulário adicionar link */}
+                    {/* Seletor automático dos meus grupos */}
+                    <div className="pt-1">
+                      <button
+                        onClick={() => abrirPicker(rotator.id)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/40 text-blue-300 text-xs font-medium rounded-lg transition-colors w-full justify-center"
+                      >
+                        <UsersIcon size={13} />
+                        {pickerRotator === rotator.id ? 'Ocultar meus grupos' : 'Escolher dos meus grupos'}
+                        {pickerRotator === rotator.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                      </button>
+
+                      {pickerRotator === rotator.id && (
+                        <div className="mt-2 rounded-lg border border-gray-700 bg-gray-900/60 p-2">
+                          {carregandoDisp ? (
+                            <div className="flex items-center gap-2 text-gray-400 text-xs py-3 justify-center">
+                              <Loader2 size={14} className="animate-spin" /> Buscando seus grupos...
+                            </div>
+                          ) : erroDisp ? (
+                            <p className="text-xs text-red-400 py-2 px-1">{erroDisp}</p>
+                          ) : (
+                            (() => {
+                              const admins = gruposDisp.filter((g) => g.isAdmin)
+                              const visiveis = mostrarTodos ? gruposDisp : admins
+                              return (
+                                <>
+                                  <div className="flex items-center justify-between mb-1.5 px-1">
+                                    <span className="text-[11px] text-gray-400">
+                                      {admins.length} grupo{admins.length !== 1 ? 's' : ''} que você administra
+                                    </span>
+                                    <button
+                                      onClick={() => setMostrarTodos((v) => !v)}
+                                      className="text-[11px] text-blue-400 hover:text-blue-300"
+                                    >
+                                      {mostrarTodos ? 'Só administrados' : `Mostrar todos (${gruposDisp.length})`}
+                                    </button>
+                                  </div>
+                                  {visiveis.length === 0 ? (
+                                    <p className="text-xs text-gray-500 py-2 px-1">
+                                      {gruposDisp.length === 0 ? 'Nenhum grupo encontrado na instância conectada.' : 'Você não é administrador de nenhum grupo. Use "Mostrar todos" para ver os demais.'}
+                                    </p>
+                                  ) : (
+                                    <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
+                                      {visiveis.map((g) => (
+                                        <div key={g.jid} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-800/60">
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="text-xs text-white truncate">{g.nome}</span>
+                                              {g.isAdmin && <ShieldCheck size={11} className="text-green-400 shrink-0" />}
+                                            </div>
+                                            {g.participantes != null && (
+                                              <span className="text-[10px] text-gray-500">{g.participantes} participantes</span>
+                                            )}
+                                          </div>
+                                          {g.jaAdicionado ? (
+                                            <span className="text-[10px] text-gray-500 shrink-0 px-2">Adicionado</span>
+                                          ) : (
+                                            <button
+                                              onClick={() => adicionarDoGrupo(rotator.id, g)}
+                                              disabled={adicionandoGrupo === g.jid}
+                                              className="flex items-center gap-1 px-2 py-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-[11px] font-medium rounded-lg transition-colors shrink-0"
+                                            >
+                                              {adicionandoGrupo === g.jid ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                                              Adicionar
+                                            </button>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </>
+                              )
+                            })()
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Formulário adicionar link (manual / fallback) */}
                     <div className="flex flex-col gap-2 pt-1">
                       <div className="flex gap-2">
                         <input

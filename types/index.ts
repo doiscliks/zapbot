@@ -90,3 +90,11 @@ export interface GruposLink {
 export interface GruposRotatorComLinks extends GruposRotator {
   links: GruposLink[]
 }
+
+export interface GrupoDisponivel {
+  jid: string
+  nome: string
+  participantes: number | null
+  isAdmin: boolean
+  jaAdicionado: boolean
+}

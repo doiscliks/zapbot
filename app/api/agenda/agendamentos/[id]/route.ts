@@ -16,11 +16,19 @@ function formatarMensagem(template: string, vars: { nome: string; data: string; 
     .replace(/\{hora\}/g, vars.hora)
 }
 
-async function deletarEventoCalendar(accessToken: string, calendarId: string, eventId: string) {
-  await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`,
-    { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } }
-  ).catch(() => {})
+async function deletarEventoCalendar(accessToken: string, calendarId: string, eventId: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+      { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } }
+    )
+    // 200/204 = deletado; 404/410 = evento já não existe (tratamos como sucesso)
+    if (res.ok || res.status === 404 || res.status === 410) return 'ok'
+    const txt = await res.text().catch(() => '')
+    return `http_${res.status}: ${txt.slice(0, 200)}`
+  } catch (e) {
+    return e instanceof Error ? e.message : 'fetch_falhou'
+  }
 }
 
 async function enviarWhatsApp(uazapiBase: string, instanceToken: string, telefone: string, texto: string) {
@@ -51,11 +59,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (errAg) return NextResponse.json({ error: errAg.message }, { status: 500 })
 
   // Se cancelou, envia WA + deleta Calendar
+  let _debug
   if (body.status === 'cancelado' && ag) {
-    await executarCancelamento(supabase, userId, ag)
+    _debug = await executarCancelamento(supabase, userId, ag)
   }
 
-  return NextResponse.json(ag)
+  return NextResponse.json({ ...ag, _debug })
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -73,7 +82,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     .eq('user_id', userId)
     .single()
 
-  if (ag) await executarCancelamento(supabase, userId, ag)
+  let _debug
+  if (ag) _debug = await executarCancelamento(supabase, userId, ag)
 
   const { error } = await supabase
     .from('agendamentos')
@@ -82,7 +92,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     .eq('user_id', userId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, _debug })
 }
 
 async function executarCancelamento(
@@ -91,7 +101,8 @@ async function executarCancelamento(
   userId: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ag: any,
-) {
+): Promise<{ calendar: string; whatsapp: string }> {
+  const debug = { calendar: 'nao_tentado', whatsapp: 'nao_tentado' }
   try {
     const { data: config } = await supabase
       .from('agenda_config')
@@ -99,7 +110,7 @@ async function executarCancelamento(
       .eq('user_id', userId)
       .single()
 
-    if (!config) return
+    if (!config) { debug.calendar = 'sem_config'; return debug }
 
     const dataObj = new Date(ag.data_hora)
     const opts = { timeZone: 'America/Sao_Paulo' } as const
@@ -107,27 +118,39 @@ async function executarCancelamento(
     const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, ...opts })
 
     // Deleta evento do Google Calendar
-    if (config.google_access_token && ag.google_event_id) {
+    if (!config.google_access_token) {
+      debug.calendar = 'google_nao_conectado'
+    } else if (!ag.google_event_id) {
+      debug.calendar = 'agendamento_sem_event_id'
+    } else {
       let token = config.google_access_token
       const testRes = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + token)
-      if (!testRes.ok && config.google_refresh_token) {
-        const refreshRes = await fetch('https://oauth2.googleapis.com/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            client_id: process.env.GOOGLE_CLIENT_ID!,
-            client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-            refresh_token: config.google_refresh_token,
-            grant_type: 'refresh_token',
-          }),
-        })
-        const refreshData = await refreshRes.json()
-        if (refreshData.access_token) {
-          token = refreshData.access_token
-          await supabase.from('agenda_config').update({ google_access_token: token }).eq('user_id', userId)
+      if (!testRes.ok) {
+        if (!config.google_refresh_token) {
+          debug.calendar = 'token_expirado_sem_refresh_token'
+        } else {
+          const refreshRes = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              client_id: process.env.GOOGLE_CLIENT_ID!,
+              client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+              refresh_token: config.google_refresh_token,
+              grant_type: 'refresh_token',
+            }),
+          })
+          const refreshData = await refreshRes.json()
+          if (refreshData.access_token) {
+            token = refreshData.access_token
+            await supabase.from('agenda_config').update({ google_access_token: token }).eq('user_id', userId)
+          } else {
+            debug.calendar = `refresh_falhou: ${refreshData.error || 'desconhecido'}`
+          }
         }
       }
-      await deletarEventoCalendar(token, config.google_calendar_id, ag.google_event_id)
+      if (debug.calendar === 'nao_tentado') {
+        debug.calendar = await deletarEventoCalendar(token, config.google_calendar_id || 'primary', ag.google_event_id)
+      }
     }
 
     // Envia WhatsApp de cancelamento
@@ -151,7 +174,13 @@ async function executarCancelamento(
           hora: horaFormatada,
         })
         await enviarWhatsApp(uazapiUrl, instancia.token, ag.telefone, msg)
+        debug.whatsapp = 'enviado'
+      } else {
+        debug.whatsapp = 'instancia_ou_url_ausente'
       }
     }
-  } catch { /* ignora */ }
+  } catch (e) {
+    debug.calendar = `excecao: ${e instanceof Error ? e.message : 'desconhecida'}`
+  }
+  return debug
 }

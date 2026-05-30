@@ -108,7 +108,11 @@ export default function AgendaPage() {
 
   async function excluir(id: string) {
     if(!confirm('Excluir este agendamento?')) return
-    await fetch(`/api/agenda/agendamentos/${id}`,{method:'DELETE'})
+    const res = await fetch(`/api/agenda/agendamentos/${id}`,{method:'DELETE'})
+    const data = await res.json().catch(()=>null)
+    if(data?._debug && data._debug.calendar !== 'ok' && data._debug.calendar !== 'google_nao_conectado') {
+      alert(`Aviso: o evento não foi removido do Google Calendar.\nMotivo: ${data._debug.calendar}`)
+    }
     setAgendamentos(p=>p.filter(a=>a.id!==id))
     setSelected(null)
   }

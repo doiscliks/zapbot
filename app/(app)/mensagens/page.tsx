@@ -146,7 +146,7 @@ export default function MensagensPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       {/* Coluna esquerda */}
       <div className="w-80 flex flex-col border-r border-gray-200 bg-white shrink-0">
         <div className="px-4 py-4 border-b border-gray-100">

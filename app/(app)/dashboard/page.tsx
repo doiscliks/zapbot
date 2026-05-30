@@ -91,9 +91,14 @@ export default function DashboardPage() {
   const BAR_HEIGHT = 160
 
   function pizzaSlices(dados: { nome: string; total: number }[]) {
-    const total = dados.reduce((s, d) => s + d.total, 0)
+    const validos = dados.filter((d) => d.total > 0)
+    const total = validos.reduce((s, d) => s + d.total, 0) || 1
+    // Uma única fatia (100%) gera arco degenerado no SVG → renderiza como círculo cheio
+    if (validos.length === 1) {
+      return [{ path: '', full: true, cor: BRAND_COLORS[0], ...validos[0], pct: 100 }]
+    }
     let angulo = -Math.PI / 2
-    return dados.map((d, i) => {
+    return validos.map((d, i) => {
       const fatia = (d.total / total) * 2 * Math.PI
       const x1 = 80 + 70 * Math.cos(angulo)
       const y1 = 80 + 70 * Math.sin(angulo)
@@ -102,7 +107,7 @@ export default function DashboardPage() {
       const y2 = 80 + 70 * Math.sin(angulo)
       const grande = fatia > Math.PI ? 1 : 0
       const path = `M80,80 L${x1},${y1} A70,70 0 ${grande},1 ${x2},${y2} Z`
-      return { path, cor: BRAND_COLORS[i % BRAND_COLORS.length], ...d, pct: Math.round((d.total / total) * 100) }
+      return { path, full: false, cor: BRAND_COLORS[i % BRAND_COLORS.length], ...d, pct: Math.round((d.total / total) * 100) }
     })
   }
 
@@ -233,9 +238,15 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-6">
                   <svg width="160" height="160" viewBox="0 0 160 160" className="shrink-0">
                     {pizzaSlices(statusAtual.map(s => ({ nome: s.status, total: s.total }))).map((s, i) => (
-                      <path key={i} d={s.path} fill={s.cor} stroke="white" strokeWidth="2" />
+                      s.full
+                        ? <circle key={i} cx="80" cy="80" r="70" fill={s.cor} />
+                        : <path key={i} d={s.path} fill={s.cor} stroke="white" strokeWidth="2" />
                     ))}
-                    <circle cx="80" cy="80" r="32" fill="white" />
+                    <circle cx="80" cy="80" r="50" fill="white" />
+                    <text x="80" y="74" textAnchor="middle" fontSize="26" fontWeight="700" fill="#1F2937">
+                      {statusAtual.reduce((s, d) => s + d.total, 0)}
+                    </text>
+                    <text x="80" y="92" textAnchor="middle" fontSize="11" fill="#9CA3AF">total</text>
                   </svg>
                   <div className="flex flex-col gap-2 overflow-hidden">
                     {pizzaSlices(statusAtual.map(s => ({ nome: s.status, total: s.total }))).map((s, i) => (
@@ -255,11 +266,17 @@ export default function DashboardPage() {
               <div className="rounded-2xl p-6 animate-fade-in-up" style={cardStyle}>
                 <h2 className="font-semibold mb-4" style={{ color: '#1F2937' }}>Clientes por etapa do Kanban</h2>
                 <div className="flex items-center gap-8">
-                  <svg width="160" height="160" viewBox="0 0 160 160">
+                  <svg width="160" height="160" viewBox="0 0 160 160" className="shrink-0">
                     {pizzaSlices(kanban).map((s, i) => (
-                      <path key={i} d={s.path} fill={s.cor} stroke="white" strokeWidth="2" />
+                      s.full
+                        ? <circle key={i} cx="80" cy="80" r="70" fill={s.cor} />
+                        : <path key={i} d={s.path} fill={s.cor} stroke="white" strokeWidth="2" />
                     ))}
-                    <circle cx="80" cy="80" r="32" fill="white" />
+                    <circle cx="80" cy="80" r="50" fill="white" />
+                    <text x="80" y="74" textAnchor="middle" fontSize="26" fontWeight="700" fill="#1F2937">
+                      {kanban.reduce((s, d) => s + d.total, 0)}
+                    </text>
+                    <text x="80" y="92" textAnchor="middle" fontSize="11" fill="#9CA3AF">total</text>
                   </svg>
                   <div className="flex flex-col gap-2.5">
                     {pizzaSlices(kanban).map((s, i) => (

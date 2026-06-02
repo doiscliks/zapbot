@@ -295,7 +295,14 @@ export async function POST(request: NextRequest) {
   const fromMe: boolean = msg.fromMe === true
   const isGroup: boolean = msg.isGroup === true
   const wasSentByApi: boolean = msg.wasSentByApi === true
-  const texto: string = ((msg.text as string) || (typeof msg.content === 'string' ? msg.content : '') || '').trim()
+  const conteudoObj = (msg.content && typeof msg.content === 'object') ? (msg.content as Record<string, unknown>) : null
+  const texto: string = (
+    (msg.text as string) ||
+    (typeof msg.content === 'string' ? msg.content : '') ||
+    (conteudoObj?.text as string) ||
+    (conteudoObj?.caption as string) ||
+    ''
+  ).trim()
   const remoteJid: string = (msg.chatid as string) || ''
   const messageType: string = ((msg.messageType as string) || (msg.type as string) || 'conversation').toLowerCase()
   const isAudio = messageType === 'audiomessage' || messageType === 'pttmessage'

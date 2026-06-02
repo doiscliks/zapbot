@@ -47,7 +47,9 @@ export async function writeTenantConfig(userId: string, config: Partial<TenantCo
   if (config.fbAdAccountId !== undefined) row.fb_ad_account_id = config.fbAdAccountId
   if (config.iaAtiva !== undefined) row.ia_ativa = config.iaAtiva
 
-  await supabase
+  const { error } = await supabase
     .from('configuracoes_usuario')
     .upsert(row, { onConflict: 'user_id' })
+
+  if (error) throw new Error(error.message)
 }

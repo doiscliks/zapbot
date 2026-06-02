@@ -42,15 +42,22 @@ export async function POST(request: NextRequest) {
     return val
   }
 
-  await writeTenantConfig(userId, {
-    openaiKey: resolve(body.openaiKey, current.openaiKey),
-    fbPixelId: body.fbPixelId?.trim() ?? current.fbPixelId,
-    fbAccessToken: resolve(body.fbAccessToken, current.fbAccessToken),
-    fbTestEventCode: body.fbTestEventCode?.trim() ?? current.fbTestEventCode,
-    fbAdsToken: resolve(body.fbAdsToken, current.fbAdsToken),
-    fbAdAccountId: body.fbAdAccountId?.trim() ?? current.fbAdAccountId,
-    ...(typeof body.iaAtiva === 'boolean' ? { iaAtiva: body.iaAtiva } : {}),
-  })
+  try {
+    await writeTenantConfig(userId, {
+      openaiKey: resolve(body.openaiKey, current.openaiKey),
+      fbPixelId: body.fbPixelId?.trim() ?? current.fbPixelId,
+      fbAccessToken: resolve(body.fbAccessToken, current.fbAccessToken),
+      fbTestEventCode: body.fbTestEventCode?.trim() ?? current.fbTestEventCode,
+      fbAdsToken: resolve(body.fbAdsToken, current.fbAdsToken),
+      fbAdAccountId: body.fbAdAccountId?.trim() ?? current.fbAdAccountId,
+      ...(typeof body.iaAtiva === 'boolean' ? { iaAtiva: body.iaAtiva } : {}),
+    })
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : 'Erro ao salvar configurações.' },
+      { status: 500 }
+    )
+  }
 
   return NextResponse.json({ ok: true })
 }

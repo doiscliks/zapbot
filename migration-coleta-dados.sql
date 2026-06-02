@@ -16,3 +16,7 @@ create table if not exists coleta_dados_config (
 --    Ex.: { "nome": "João", "email": "joao@x.com", "empresa": "ACME" }
 alter table clientes
   add column if not exists dados_coletados jsonb not null default '{}'::jsonb;
+
+-- 3. Controle de acesso é feito na aplicação (filtro por user_id via chave anônima),
+--    igual às demais tabelas do sistema. Desativa o RLS para permitir as gravações.
+alter table coleta_dados_config disable row level security;

@@ -11,6 +11,7 @@ export interface Cliente {
   status_atual?: string | null
   dt_ultima_mensagem?: string | null
   ia_desabilitada?: boolean | null
+  dados_coletados?: Record<string, string> | null
 }
 
 export interface MensagemWhatsapp {

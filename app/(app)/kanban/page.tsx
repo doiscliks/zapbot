@@ -8,6 +8,20 @@ import { STATUS_LIST } from '@/constants/status'
 
 const STATUS_COLUNAS = STATUS_LIST
 
+function DadosColetadosChips({ cliente }: { cliente: Cliente }) {
+  const entradas = Object.entries(cliente.dados_coletados ?? {}).filter(([, v]) => v && String(v).trim())
+  if (entradas.length === 0) return null
+  return (
+    <div className="flex flex-wrap items-center gap-1 mt-2">
+      {entradas.map(([k, v]) => (
+        <span key={k} className="text-[10px] bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded font-medium truncate max-w-full">
+          <span className="capitalize opacity-70">{k.replace(/_/g, ' ')}:</span> {v}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 const FB_EVENTOS = [
   { value: 'Lead', label: 'Lead (gerou interesse)' },
   { value: 'Contact', label: 'Contato realizado' },
@@ -542,6 +556,7 @@ export default function KanbanPage() {
                           <p className="text-xs text-gray-400 truncate">{cliente.cidade || cliente.telefone}</p>
                         </div>
                       </div>
+                      <DadosColetadosChips cliente={cliente} />
                     </div>
                   ))}
                 </div>

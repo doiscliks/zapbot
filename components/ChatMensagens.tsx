@@ -216,6 +216,17 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
               )}
             </div>
           )}
+          {cliente.dados_coletados && Object.entries(cliente.dados_coletados).filter(([, v]) => v && String(v).trim()).length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 mt-1">
+              {Object.entries(cliente.dados_coletados)
+                .filter(([, v]) => v && String(v).trim())
+                .map(([k, v]) => (
+                  <span key={k} className="text-[10px] bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded font-medium">
+                    <span className="capitalize opacity-70">{k.replace(/_/g, ' ')}:</span> {v}
+                  </span>
+                ))}
+            </div>
+          )}
         </div>
         <button
           onClick={handleImportarHistorico}

@@ -105,6 +105,69 @@ Responda APENAS com o número do ID da seção. Se não for possível classifica
   return null
 }
 
+type CampoColeta = { chave: string; label: string; descricao?: string }
+
+// Extrai dados do cliente (nome, email, etc.) da mensagem e salva em clientes.dados_coletados.
+// Roda em paralelo à resposta da IA — não bloqueia o atendimento.
+async function extrairDadosCliente(
+  supabase: SupabaseClient,
+  clienteId: number,
+  campos: CampoColeta[],
+  dadosAtuais: Record<string, unknown>,
+  texto: string,
+  openaiKey: string
+): Promise<void> {
+  // Só busca campos ainda não preenchidos
+  const faltantes = campos.filter((c) => {
+    const v = dadosAtuais?.[c.chave]
+    return v === undefined || v === null || String(v).trim() === ''
+  })
+  if (faltantes.length === 0) return
+
+  const listagem = faltantes
+    .map((c) => `- "${c.chave}": ${c.label}${c.descricao ? ` (${c.descricao})` : ''}`)
+    .join('\n')
+
+  const prompt = `Extraia da mensagem do cliente APENAS os dados abaixo que ele tenha informado explicitamente. Não invente, não deduza, não use exemplos.
+
+Campos:
+${listagem}
+
+Mensagem do cliente: "${texto}"
+
+Responda APENAS com um objeto JSON contendo somente as chaves que você conseguiu extrair com certeza (omita as demais). Se não houver nenhuma, responda {}.`
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0,
+      max_tokens: 200,
+      response_format: { type: 'json_object' },
+    }),
+  })
+  if (!res.ok) return
+
+  const data = await res.json()
+  let extraidos: Record<string, unknown> = {}
+  try { extraidos = JSON.parse((data.choices?.[0]?.message?.content as string) || '{}') } catch { return }
+
+  const validos: Record<string, unknown> = {}
+  for (const c of faltantes) {
+    const v = extraidos[c.chave]
+    if (v != null && String(v).trim() !== '') validos[c.chave] = String(v).trim()
+  }
+  if (Object.keys(validos).length === 0) return
+
+  const novos = { ...(dadosAtuais || {}), ...validos }
+  const update: Record<string, unknown> = { dados_coletados: novos }
+  // Se coletou "nome", reflete também no campo nome do cliente
+  if (typeof validos.nome === 'string' && validos.nome.trim()) update.nome = validos.nome.trim()
+  await supabase.from('clientes').update(update).eq('id', clienteId)
+}
+
 async function sincronizarHistorico(
   supabase: SupabaseClient,
   chatid: string,
@@ -331,7 +394,7 @@ export async function POST(request: NextRequest) {
   // 1. Upsert cliente
   const clienteQuery = supabase
     .from('clientes')
-    .select('id, ia_desabilitada, historico_sincronizado')
+    .select('id, ia_desabilitada, historico_sincronizado, dados_coletados')
     .eq('telefone', telefone)
   if (userId) clienteQuery.eq('user_id', userId)
   const { data: clienteExistente } = await clienteQuery.maybeSingle()
@@ -526,7 +589,10 @@ export async function POST(request: NextRequest) {
     textosQuery.eq('user_id', userId)
   }
 
-  const [templateGlobalRes, baseRes, promptRes, qaRes, textosRes, historicoRes] = await Promise.all([
+  const coletaQuery = supabase.from('coleta_dados_config').select('ativo, campos')
+  if (userId) coletaQuery.eq('user_id', userId)
+
+  const [templateGlobalRes, baseRes, promptRes, qaRes, textosRes, historicoRes, coletaRes] = await Promise.all([
     supabase.from('configuracoes').select('valor').eq('chave', 'prompt_template').maybeSingle(),
     baseQuery.maybeSingle(),
     promptQuery.maybeSingle(),
@@ -537,7 +603,13 @@ export async function POST(request: NextRequest) {
       if (userId) q.eq('user_id', userId)
       return q
     })(),
+    coletaQuery.maybeSingle(),
   ])
+
+  // Config de coleta de dados (campos a obter do cliente)
+  const coletaAtiva = coletaRes.data?.ativo === true
+  const camposColeta: CampoColeta[] = Array.isArray(coletaRes.data?.campos) ? coletaRes.data.campos : []
+  const dadosColetados = (clienteExistente?.dados_coletados as Record<string, unknown>) ?? {}
 
   const globalTemplate: string = templateGlobalRes.data?.valor ?? ''
 
@@ -592,6 +664,18 @@ export async function POST(request: NextRequest) {
     systemPrompt += '\n\nIMPORTANTE: Você já está no meio de uma conversa com este cliente. NÃO envie saudação (oi, olá, tudo certo, etc.) novamente. Responda diretamente à última mensagem do cliente, mantendo o contexto do que já foi discutido.'
   }
 
+  // Coleta de dados — instrui a IA a obter, de forma natural, os campos que ainda faltam
+  if (coletaAtiva && camposColeta.length > 0) {
+    const faltantes = camposColeta.filter((c) => {
+      const v = dadosColetados?.[c.chave]
+      return v === undefined || v === null || String(v).trim() === ''
+    })
+    if (faltantes.length > 0) {
+      const labels = faltantes.map((c) => c.label).join(', ')
+      systemPrompt += `\n\n---\nIMPORTANTE: Durante a conversa, de forma natural e educada (sem parecer um formulário), procure obter do cliente os seguintes dados que ainda não temos: ${labels}. Não peça todos de uma vez nem insista caso o cliente não queira informar.`
+    }
+  }
+
   const mensagensHistorico = [...(historicoRes.data ?? [])].reverse()
     .map((m: { mensagem: string; quem_mandou: string }) => ({
       role: m.quem_mandou === 'cliente' ? ('user' as const) : ('assistant' as const),
@@ -619,6 +703,9 @@ export async function POST(request: NextRequest) {
               }
             })
             .catch(() => {})
+        : Promise.resolve(),
+      (clienteId && openaiKey && coletaAtiva && camposColeta.length > 0)
+        ? extrairDadosCliente(supabase, clienteId, camposColeta, dadosColetados, inputTexto, openaiKey).catch(() => {})
         : Promise.resolve(),
     ])
 

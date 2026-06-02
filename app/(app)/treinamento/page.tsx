@@ -3,11 +3,13 @@
 import { useEffect, useState, useRef } from 'react'
 import {
   BookOpen, Plus, Trash2, Loader2,
-  FileText, MessageSquareQuote, AlignLeft, Upload, CheckCircle, AlertCircle, MessageCircle, Wand2, Layers,
+  FileText, MessageSquareQuote, AlignLeft, Upload, CheckCircle, AlertCircle, MessageCircle, Wand2, Layers, UserPlus,
 } from 'lucide-react'
 import { TreinamentoQA, TreinamentoTexto } from '@/types'
 
-type Aba = 'prompt' | 'qa' | 'textos' | 'arquivos' | 'whatsapp' | 'qualificacao'
+type Aba = 'prompt' | 'qa' | 'textos' | 'arquivos' | 'whatsapp' | 'qualificacao' | 'coleta'
+
+type CampoColeta = { chave: string; label: string; descricao: string }
 
 export default function TreinamentoPage() {
   const [aba, setAba] = useState<Aba>('prompt')
@@ -57,6 +59,12 @@ export default function TreinamentoPage() {
   const [salvandoQual, setSalvandoQual] = useState(false)
   const [qualSalvo, setQualSalvo] = useState(false)
 
+  // Coleta de dados do cliente
+  const [coletaAtivo, setColetaAtivo] = useState(false)
+  const [coletaCampos, setColetaCampos] = useState<CampoColeta[]>([])
+  const [salvandoColeta, setSalvandoColeta] = useState(false)
+  const [coletaSalvo, setColetaSalvo] = useState(false)
+
   // Erro geral
   const [erro, setErro] = useState<string | null>(null)
 
@@ -66,12 +74,13 @@ export default function TreinamentoPage() {
 
   async function carregarTudo() {
     setErro(null)
-    const [promptRes, qaRes, textosRes, configRes, qualRes] = await Promise.all([
+    const [promptRes, qaRes, textosRes, configRes, qualRes, coletaRes] = await Promise.all([
       fetch('/api/treinamento/prompt'),
       fetch('/api/treinamento/qa'),
       fetch('/api/treinamento/textos'),
       fetch('/api/config/usuario'),
       fetch('/api/treinamento/qualificacao'),
+      fetch('/api/treinamento/coleta'),
     ])
 
     if (promptRes.ok) {
@@ -92,6 +101,11 @@ export default function TreinamentoPage() {
         descMap[cfg.secao_id] = cfg.descricao ?? ''
       }
       setQualDescricoes(descMap)
+    }
+    if (coletaRes.ok) {
+      const d = await coletaRes.json()
+      setColetaAtivo(d.ativo ?? false)
+      setColetaCampos(Array.isArray(d.campos) ? d.campos.map((c: Partial<CampoColeta>) => ({ chave: c.chave ?? '', label: c.label ?? '', descricao: c.descricao ?? '' })) : [])
     }
   }
 
@@ -320,6 +334,52 @@ export default function TreinamentoPage() {
     }
   }
 
+  // --- Coleta de dados ---
+  async function postarColeta(campos: Record<string, unknown>) {
+    const res = await fetch('/api/treinamento/coleta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(campos),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setErro(d.error ?? 'Erro ao salvar. Verifique se a tabela coleta_dados_config existe no Supabase.')
+      return false
+    }
+    return true
+  }
+
+  async function toggleColeta() {
+    const novo = !coletaAtivo
+    setColetaAtivo(novo)
+    setSalvandoColeta(true)
+    await postarColeta({ ativo: novo, campos: coletaCampos })
+    setSalvandoColeta(false)
+  }
+
+  async function salvarColeta() {
+    setSalvandoColeta(true)
+    setColetaSalvo(false)
+    const limpos = coletaCampos.filter((c) => c.label.trim())
+    const ok = await postarColeta({ campos: limpos })
+    setSalvandoColeta(false)
+    if (ok) {
+      setColetaCampos(limpos)
+      setColetaSalvo(true)
+      setTimeout(() => setColetaSalvo(false), 3000)
+    }
+  }
+
+  function addCampoColeta() {
+    setColetaCampos((prev) => [...prev, { chave: '', label: '', descricao: '' }])
+  }
+  function updateCampoColeta(i: number, patch: Partial<CampoColeta>) {
+    setColetaCampos((prev) => prev.map((c, j) => (j === i ? { ...c, ...patch } : c)))
+  }
+  function removeCampoColeta(i: number) {
+    setColetaCampos((prev) => prev.filter((_, j) => j !== i))
+  }
+
   const abas: { id: Aba; label: string; icon: React.ElementType; count?: number }[] = [
     { id: 'prompt', label: 'Prompt', icon: AlignLeft },
     { id: 'qa', label: 'Perguntas & Respostas', icon: MessageSquareQuote, count: qas.length },
@@ -327,6 +387,7 @@ export default function TreinamentoPage() {
     { id: 'arquivos', label: 'Arquivos', icon: Upload },
     { id: 'whatsapp', label: 'Importar do WhatsApp', icon: MessageCircle },
     { id: 'qualificacao', label: 'Qualificação Kanban', icon: Layers },
+    { id: 'coleta', label: 'Coleta de dados', icon: UserPlus, count: coletaCampos.length },
   ]
 
   return (
@@ -785,6 +846,94 @@ export default function TreinamentoPage() {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Aba: Coleta de dados */}
+            {aba === 'coleta' && (
+              <div className="space-y-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">Coleta automática de dados</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Quando ativo, a IA pede educadamente e captura os dados abaixo durante a conversa, salvando na ficha do cliente.
+                    </p>
+                  </div>
+                  <button
+                    onClick={toggleColeta}
+                    disabled={salvandoColeta}
+                    className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors disabled:opacity-60 ${
+                      coletaAtivo
+                        ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                        : 'bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${coletaAtivo ? 'bg-green-500' : 'bg-gray-400'}`} />
+                    {salvandoColeta ? 'Salvando...' : coletaAtivo ? 'Ativo' : 'Inativo'}
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {coletaCampos.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      <UserPlus size={28} className="mx-auto mb-2 text-gray-300" />
+                      Nenhum campo configurado. Adicione os dados que a IA deve coletar (ex: E-mail, Empresa).
+                    </div>
+                  ) : (
+                    coletaCampos.map((campo, i) => (
+                      <div key={i} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1 space-y-2">
+                            <input
+                              type="text"
+                              value={campo.label}
+                              onChange={(e) => updateCampoColeta(i, { label: e.target.value })}
+                              placeholder="Nome do dado (ex: E-mail)"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            />
+                            <input
+                              type="text"
+                              value={campo.descricao}
+                              onChange={(e) => updateCampoColeta(i, { descricao: e.target.value })}
+                              placeholder="Dica para a IA (opcional, ex: e-mail de contato do cliente)"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            />
+                          </div>
+                          <button
+                            onClick={() => removeCampoColeta(i)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
+                            title="Remover campo"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+
+                  <button
+                    onClick={addCampoColeta}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-gray-300 text-gray-500 hover:text-purple-600 hover:border-purple-300 text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Plus size={15} /> Adicionar campo
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={salvarColeta}
+                    disabled={salvandoColeta}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    {salvandoColeta ? <Loader2 size={15} className="animate-spin" /> : null}
+                    Salvar campos
+                  </button>
+                  {coletaSalvo && (
+                    <span className="flex items-center gap-1 text-green-600 text-sm">
+                      <CheckCircle size={14} /> Salvo!
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 

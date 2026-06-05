@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ClienteComUltimaMensagem, MensagemWhatsapp } from '@/types'
 import { supabase } from '@/lib/supabase'
 import ListaClientes from '@/components/ListaClientes'
@@ -21,22 +21,26 @@ export default function MensagensPage() {
   const clienteSelecionadoRef = useRef<ClienteComUltimaMensagem | null>(null)
   clienteSelecionadoRef.current = clienteSelecionado
 
+  // Ref para acessar a lista atual de clientes dentro do callback do realtime
+  const clientesRef = useRef<ClienteComUltimaMensagem[]>([])
+  clientesRef.current = clientes
+
+  const carregarClientes = useCallback(async () => {
+    try {
+      const res = await fetch('/api/mensagens/clientes')
+      const data = await res.json()
+      if (Array.isArray(data)) setClientes(data)
+    } catch {
+      setErro('Erro ao carregar clientes.')
+    } finally {
+      setLoadingClientes(false)
+    }
+  }, [])
+
   // Carregar lista de clientes
   useEffect(() => {
-    async function carregar() {
-      try {
-        const res = await fetch('/api/mensagens/clientes')
-        const data = await res.json()
-        setClientes(data)
-        setClientesFiltrados(data)
-      } catch {
-        setErro('Erro ao carregar clientes.')
-      } finally {
-        setLoadingClientes(false)
-      }
-    }
-    carregar()
-  }, [])
+    carregarClientes()
+  }, [carregarClientes])
 
   // Realtime — escuta novas mensagens na tabela
   useEffect(() => {
@@ -69,17 +73,27 @@ export default function MensagensPage() {
             })
           }
 
-          // Atualiza última mensagem na lista lateral
-          setClientes((prev) =>
-            prev.map((c) => {
-              const tel = c.telefone ?? ''
-              const match =
-                nova.numero_cliente === tel ||
-                nova.numero_cliente === `${tel}@s.whatsapp.net` ||
-                nova.numero_cliente.replace('@s.whatsapp.net', '') === tel
-              return match ? { ...c, ultima_mensagem: nova } : c
-            })
-          )
+          // Atualiza a lista lateral. Se for uma conversa que ainda não está na
+          // lista (cliente novo), recarrega para incluí-la.
+          const telNova = nova.numero_cliente.replace('@s.whatsapp.net', '')
+          const existe = clientesRef.current.some((c) => {
+            const t = c.telefone ?? ''
+            return nova.numero_cliente === t || nova.numero_cliente === `${t}@s.whatsapp.net` || telNova === t
+          })
+          if (existe) {
+            setClientes((prev) =>
+              prev.map((c) => {
+                const tel = c.telefone ?? ''
+                const match =
+                  nova.numero_cliente === tel ||
+                  nova.numero_cliente === `${tel}@s.whatsapp.net` ||
+                  nova.numero_cliente.replace('@s.whatsapp.net', '') === tel
+                return match ? { ...c, ultima_mensagem: nova } : c
+              })
+            )
+          } else {
+            carregarClientes()
+          }
         }
       )
       .subscribe()
@@ -87,7 +101,7 @@ export default function MensagensPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [carregarClientes])
 
   // Filtro de busca
   useEffect(() => {

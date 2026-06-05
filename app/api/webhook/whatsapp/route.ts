@@ -557,7 +557,10 @@ export async function POST(request: NextRequest) {
   }
 
   // 6. Salva mensagem recebida com texto real (transcrição/descrição para áudio/imagem)
-  await supabase.from('mensagens_whatsapp').upsert({
+  //    INSERT (não upsert) para dedup ATÔMICO: dois webhooks quase simultâneos podem
+  //    passar pelo SELECT do passo 3; aqui a constraint unique de message_id garante que
+  //    só um grava. O duplicado recebe 23505 e retornamos ANTES de responder de novo.
+  const { error: insertRecebidaErr } = await supabase.from('mensagens_whatsapp').insert({
     numero_cliente: telefone,
     mensagem: inputTexto,
     quem_mandou: 'cliente',
@@ -567,7 +570,15 @@ export async function POST(request: NextRequest) {
     ...(mediaUrl ? { media_url: mediaUrl } : {}),
     ...(mediaType ? { media_type: mediaType } : {}),
     ...(userId ? { user_id: userId } : {}),
-  }, { onConflict: 'message_id', ignoreDuplicates: true })
+  })
+  if (insertRecebidaErr) {
+    await log(supabase, '6_insert_recebida_erro', { code: insertRecebidaErr.code, message: insertRecebidaErr.message })
+    if (messageId && insertRecebidaErr.code === '23505') {
+      // Webhook duplicado (mesmo message_id) — não responde de novo
+      return NextResponse.json({ ok: true })
+    }
+    // Outro erro: segue o fluxo (mantém o comportamento anterior de tentar responder)
+  }
 
   // 7. Verifica fluxos ativos antes de chamar a IA
   if (userId && clienteId) {

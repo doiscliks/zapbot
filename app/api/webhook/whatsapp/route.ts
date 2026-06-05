@@ -105,6 +105,25 @@ Responda APENAS com o número do ID da seção. Se não for possível classifica
   return null
 }
 
+// Busca a URL da foto de perfil do WhatsApp via uazapi (/chat/GetNameAndImageURL).
+// As URLs do WhatsApp expiram; o Avatar tem fallback para iniciais quando a imagem falha.
+async function buscarFotoPerfil(uazapiBase: string, instanceToken: string, telefone: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${uazapiBase}/chat/GetNameAndImageURL`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', token: instanceToken },
+      body: JSON.stringify({ number: telefone, preview: true }),
+      signal: AbortSignal.timeout(8000),
+    })
+    if (!res.ok) return null
+    const data = await res.json() as Record<string, unknown>
+    const url = (data.imagePreview as string) || (data.image as string) || ''
+    return (typeof url === 'string' && url.startsWith('http')) ? url : null
+  } catch {
+    return null
+  }
+}
+
 type CampoColeta = { chave: string; label: string; descricao?: string }
 
 // Extrai dados do cliente (nome, email, etc.) da mensagem e salva em clientes.dados_coletados.
@@ -401,7 +420,7 @@ export async function POST(request: NextRequest) {
   // 1. Upsert cliente
   const clienteQuery = supabase
     .from('clientes')
-    .select('id, ia_desabilitada, historico_sincronizado, dados_coletados')
+    .select('id, ia_desabilitada, historico_sincronizado, dados_coletados, foto')
     .eq('telefone', telefone)
   if (userId) clienteQuery.eq('user_id', userId)
   const { data: clienteExistente } = await clienteQuery.maybeSingle()
@@ -421,6 +440,12 @@ export async function POST(request: NextRequest) {
       ...(userId ? { user_id: userId } : {}),
     }).select('id').single()
     clienteId = novoCliente?.id ?? null
+  }
+
+  // 1b. Busca a foto de perfil do WhatsApp se ainda não temos uma
+  if (clienteId && uazapiBase && instanciaToken && !clienteExistente?.foto) {
+    const foto = await buscarFotoPerfil(uazapiBase, instanciaToken, telefone)
+    if (foto) await supabase.from('clientes').update({ foto }).eq('id', clienteId)
   }
 
   // 2. Sincroniza histórico automaticamente na primeira vez

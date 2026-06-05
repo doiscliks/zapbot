@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { readConfig } from '@/lib/config-server'
 
 function getSupabase() {
   return createClient(
@@ -79,13 +80,20 @@ async function criarEventoCalendar(accessToken: string, calendarId: string, even
   return res.json()
 }
 
-async function enviarWhatsApp(uazapiBase: string, instanceToken: string, telefone: string, texto: string) {
-  const base = uazapiBase.replace(/\/+$/, '').replace(/\/send\/.*$/, '')
-  await fetch(`${base}/send/text`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', token: instanceToken },
-    body: JSON.stringify({ number: telefone, text: texto }),
-  }).catch(() => {})
+async function enviarWhatsApp(uazapiBase: string, instanceToken: string, telefone: string, texto: string): Promise<string> {
+  try {
+    const base = uazapiBase.replace(/\/+$/, '').replace(/\/send\/.*$/, '')
+    const res = await fetch(`${base}/send/text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', token: instanceToken },
+      body: JSON.stringify({ number: telefone, text: texto }),
+    })
+    if (res.ok) return 'ok'
+    const t = await res.text().catch(() => '')
+    return `http_${res.status}: ${t.slice(0, 150)}`
+  } catch (e) {
+    return e instanceof Error ? e.message : 'fetch_falhou'
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -183,7 +191,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Envia WhatsApp de confirmação
-  if (config.whatsapp_instancia_id) {
+  let whatsappDebug = 'nao_tentado'
+  if (!config.whatsapp_instancia_id) {
+    whatsappDebug = 'sem_instancia_na_config_da_agenda'
+  } else {
     try {
       const { data: instancia } = await supabase
         .from('instancias_whatsapp')
@@ -191,14 +202,14 @@ export async function POST(request: NextRequest) {
         .eq('id', config.whatsapp_instancia_id)
         .single()
 
-      const { data: configApp } = await supabase
-        .from('configuracoes')
-        .select('chave, valor')
+      const appConfig = await readConfig()
+      const uazapiUrl = appConfig.uazapiUrl || ''
 
-      const uazapiUrl = configApp?.find((c: { chave: string }) => c.chave === 'uazapi_url')?.valor || ''
-      const uazapiToken = configApp?.find((c: { chave: string }) => c.chave === 'uazapi_token')?.valor || ''
-
-      if (instancia?.token && uazapiUrl && uazapiToken) {
+      if (!instancia?.token) {
+        whatsappDebug = 'instancia_sem_token'
+      } else if (!uazapiUrl) {
+        whatsappDebug = 'sem_uazapi_url'
+      } else {
         const dataFormatada = dataHoraInicio.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'America/Sao_Paulo' })
         const horaFormatada = dataHoraInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo', hour12: false })
 
@@ -210,10 +221,14 @@ export async function POST(request: NextRequest) {
         if (assunto) msg += `📋 Assunto: ${assunto.trim()}\n`
         if (meetLink) msg += `\n🎥 Link do Google Meet:\n${meetLink}`
 
-        await enviarWhatsApp(uazapiUrl, instancia.token, telefone.trim(), msg)
-        await supabase.from('agendamentos').update({ whatsapp_enviado: true }).eq('id', agendamento.id)
+        whatsappDebug = await enviarWhatsApp(uazapiUrl, instancia.token, telefone.trim(), msg)
+        if (whatsappDebug === 'ok') {
+          await supabase.from('agendamentos').update({ whatsapp_enviado: true }).eq('id', agendamento.id)
+        }
       }
-    } catch { /* ignora erros do WhatsApp */ }
+    } catch (e) {
+      whatsappDebug = `excecao: ${e instanceof Error ? e.message : 'desconhecida'}`
+    }
   }
 
   return NextResponse.json({
@@ -224,6 +239,7 @@ export async function POST(request: NextRequest) {
       google_token_presente: !!config.google_access_token,
       google_erro: googleErro,
       whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,
+      whatsapp: whatsappDebug,
     },
   })
 }

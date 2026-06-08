@@ -42,6 +42,24 @@ export default function MensagensPage() {
     carregarClientes()
   }, [carregarClientes])
 
+  // Sincroniza as fotos de perfil que faltam, em lotes, atualizando a lista a cada passo
+  const sincronizarFotos = useCallback(async () => {
+    for (let i = 0; i < 6; i++) {
+      try {
+        const res = await fetch('/api/mensagens/sincronizar-fotos', { method: 'POST' })
+        const data = await res.json()
+        if (data?.atualizadas > 0) await carregarClientes()
+        if (!data?.restantes) break
+      } catch {
+        break
+      }
+    }
+  }, [carregarClientes])
+
+  useEffect(() => {
+    sincronizarFotos()
+  }, [sincronizarFotos])
+
   // Realtime — escuta novas mensagens na tabela
   useEffect(() => {
     const channel = supabase

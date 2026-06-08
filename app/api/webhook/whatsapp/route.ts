@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { readConfig } from '@/lib/config-server'
 import { readTenantConfig } from '@/lib/tenant-config'
 import { handleFlowExecution, dispatchKanbanFlows } from '@/lib/flow-executor'
+import { buscarFotoPerfil } from '@/lib/uazapi'
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -103,25 +104,6 @@ Responda APENAS com o número do ID da seção. Se não for possível classifica
     return secaoId
   }
   return null
-}
-
-// Busca a URL da foto de perfil do WhatsApp via uazapi (/chat/GetNameAndImageURL).
-// As URLs do WhatsApp expiram; o Avatar tem fallback para iniciais quando a imagem falha.
-async function buscarFotoPerfil(uazapiBase: string, instanceToken: string, telefone: string): Promise<string | null> {
-  try {
-    const res = await fetch(`${uazapiBase}/chat/GetNameAndImageURL`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', token: instanceToken },
-      body: JSON.stringify({ number: telefone, preview: true }),
-      signal: AbortSignal.timeout(8000),
-    })
-    if (!res.ok) return null
-    const data = await res.json() as Record<string, unknown>
-    const url = (data.imagePreview as string) || (data.image as string) || ''
-    return (typeof url === 'string' && url.startsWith('http')) ? url : null
-  } catch {
-    return null
-  }
 }
 
 type CampoColeta = { chave: string; label: string; descricao?: string }

@@ -1,28 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, MessageSquare, LogOut, Kanban, BookOpen, TrendingUp,
-  Users, Menu, X, Filter, Send, Bell, Smartphone, Settings, Zap, CalendarDays,
+  Users, Menu, X, Filter, Send, Bell, Smartphone, Settings, Zap, CalendarDays, UserCog,
 } from 'lucide-react'
+import { SCREENS, podeAcessar } from '@/lib/screens'
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/mensagens', label: 'Mensagens', icon: MessageSquare },
-  { href: '/disparos', label: 'Disparos', icon: Send },
-  { href: '/remarketing', label: 'Remarketing', icon: Bell },
-  { href: '/fluxos', label: 'Fluxos', icon: Zap },
-  { href: '/kanban', label: 'Kanban', icon: Kanban },
-  { href: '/agenda', label: 'Agenda', icon: CalendarDays },
-  { href: '/funil', label: 'Funil', icon: Filter },
-  { href: '/ads', label: 'Ads', icon: TrendingUp },
-  { href: '/treinamento', label: 'Treinamento', icon: BookOpen },
-  { href: '/grupos', label: 'Grupos', icon: Users },
-  { href: '/conexao', label: 'Conexão', icon: Smartphone },
-  { href: '/configuracoes', label: 'Configurações', icon: Settings },
-]
+const ICONS: Record<string, React.ElementType> = {
+  dashboard: LayoutDashboard,
+  mensagens: MessageSquare,
+  disparos: Send,
+  remarketing: Bell,
+  fluxos: Zap,
+  kanban: Kanban,
+  agenda: CalendarDays,
+  funil: Filter,
+  ads: TrendingUp,
+  treinamento: BookOpen,
+  grupos: Users,
+  conexao: Smartphone,
+  configuracoes: Settings,
+  usuarios: UserCog,
+}
+
+const navItems = SCREENS.map((s) => ({ href: `/${s.key}`, label: s.label, key: s.key, icon: ICONS[s.key] }))
 
 function Logo2Cliks() {
   return (
@@ -45,6 +49,16 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [aberto, setAberto] = useState(false)
+  const [permissoes, setPermissoes] = useState<unknown>('*')
+
+  useEffect(() => {
+    fetch('/api/tenant/me')
+      .then((r) => r.json())
+      .then((d) => { if (d?.ok) setPermissoes(d.isAdmin ? '*' : (d.permissoes ?? [])) })
+      .catch(() => {})
+  }, [])
+
+  const itensVisiveis = navItems.filter((item) => podeAcessar(permissoes, item.key))
 
   async function handleSignOut() {
     await fetch('/api/tenant/logout', { method: 'POST' })
@@ -81,7 +95,7 @@ export default function Sidebar() {
 
       {/* Nav items */}
       <nav className="flex-1 px-3 py-1 space-y-0.5 overflow-y-auto">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {itensVisiveis.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link

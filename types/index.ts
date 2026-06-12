@@ -99,3 +99,13 @@ export interface GrupoDisponivel {
   isAdmin: boolean
   jaAdicionado: boolean
 }
+
+export interface Usuario {
+  id: string
+  nome: string
+  email: string
+  telefone: string | null
+  permissoes: string[] | null
+  ativo: boolean
+  usado_em: string | null
+}

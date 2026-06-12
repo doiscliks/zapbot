@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { SCREEN_KEYS, screenKeyFromPath, podeAcessar } from '@/lib/screens'
 
 const PUBLIC_PATHS = ['/login', '/setup/login', '/g/']
 const MASTER_PATHS = ['/setup']
@@ -43,6 +44,19 @@ export function proxy(request: NextRequest) {
   // App routes — require tenant session
   if (!request.cookies.get('tenant_session')?.value) {
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // Permissões por tela: bloqueia acesso direto por URL a telas não permitidas.
+  // Só aplica a telas conhecidas; sessões antigas (sem cookie permissoes) = libera tudo.
+  const permCookie = request.cookies.get('permissoes')?.value
+  if (permCookie) {
+    let permissoes: unknown = '*'
+    try { permissoes = JSON.parse(permCookie) } catch { permissoes = '*' }
+    const key = screenKeyFromPath(pathname)
+    if (SCREEN_KEYS.includes(key) && !podeAcessar(permissoes, key)) {
+      const primeira = Array.isArray(permissoes) && permissoes.length > 0 ? permissoes[0] : 'mensagens'
+      return NextResponse.redirect(new URL(`/${primeira}`, request.url))
+    }
   }
 
   return NextResponse.next()

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getTenantId } from '@/lib/tenant-auth'
+import { temPermissao } from '@/lib/permissoes'
 import { readTenantConfig, writeTenantConfig } from '@/lib/tenant-config'
 
 const MASKED = '••••••••••••••••••••••'
@@ -34,6 +35,15 @@ export async function POST(request: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
+
+  // Este endpoint atende a tela Configurações (chaves) e o toggle de IA da tela
+  // Treinamento. Exige a permissão da tela correspondente ao que está sendo alterado.
+  const apenasIaAtiva = Object.keys(body).every((k) => k === 'iaAtiva')
+  const permKey = apenasIaAtiva ? 'treinamento' : 'configuracoes'
+  if (!(await temPermissao(request, permKey))) {
+    return NextResponse.json({ error: 'Sem permissão para esta alteração' }, { status: 403 })
+  }
+
   const current = await readTenantConfig(userId)
 
   function resolve(incoming: string | undefined, current: string): string {

@@ -11,6 +11,11 @@
 alter table usuarios
   add column if not exists parent_id  uuid,
   add column if not exists telefone   text,
-  add column if not exists permissoes jsonb;
+  add column if not exists permissoes jsonb,
+  -- senha própria dos SUB-usuários (contas de topo usam Supabase Auth).
+  add column if not exists senha_hash text;
 
 create index if not exists usuarios_parent_idx on usuarios (parent_id);
+
+-- Recarrega o cache de schema do PostgREST (senão o INSERT pode não enxergar as colunas novas)
+NOTIFY pgrst, 'reload schema';

@@ -40,6 +40,19 @@ export default function LoginPage() {
       return
     }
 
+    // 1) Tenta login de sub-usuário (email+senha próprios). Conta de topo cai no Supabase Auth.
+    const subRes = await fetch('/api/tenant/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha }),
+    })
+    if (subRes.ok) { window.location.href = '/dashboard'; return }
+    if (subRes.status === 403) {
+      const d = await subRes.json().catch(() => ({}))
+      setErro(d.error ?? 'Acesso negado'); setLoading(false); return
+    }
+    // 401 = não é sub-usuário → segue para o Supabase Auth normal
+
     const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
     if (error) { setErro('Email ou senha inválidos'); setLoading(false); return }
 

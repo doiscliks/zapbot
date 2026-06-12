@@ -61,5 +61,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Falha ao enviar mensagem', detail: data }, { status: response.status })
   }
 
-  return NextResponse.json({ ok: true, data })
+  // Persiste a mensagem enviada com o user_id do workspace, para aparecer no
+  // histórico (o webhook ignora o echo wasSentByApi, então a gravação é aqui).
+  const { error: insertErr } = await supabase.from('mensagens_whatsapp').insert({
+    numero_cliente: String(numero).split('@')[0],
+    mensagem,
+    quem_mandou: 'manual',
+    status: 'enviada',
+    data_criacao: new Date().toISOString(),
+    user_id: userId,
+  })
+
+  return NextResponse.json({ ok: true, data, salvo: !insertErr, erro_salvar: insertErr?.message })
 }

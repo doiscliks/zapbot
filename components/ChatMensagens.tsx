@@ -5,7 +5,6 @@ import { MensagemWhatsapp, Cliente, KanbanSecao } from '@/types'
 import { Loader2, MessageSquare, Send, ChevronDown, AlertCircle, RotateCcw, BotOff, Bot, History } from 'lucide-react'
 
 import Avatar from './Avatar'
-import { supabase } from '@/lib/supabase'
 import { getSecoes, moverClienteParaSecao } from '@/services/kanbanService'
 
 interface Props {
@@ -120,19 +119,12 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
   async function enviarMensagem(mensagemTexto: string, msgId: number) {
     if (!cliente) return
     try {
-      const [res] = await Promise.all([
-        fetch('/api/send-message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ numero: cliente.telefone, mensagem: mensagemTexto }),
-        }),
-        supabase.from('mensagens_whatsapp').insert({
-          numero_cliente: cliente.telefone,
-          mensagem: mensagemTexto,
-          status: 'processando',
-          quem_mandou: 'manual',
-        }),
-      ])
+      // O servidor envia via uazapi E persiste a mensagem com o user_id do workspace
+      const res = await fetch('/api/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numero: cliente.telefone, mensagem: mensagemTexto }),
+      })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error ?? 'Erro ao enviar')

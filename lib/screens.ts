@@ -16,6 +16,7 @@ export const SCREENS = [
   { key: 'conexao', label: 'Conexão' },
   { key: 'configuracoes', label: 'Configurações' },
   { key: 'usuarios', label: 'Usuários' },
+  { key: 'clientes', label: 'Clientes' },
 ] as const
 
 export type ScreenKey = (typeof SCREENS)[number]['key']

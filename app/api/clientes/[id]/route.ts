@@ -9,6 +9,42 @@ function getSupabase() {
   )
 }
 
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const userId = getTenantId(request)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { id: idStr } = await params
+  const id = Number(idStr)
+  if (!id) return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+
+  const supabase = getSupabase()
+
+  // Verifica permissão: busca o cliente
+  const { data: cliente, error: clienteError } = await supabase
+    .from('clientes')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (clienteError) return NextResponse.json({ error: clienteError.message }, { status: 500 })
+  if (!cliente) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Se atendente, verifica se o cliente está atribuído a ele
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id, is_attendant')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const isAdmin = !usuario?.parent_id
+  if (!isAdmin && usuario?.is_attendant && cliente.assigned_user_id !== userId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  return NextResponse.json(cliente)
+}
+
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = getTenantId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -19,19 +55,50 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const body = await request.json()
   const campos: Record<string, unknown> = {}
-  if (typeof body.ia_desabilitada === 'boolean') campos.ia_desabilitada = body.ia_desabilitada
+
+  // Campos permitidos para atualização
+  const camposPermitidos = ['email', 'cpf_cnpj', 'empresa', 'endereco', 'cidade', 'numero_endereco', 'complemento', 'bairro', 'cep', 'cargo', 'notas', 'data_nascimento', 'ia_desabilitada']
+  for (const campo of camposPermitidos) {
+    if (campo in body) campos[campo] = body[campo]
+  }
 
   if (Object.keys(campos).length === 0) {
     return NextResponse.json({ error: 'Nenhum campo para atualizar' }, { status: 400 })
   }
 
+  campos.updated_at = new Date().toISOString()
+
   const supabase = getSupabase()
-  const { error } = await supabase
+
+  // Verifica permissão
+  const { data: cliente } = await supabase
+    .from('clientes')
+    .select('assigned_user_id')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!cliente) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id, is_attendant')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const isAdmin = !usuario?.parent_id
+  if (!isAdmin && usuario?.is_attendant && cliente.assigned_user_id !== userId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { data, error } = await supabase
     .from('clientes')
     .update(campos)
     .eq('id', id)
     .eq('user_id', userId)
+    .select()
+    .maybeSingle()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  return NextResponse.json(data)
 }

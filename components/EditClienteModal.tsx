@@ -2,7 +2,7 @@
 
 import { Cliente, ClienteHistoricoItem } from '@/types'
 import { X, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface EditClienteModalProps {
   cliente: Cliente | null
@@ -38,7 +38,15 @@ export default function EditClienteModal({
   loading,
 }: EditClienteModalProps) {
   const [novaNotaTexto, setNovaNotaTexto] = useState('')
-  const [historico, setHistorico] = useState<ClienteHistoricoItem[]>(cliente?.historico || [])
+  const [historico, setHistorico] = useState<ClienteHistoricoItem[]>([])
+
+  // Reseta o histórico quando muda de cliente
+  useEffect(() => {
+    if (cliente) {
+      setHistorico(cliente.historico || [])
+      setNovaNotaTexto('')
+    }
+  }, [cliente?.id])
 
   if (!cliente) return null
 

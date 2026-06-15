@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Users, Search, Edit2, Loader2, AlertCircle, Phone, Mail } from 'lucide-react'
 import { Cliente } from '@/types'
+import EditClienteModal from '@/components/EditClienteModal'
 
 const ACCENT = '#12C6D6'
 
@@ -12,7 +13,7 @@ export default function ClientesPage() {
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [busca, setBusca] = useState('')
-  const [editandoId, setEditandoId] = useState<number | null>(null)
+  const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null)
   const [salvando, setSalvando] = useState(false)
 
   const [email, setEmail] = useState('')
@@ -57,7 +58,7 @@ export default function ClientesPage() {
   }, [busca, clientes])
 
   function abrirEdicao(c: Cliente) {
-    setEditandoId(c.id)
+    setClienteEditando(c)
     setEmail(c.email || '')
     setCpf(c.cpf_cnpj || '')
     setEmpresa(c.empresa || '')
@@ -65,28 +66,34 @@ export default function ClientesPage() {
     setCidade(c.cidade || '')
   }
 
+  function fecharEdicao() {
+    setClienteEditando(null)
+    setEmail('')
+    setCpf('')
+    setEmpresa('')
+    setEndereco('')
+    setCidade('')
+  }
+
   async function salvar() {
-    if (!editandoId) return
+    if (!clienteEditando) return
     setSalvando(true)
     try {
-      const res = await fetch(`/api/clientes/${editandoId}`, {
+      const res = await fetch(`/api/clientes/${clienteEditando.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, cpf_cnpj: cpf, empresa, endereco, cidade }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setClientes((prev) => prev.map((c) => (c.id === editandoId ? data : c)))
-      setEditandoId(null)
+      setClientes((prev) => prev.map((c) => (c.id === clienteEditando.id ? data : c)))
+      fecharEdicao()
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao salvar')
     } finally {
       setSalvando(false)
     }
   }
-
-  const inputCls = 'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2'
-  const inputStyle = { borderColor: '#E9EEF2', '--tw-ring-color': ACCENT } as React.CSSProperties
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
@@ -132,63 +139,55 @@ export default function ClientesPage() {
       ) : (
         <div className="space-y-3">
           {filtrados.map((cliente) => (
-            <div key={cliente.id} className="bg-white rounded-xl border p-4" style={{ borderColor: '#E9EEF2' }}>
-              {editandoId === cliente.id ? (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} style={inputStyle} />
-                    <input type="text" placeholder="CPF/CNPJ" value={cpf} onChange={(e) => setCpf(e.target.value)} className={inputCls} style={inputStyle} />
-                    <input type="text" placeholder="Empresa" value={empresa} onChange={(e) => setEmpresa(e.target.value)} className={inputCls} style={inputStyle} />
-                    <input type="text" placeholder="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} className={inputCls} style={inputStyle} />
-                    <input type="text" placeholder="Cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} className={inputCls} style={inputStyle} />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={salvar}
-                      disabled={salvando}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-60"
-                      style={{ background: ACCENT }}
-                    >
-                      {salvando ? 'Salvando...' : 'Salvar'}
-                    </button>
-                    <button onClick={() => setEditandoId(null)} className="px-4 py-2 rounded-lg text-sm font-medium border" style={{ borderColor: '#E9EEF2', color: '#6B7280' }}>
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm" style={{ color: '#1F2937' }}>
-                      {cliente.nome}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1 text-xs" style={{ color: '#6B7280' }}>
+            <div key={cliente.id} className="bg-white rounded-xl border p-4 hover:shadow-sm transition-shadow" style={{ borderColor: '#E9EEF2' }}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="font-semibold text-sm" style={{ color: '#1F2937' }}>
+                    {cliente.nome}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1 text-xs" style={{ color: '#6B7280' }}>
+                    <span className="flex items-center gap-1">
+                      <Phone size={12} /> {cliente.telefone}
+                    </span>
+                    {cliente.email && (
                       <span className="flex items-center gap-1">
-                        <Phone size={12} /> {cliente.telefone}
+                        <Mail size={12} /> {cliente.email}
                       </span>
-                      {cliente.email && (
-                        <span className="flex items-center gap-1">
-                          <Mail size={12} /> {cliente.email}
-                        </span>
-                      )}
-                    </div>
-                    {(cliente.empresa || cliente.cpf_cnpj || cliente.cidade) && (
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs mt-2" style={{ color: '#9CA3AF' }}>
-                        {cliente.empresa && <p><strong>Empresa:</strong> {cliente.empresa}</p>}
-                        {cliente.cpf_cnpj && <p><strong>CPF/CNPJ:</strong> {cliente.cpf_cnpj}</p>}
-                        {cliente.cidade && <p><strong>Cidade:</strong> {cliente.cidade}</p>}
-                      </div>
                     )}
                   </div>
-                  <button onClick={() => abrirEdicao(cliente)} className="p-2 rounded-lg hover:bg-gray-50 text-gray-500">
-                    <Edit2 size={16} />
-                  </button>
+                  {(cliente.empresa || cliente.cpf_cnpj || cliente.cidade) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs mt-2" style={{ color: '#9CA3AF' }}>
+                      {cliente.empresa && <p><strong>Empresa:</strong> {cliente.empresa}</p>}
+                      {cliente.cpf_cnpj && <p><strong>CPF/CNPJ:</strong> {cliente.cpf_cnpj}</p>}
+                      {cliente.cidade && <p><strong>Cidade:</strong> {cliente.cidade}</p>}
+                    </div>
+                  )}
                 </div>
-              )}
+                <button onClick={() => abrirEdicao(cliente)} className="p-2 rounded-lg hover:bg-gray-50 transition-colors" style={{ color: '#9CA3AF' }}>
+                  <Edit2 size={16} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      <EditClienteModal
+        cliente={clienteEditando}
+        email={email}
+        cpf={cpf}
+        empresa={empresa}
+        endereco={endereco}
+        cidade={cidade}
+        onEmailChange={setEmail}
+        onCpfChange={setCpf}
+        onEmpresaChange={setEmpresa}
+        onEnderecoChange={setEndereco}
+        onCidadeChange={setCidade}
+        onSave={salvar}
+        onCancel={fecharEdicao}
+        loading={salvando}
+      />
     </div>
   )
 }

@@ -4,6 +4,7 @@
 export const SCREENS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'mensagens', label: 'Mensagens' },
+  { key: 'clientes', label: 'Clientes' },
   { key: 'disparos', label: 'Disparos' },
   { key: 'remarketing', label: 'Remarketing' },
   { key: 'fluxos', label: 'Fluxos' },

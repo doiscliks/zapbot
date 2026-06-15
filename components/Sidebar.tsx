@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, MessageSquare, LogOut, Kanban, BookOpen, TrendingUp,
-  Users, Menu, X, Filter, Send, Bell, Smartphone, Settings, Zap, CalendarDays, UserCog,
+  Users, Menu, X, Filter, Send, Bell, Smartphone, Settings, Zap, CalendarDays, UserCog, Building2,
 } from 'lucide-react'
 import { SCREENS, podeAcessar } from '@/lib/screens'
 
@@ -24,6 +24,7 @@ const ICONS: Record<string, React.ElementType> = {
   conexao: Smartphone,
   configuracoes: Settings,
   usuarios: UserCog,
+  clientes: Building2,
 }
 
 const navItems = SCREENS.map((s) => ({ href: `/${s.key}`, label: s.label, key: s.key, icon: ICONS[s.key] }))

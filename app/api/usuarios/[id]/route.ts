@@ -66,6 +66,29 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const { id } = await params
   const supabase = getSupabase()
 
+  // Garante que o alvo é um sub-usuário deste workspace
+  const { data: alvo } = await supabase
+    .from('usuarios')
+    .select('id')
+    .eq('id', id)
+    .eq('parent_id', ownerId)
+    .maybeSingle()
+  if (!alvo) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
+
+  // Verifica se tem clientes vinculados
+  const { data: clientesVinculados } = await supabase
+    .from('clientes')
+    .select('id', { count: 'exact' })
+    .eq('assigned_user_id', id)
+
+  if ((clientesVinculados?.length ?? 0) > 0) {
+    return NextResponse.json({
+      error: 'Usuário tem clientes vinculados',
+      code: 'CLIENTES_VINCULADOS',
+      clientesCount: clientesVinculados?.length ?? 0,
+    }, { status: 409 })
+  }
+
   const { error } = await supabase
     .from('usuarios')
     .delete()

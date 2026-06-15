@@ -23,6 +23,10 @@ export default function UsuariosPage() {
   const [editAtendente, setEditAtendente] = useState(false)
   const [salvandoEdit, setSalvandoEdit] = useState(false)
 
+  const [modalMigracao, setModalMigracao] = useState<{ usuarioId: string; usuarioNome: string; clientesCount: number } | null>(null)
+  const [novoAtendenteSelecionado, setNovoAtendenteSelecionado] = useState<string>('')
+  const [migrandoClientes, setMigrandoClientes] = useState(false)
+
   useEffect(() => { carregar() }, [])
 
   async function carregar() {
@@ -93,12 +97,55 @@ export default function UsuariosPage() {
   }
 
   async function deletar(u: Usuario) {
-    if (!confirm(`Excluir o usuário ${u.nome}?`)) return
     try {
-      await fetch(`/api/usuarios/${u.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/usuarios/${u.id}`, { method: 'DELETE' })
+      const data = await res.json()
+
+      if (res.status === 409 && data.code === 'CLIENTES_VINCULADOS') {
+        // Abre modal de migração
+        setModalMigracao({
+          usuarioId: u.id,
+          usuarioNome: u.nome,
+          clientesCount: data.clientesCount,
+        })
+        setNovoAtendenteSelecionado('')
+        return
+      }
+
+      if (!res.ok) throw new Error(data.error || 'Erro ao excluir')
       setUsuarios((prev) => prev.filter((x) => x.id !== u.id))
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao excluir')
+    }
+  }
+
+  async function migrarClientesEDeletar() {
+    if (!modalMigracao || !novoAtendenteSelecionado) return
+
+    setMigrandoClientes(true)
+    try {
+      // 1. Migra os clientes
+      const migrRes = await fetch(`/api/usuarios/${modalMigracao.usuarioId}/migrar-clientes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ novoAtendente: novoAtendenteSelecionado }),
+      })
+      const migrData = await migrRes.json()
+      if (!migrRes.ok) throw new Error(migrData.error || 'Erro ao migrar clientes')
+
+      // 2. Deleta o usuário
+      const delRes = await fetch(`/api/usuarios/${modalMigracao.usuarioId}`, { method: 'DELETE' })
+      const delData = await delRes.json()
+      if (!delRes.ok) throw new Error(delData.error || 'Erro ao excluir usuário')
+
+      // 3. Atualiza a lista
+      setUsuarios((prev) => prev.filter((x) => x.id !== modalMigracao.usuarioId))
+      setModalMigracao(null)
+      alert(`✅ ${migrData.clientesMigrados} cliente(s) transferido(s) com sucesso!`)
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao processar migração')
+    } finally {
+      setMigrandoClientes(false)
     }
   }
 
@@ -309,6 +356,59 @@ export default function UsuariosPage() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal de Migração de Clientes */}
+      {modalMigracao && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <h2 className="text-lg font-bold mb-3" style={{ color: '#1F2937' }}>
+              Migrar Clientes
+            </h2>
+            <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
+              <strong>{modalMigracao.usuarioNome}</strong> tem <strong>{modalMigracao.clientesCount}</strong> cliente(s) vinculado(s).
+            </p>
+            <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
+              Para qual atendente deseja transferir esses clientes?
+            </p>
+
+            <select
+              value={novoAtendenteSelecionado}
+              onChange={(e) => setNovoAtendenteSelecionado(e.target.value)}
+              className="w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 mb-4"
+              style={{ borderColor: '#E9EEF2', '--tw-ring-color': ACCENT } as React.CSSProperties}
+            >
+              <option value="">-- Escolha um atendente --</option>
+              {usuarios
+                .filter((u) => u.is_attendant && u.ativo && u.id !== modalMigracao.usuarioId)
+                .map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.nome}
+                  </option>
+                ))}
+            </select>
+
+            <div className="flex gap-2">
+              <button
+                onClick={migrarClientesEDeletar}
+                disabled={!novoAtendenteSelecionado || migrandoClientes}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-60"
+                style={{ background: ACCENT }}
+              >
+                {migrandoClientes ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+                Confirmar
+              </button>
+              <button
+                onClick={() => setModalMigracao(null)}
+                disabled={migrandoClientes}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium border"
+                style={{ borderColor: '#E9EEF2', color: '#6B7280' }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

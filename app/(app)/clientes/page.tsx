@@ -75,14 +75,14 @@ export default function ClientesPage() {
     setCidade('')
   }
 
-  async function salvar() {
+  async function salvar(historico?: any[]) {
     if (!clienteEditando) return
     setSalvando(true)
     try {
       const res = await fetch(`/api/clientes/${clienteEditando.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, cpf_cnpj: cpf, empresa, endereco, cidade }),
+        body: JSON.stringify({ email, cpf_cnpj: cpf, empresa, endereco, cidade, historico }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)

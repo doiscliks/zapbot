@@ -1,3 +1,8 @@
+export interface ClienteHistoricoItem {
+  data: string
+  texto: string
+}
+
 export interface Cliente {
   id: number
   created_at: string
@@ -26,6 +31,7 @@ export interface Cliente {
   notas?: string | null
   data_nascimento?: string | null
   updated_at?: string | null
+  historico?: ClienteHistoricoItem[] | null
 }
 
 export interface MensagemWhatsapp {

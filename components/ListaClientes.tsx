@@ -63,6 +63,11 @@ export default function ListaClientes({ clientes, clienteSelecionadoId, onSeleci
                   <span className="text-xs text-gray-400 shrink-0">{formatarData(dataLista)}</span>
                 </div>
                 <p className="text-xs text-gray-500 truncate mt-0.5">{telefoneExibido}</p>
+                {cliente.assigned_user && (
+                  <p className="text-xs mt-1" style={{ color: '#12C6D6' }}>
+                    👤 {cliente.assigned_user.nome}
+                  </p>
+                )}
               </div>
             </button>
           </li>

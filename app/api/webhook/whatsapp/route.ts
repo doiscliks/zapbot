@@ -4,6 +4,7 @@ import { readConfig } from '@/lib/config-server'
 import { readTenantConfig } from '@/lib/tenant-config'
 import { handleFlowExecution, dispatchKanbanFlows } from '@/lib/flow-executor'
 import { buscarFotoPerfil } from '@/lib/uazapi'
+import { atribuirClienteAAtendente } from '@/lib/attendant-distribution'
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -402,7 +403,7 @@ export async function POST(request: NextRequest) {
   // 1. Upsert cliente
   const clienteQuery = supabase
     .from('clientes')
-    .select('id, ia_desabilitada, historico_sincronizado, dados_coletados, foto')
+    .select('id, ia_desabilitada, historico_sincronizado, dados_coletados, foto, assigned_user_id')
     .eq('telefone', telefone)
   if (userId) clienteQuery.eq('user_id', userId)
   const { data: clienteExistente } = await clienteQuery.maybeSingle()
@@ -422,6 +423,30 @@ export async function POST(request: NextRequest) {
       ...(userId ? { user_id: userId } : {}),
     }).select('id').single()
     clienteId = novoCliente?.id ?? null
+  }
+
+  // 1a. Distribuição automática para atendentes (apenas se é novo cliente e workspace tem atendentes)
+  if (clienteId && userId && !clienteExistente && !clienteExistente?.assigned_user_id) {
+    try {
+      // Resolve o workspace admin ID
+      const { data: usuarioAtual } = await supabase
+        .from('usuarios')
+        .select('parent_id')
+        .eq('id', userId)
+        .maybeSingle()
+
+      const workspaceAdminId = usuarioAtual?.parent_id ?? userId
+
+      await atribuirClienteAAtendente(
+        supabase,
+        clienteId,
+        workspaceAdminId,
+        pushName || telefone,
+        telefone
+      )
+    } catch (e) {
+      await log(supabase, '1a_distribuicao_erro', { error: String(e), clienteId })
+    }
   }
 
   // 1b. Busca a foto de perfil do WhatsApp se ainda não temos uma

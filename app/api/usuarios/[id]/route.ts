@@ -36,6 +36,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (body.telefone !== undefined) update.telefone = (body.telefone || '').trim() || null
   if (body.permissoes !== undefined) update.permissoes = normalizarPermissoes(body.permissoes)
   if (typeof body.ativo === 'boolean') update.ativo = body.ativo
+  if (typeof body.is_attendant === 'boolean') update.is_attendant = body.is_attendant
   if (body.senha) {
     if (String(body.senha).length < 6) {
       return NextResponse.json({ error: 'A senha deve ter ao menos 6 caracteres' }, { status: 400 })
@@ -50,7 +51,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .update(update)
     .eq('id', id)
     .eq('parent_id', ownerId)
-    .select('id, nome, email, telefone, permissoes, ativo, usado_em')
+    .select('id, nome, email, telefone, permissoes, ativo, is_attendant, usado_em')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

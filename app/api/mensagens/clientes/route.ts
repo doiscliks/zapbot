@@ -11,11 +11,30 @@ export async function GET(request: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const supabase = getSupabase()
 
-  const { data, error } = await supabase
+  // Verifica se o usuário é admin (parent_id nulo) ou atendente
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id, is_attendant')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!usuario) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const isAdmin = !usuario.parent_id // parent_id nulo = conta de topo (admin)
+  const isAtendente = usuario.is_attendant
+
+  let query = supabase
     .from('clientes')
-    .select('*')
+    .select('*, assigned_user:assigned_user_id(id, nome)')
     .eq('user_id', userId)
     .not('dt_ultima_mensagem', 'is', null)
+
+  // Se não é admin: atendentes veem apenas conversas atribuídas a eles
+  if (!isAdmin && isAtendente) {
+    query = query.eq('assigned_user_id', userId)
+  }
+
+  const { data, error } = await query
     .order('dt_ultima_mensagem', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

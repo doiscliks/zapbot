@@ -12,6 +12,8 @@ export interface Cliente {
   dt_ultima_mensagem?: string | null
   ia_desabilitada?: boolean | null
   dados_coletados?: Record<string, string> | null
+  user_id?: string | null
+  assigned_user_id?: string | null
 }
 
 export interface MensagemWhatsapp {
@@ -29,6 +31,7 @@ export interface MensagemWhatsapp {
 
 export interface ClienteComUltimaMensagem extends Cliente {
   ultima_mensagem?: MensagemWhatsapp | null
+  assigned_user?: { id: string; nome: string } | null
 }
 
 export interface KanbanSecao {
@@ -108,4 +111,5 @@ export interface Usuario {
   permissoes: string[] | null
   ativo: boolean
   usado_em: string | null
+  is_attendant?: boolean
 }

@@ -24,6 +24,32 @@ export async function POST(request: NextRequest) {
 
   const supabase = getSupabase()
 
+  // Verifica permissão: se atendente, só pode enviar para conversas atribuídas a ele
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id, is_attendant')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!usuario) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const isAdmin = !usuario.parent_id
+  const isAtendente = usuario.is_attendant
+
+  if (!isAdmin && isAtendente) {
+    const numeroSemSufixo = String(numero).split('@')[0]
+    const { data: cliente } = await supabase
+      .from('clientes')
+      .select('assigned_user_id')
+      .eq('telefone', numeroSemSufixo)
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (!cliente || cliente.assigned_user_id !== userId) {
+      return NextResponse.json({ error: 'Sem permissão para enviar mensagem nesta conversa' }, { status: 403 })
+    }
+  }
+
   // Busca token da instância: por instancia_id se passado, senão pega a conectada do usuário
   let uazapiToken: string | null = null
   if (instancia_id) {
@@ -63,14 +89,23 @@ export async function POST(request: NextRequest) {
 
   // Persiste a mensagem enviada com o user_id do workspace, para aparecer no
   // histórico (o webhook ignora o echo wasSentByApi, então a gravação é aqui).
+  const agora = new Date().toISOString()
+  const numeroSemSufixo = String(numero).split('@')[0]
   const { error: insertErr } = await supabase.from('mensagens_whatsapp').insert({
-    numero_cliente: String(numero).split('@')[0],
+    numero_cliente: numeroSemSufixo,
     mensagem,
     quem_mandou: 'manual',
     status: 'enviada',
-    data_criacao: new Date().toISOString(),
+    data_criacao: agora,
     user_id: userId,
   })
+
+  // Atualiza a última interação do cliente para a conversa subir na lista
+  await supabase
+    .from('clientes')
+    .update({ dt_ultima_mensagem: agora })
+    .eq('telefone', numeroSemSufixo)
+    .eq('user_id', userId)
 
   return NextResponse.json({ ok: true, data, salvo: !insertErr, erro_salvar: insertErr?.message })
 }

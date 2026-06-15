@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   const supabase = getSupabase()
   const { data, error } = await supabase
     .from('usuarios')
-    .select('id, nome, email, telefone, permissoes, ativo, usado_em')
+    .select('id, nome, email, telefone, permissoes, ativo, is_attendant, usado_em')
     .eq('parent_id', ownerId)
     .order('nome', { ascending: true })
 
@@ -69,9 +69,10 @@ export async function POST(request: NextRequest) {
       permissoes,
       parent_id: ownerId,
       ativo: true,
+      is_attendant: body.is_attendant ?? false,
       validade: owner?.validade ?? null,
     })
-    .select('id, nome, email, telefone, permissoes, ativo, usado_em')
+    .select('id, nome, email, telefone, permissoes, ativo, is_attendant, usado_em')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

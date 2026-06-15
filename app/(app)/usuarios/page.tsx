@@ -14,12 +14,13 @@ export default function UsuariosPage() {
 
   const [formAberto, setFormAberto] = useState(false)
   const [criando, setCriando] = useState(false)
-  const [form, setForm] = useState<{ nome: string; email: string; senha: string; telefone: string; permissoes: string[] }>({
-    nome: '', email: '', senha: '', telefone: '', permissoes: ['mensagens'],
+  const [form, setForm] = useState<{ nome: string; email: string; senha: string; telefone: string; permissoes: string[]; is_attendant: boolean }>({
+    nome: '', email: '', senha: '', telefone: '', permissoes: ['mensagens'], is_attendant: false,
   })
 
   const [editando, setEditando] = useState<string | null>(null)
   const [editPermissoes, setEditPermissoes] = useState<string[]>([])
+  const [editAtendente, setEditAtendente] = useState(false)
   const [salvandoEdit, setSalvandoEdit] = useState(false)
 
   useEffect(() => { carregar() }, [])
@@ -62,7 +63,7 @@ export default function UsuariosPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erro ao criar usuário')
       setUsuarios((prev) => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)))
-      setForm({ nome: '', email: '', senha: '', telefone: '', permissoes: ['mensagens'] })
+      setForm({ nome: '', email: '', senha: '', telefone: '', permissoes: ['mensagens'], is_attendant: false })
       setFormAberto(false)
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao criar usuário')
@@ -115,6 +116,7 @@ export default function UsuariosPage() {
   function abrirEdicao(u: Usuario) {
     setEditando(u.id)
     setEditPermissoes(u.permissoes ?? [])
+    setEditAtendente(u.is_attendant ?? false)
   }
 
   function toggleEditPerm(key: string) {
@@ -124,11 +126,11 @@ export default function UsuariosPage() {
   async function salvarEdicao(id: string) {
     setSalvandoEdit(true)
     try {
-      const atualizado = await patch(id, { permissoes: editPermissoes })
+      const atualizado = await patch(id, { permissoes: editPermissoes, is_attendant: editAtendente })
       setUsuarios((prev) => prev.map((x) => (x.id === id ? atualizado : x)))
       setEditando(null)
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Erro ao salvar permissões')
+      setErro(e instanceof Error ? e.message : 'Erro ao salvar configurações')
     } finally {
       setSalvandoEdit(false)
     }
@@ -172,6 +174,20 @@ export default function UsuariosPage() {
             <input className={inputCls} style={inputStyle} type="email" placeholder="Email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
             <input className={inputCls} style={inputStyle} type="password" placeholder="Senha (mín. 6)" value={form.senha} onChange={(e) => setForm((f) => ({ ...f, senha: e.target.value }))} />
             <input className={inputCls} style={inputStyle} placeholder="Telefone (opcional)" value={form.telefone} onChange={(e) => setForm((f) => ({ ...f, telefone: e.target.value }))} />
+          </div>
+
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg" style={{ background: 'rgba(18,198,214,0.05)' }}>
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, is_attendant: !f.is_attendant }))}
+              className="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+              style={form.is_attendant
+                ? { borderColor: ACCENT, background: ACCENT }
+                : { borderColor: '#E9EEF2' }}
+            >
+              {form.is_attendant && <Check size={14} className="text-white" />}
+            </button>
+            <span className="text-sm font-medium" style={{ color: '#1F2937' }}>É atendente (receberá conversas automaticamente)</span>
           </div>
 
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#9CA3AF' }}>Telas que este usuário pode acessar</p>
@@ -222,11 +238,16 @@ export default function UsuariosPage() {
             <div key={u.id} className="bg-white rounded-2xl border p-4" style={{ borderColor: '#E9EEF2' }}>
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-sm truncate" style={{ color: '#1F2937' }}>{u.nome}</p>
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={u.ativo ? { background: '#F0FDF4', color: '#16a34a' } : { background: '#F3F4F6', color: '#9CA3AF' }}>
                       {u.ativo ? 'Ativo' : 'Inativo'}
                     </span>
+                    {u.is_attendant && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(18,198,214,0.12)', color: ACCENT }}>
+                        Atendente
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 mt-0.5 text-xs" style={{ color: '#6B7280' }}>
                     <span className="flex items-center gap-1"><Mail size={11} /> {u.email}</span>
@@ -247,6 +268,19 @@ export default function UsuariosPage() {
               {/* Edição de permissões */}
               {editando === u.id && (
                 <div className="mt-3 pt-3 border-t" style={{ borderColor: '#F1F5F9' }}>
+                  <div className="flex items-center gap-2 mb-4 p-3 rounded-lg" style={{ background: 'rgba(18,198,214,0.05)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setEditAtendente((prev) => !prev)}
+                      className="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+                      style={editAtendente
+                        ? { borderColor: ACCENT, background: ACCENT }
+                        : { borderColor: '#E9EEF2' }}
+                    >
+                      {editAtendente && <Check size={14} className="text-white" />}
+                    </button>
+                    <span className="text-sm font-medium" style={{ color: '#1F2937' }}>É atendente (receberá conversas automaticamente)</span>
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
                     {SCREENS.map((s) => {
                       const ativo = editPermissoes.includes(s.key)

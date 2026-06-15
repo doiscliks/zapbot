@@ -91,14 +91,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { data, error } = await supabase
+  const { error: updateError } = await supabase
     .from('clientes')
     .update(campos)
     .eq('id', id)
     .eq('user_id', userId)
-    .select()
+
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
+
+  // Busca o cliente atualizado
+  const { data, error: fetchError } = await supabase
+    .from('clientes')
+    .select('*')
+    .eq('id', id)
     .maybeSingle()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
   return NextResponse.json(data)
 }

@@ -1,9 +1,9 @@
 export interface Cliente {
   id: number
   created_at: string
-  nome: string
-  telefone: string
-  cidade: string
+  nome?: string | null
+  telefone?: string | null
+  cidade?: string | null
   foto?: string | null
   kanban_secao_id?: number | null
   origem_app?: string | null
@@ -14,6 +14,18 @@ export interface Cliente {
   dados_coletados?: Record<string, string> | null
   user_id?: string | null
   assigned_user_id?: string | null
+  email?: string | null
+  endereco?: string | null
+  numero_endereco?: string | null
+  complemento?: string | null
+  bairro?: string | null
+  cep?: string | null
+  cpf_cnpj?: string | null
+  empresa?: string | null
+  cargo?: string | null
+  notas?: string | null
+  data_nascimento?: string | null
+  updated_at?: string | null
 }
 
 export interface MensagemWhatsapp {

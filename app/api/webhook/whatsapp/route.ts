@@ -426,7 +426,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 1a. Distribuição automática para atendentes (apenas se é novo cliente e workspace tem atendentes)
-  if (clienteId && userId && !clienteExistente && !clienteExistente?.assigned_user_id) {
+  if (clienteId && userId && !clienteExistente) {
     try {
       // Resolve o workspace admin ID
       const { data: usuarioAtual } = await supabase

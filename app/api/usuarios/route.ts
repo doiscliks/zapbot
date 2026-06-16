@@ -8,6 +8,10 @@ function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
 }
 
+function getSupabaseAdmin() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '')
+}
+
 function normalizarPermissoes(input: unknown): string[] {
   if (!Array.isArray(input)) return []
   return input.filter((k): k is string => typeof k === 'string' && SCREEN_KEYS.includes(k))
@@ -59,9 +63,22 @@ export async function POST(request: NextRequest) {
 
   const senha_hash = await hashPassword(senha)
 
+  // Cria usuário no Supabase Auth também
+  const supabaseAdmin = getSupabaseAdmin()
+  const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password: senha,
+    email_confirm: true,
+  })
+
+  if (authError) {
+    return NextResponse.json({ error: `Erro ao criar conta de autenticação: ${authError.message}` }, { status: 500 })
+  }
+
   const { data, error } = await supabase
     .from('usuarios')
     .insert({
+      id: authUser?.user?.id,
       nome,
       email,
       senha_hash,

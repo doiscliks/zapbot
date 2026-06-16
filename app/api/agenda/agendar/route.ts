@@ -116,6 +116,8 @@ export async function POST(request: NextRequest) {
 
   if (!config) return NextResponse.json({ error: 'Agenda não encontrada' }, { status: 404 })
 
+  console.log('[AGENDAR] Config encontrada:', { slug, user_id: config.user_id, titulo: config.titulo })
+
   // Verifica se o slot ainda está disponível
   const [sh, sm] = hora.split(':').map(Number)
   const dataHoraInicio = new Date(`${data}T${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}:00-03:00`)

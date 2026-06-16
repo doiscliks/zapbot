@@ -173,13 +173,13 @@ export async function gerarLinkMeetComCalendar(
     }
 
     const event = await response.json()
-    eventId = event.id
+    eventId = event.id || 'fallback-created'
 
     console.log('[MEET] Evento criado com fallback link')
 
     return {
       link: meetLink,
-      eventId,
+      eventId: eventId || 'fallback-created',
     }
   } catch (error) {
     console.error('[MEET] Erro geral:', error)

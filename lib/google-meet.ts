@@ -1,3 +1,11 @@
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
 export async function gerarLinkMeet(
   titulo: string,
   dataHoraInicio: Date,
@@ -8,11 +16,9 @@ export async function gerarLinkMeet(
   assuntoCliente?: string
 ): Promise<string | null> {
   try {
-    // Gera um ID único para a reunião do Google Meet
-    // Google Meet aceita apenas letras minúsculas e números (sem hífens)
-    const timestamp = Date.now().toString().slice(-8) // últimos 8 dígitos
-    const random = Math.random().toString(36).substring(2, 10) // caracteres aleatórios
-    const meetId = `zapbot${timestamp}${random}`
+    // Gera um UUID v4 para a reunião
+    // Google Meet aceita UUIDs padrão
+    const meetId = generateUUID()
 
     // Constrói o link do Google Meet
     const meetLink = `https://meet.google.com/${meetId}`

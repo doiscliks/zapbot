@@ -179,12 +179,13 @@ export async function POST(request: NextRequest) {
   }
 
   const debugInfo = {
-    versao: 'v6-rebuild-forcado',
+    versao: 'v7-felipe-test',
     google_meet: googleErro,
     email: emailDebug,
     whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,
     whatsapp: whatsappDebug,
     timestamp: new Date().toISOString(),
+    felipe: 'codigo-novo-rodando',
   }
 
   console.log('[RESPONSE] Debug info:', JSON.stringify(debugInfo))

@@ -182,11 +182,12 @@ export async function POST(request: NextRequest) {
     agendamento: { id: agendamento.id, data_hora: agendamento.data_hora },
     meet_link: meetLink,
     _debug: {
-      versao: 'v4-force-rebuild',
+      versao: 'v5-novo-rebuild',
       google_meet: googleErro,
       email: emailDebug,
       whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,
       whatsapp: whatsappDebug,
+      timestamp: new Date().toISOString(),
     },
   })
 }

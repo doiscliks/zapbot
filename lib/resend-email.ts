@@ -12,10 +12,14 @@ export async function enviarEmailConfirmacaoAgendamento(
   meetLink?: string
 ): Promise<boolean> {
   try {
+    console.log('[EMAIL] Iniciando envio para:', emailCliente)
+
     if (!emailCliente) {
-      console.log('Email do cliente não fornecido, pulando envio de email')
+      console.log('[EMAIL] Email do cliente não fornecido')
       return false
     }
+
+    console.log('[EMAIL] API Key presente?', !!process.env.RESEND_API_KEY)
 
     const dataFormatada = dataHoraInicio.toLocaleDateString('pt-BR', {
       weekday: 'long',
@@ -99,6 +103,8 @@ export async function enviarEmailConfirmacaoAgendamento(
     </div>
     `
 
+    console.log('[EMAIL] Enviando para:', emailCliente)
+
     const result = await resend.emails.send({
       from: 'onboarding@resend.dev',
       to: emailCliente,
@@ -106,11 +112,14 @@ export async function enviarEmailConfirmacaoAgendamento(
       html: htmlContent,
     })
 
+    console.log('[EMAIL] Resposta do Resend:', result)
+
     if (result.error) {
-      console.error('Erro ao enviar email:', result.error)
+      console.error('[EMAIL] Erro:', result.error)
       return false
     }
 
+    console.log('[EMAIL] Enviado com sucesso! ID:', result.data?.id)
     return !!result.data?.id
   } catch (error) {
     console.error('Erro ao enviar email:', error)

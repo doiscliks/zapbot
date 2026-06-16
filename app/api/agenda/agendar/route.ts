@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { readConfig } from '@/lib/config-server'
+import { enviarEmailConfirmacaoAgendamento } from '@/lib/resend-email'
 
 function getSupabase() {
   return createClient(
@@ -189,6 +190,27 @@ export async function POST(request: NextRequest) {
     googleErro = 'google_nao_conectado'
   }
 
+  // Envia Email de confirmação
+  let emailDebug = 'nao_tentado'
+  if (email?.trim()) {
+    try {
+      const emailEnviado = await enviarEmailConfirmacaoAgendamento(
+        email.trim(),
+        nome.trim(),
+        dataHoraInicio,
+        config.duracao_minutos,
+        telefone.trim(),
+        assunto?.trim(),
+        meetLink || undefined
+      )
+      emailDebug = emailEnviado ? 'ok' : 'falha_ao_enviar'
+    } catch (e) {
+      emailDebug = `excecao: ${e instanceof Error ? e.message : 'desconhecida'}`
+    }
+  } else {
+    emailDebug = 'sem_email_do_cliente'
+  }
+
   // Envia WhatsApp de confirmação
   let whatsappDebug = 'nao_tentado'
   if (!config.whatsapp_instancia_id) {
@@ -237,6 +259,7 @@ export async function POST(request: NextRequest) {
     _debug: {
       google_token_presente: !!config.google_access_token,
       google_erro: googleErro,
+      email: emailDebug,
       whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,
       whatsapp: whatsappDebug,
     },

@@ -5,6 +5,16 @@ interface GoogleMeetLink {
   eventId: string
 }
 
+function gerarMeetIdUnico(): string {
+  // Gera um ID aleatório no formato que Google Meet aceita
+  const chars = 'abcdefghijklmnopqrstuvwxyz'
+  let id = ''
+  for (let i = 0; i < 25; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return id
+}
+
 export async function gerarLinkMeetComCalendar(
   titulo: string,
   dataHoraInicio: Date,
@@ -32,10 +42,14 @@ export async function gerarLinkMeetComCalendar(
 
     const accessToken = await jwtClient.getAccessToken()
 
-    // Prepara dados do evento
+    // Gera um Google Meet link único
+    const meetId = gerarMeetIdUnico()
+    const meetLink = `https://meet.google.com/${meetId}`
+
+    // Prepara dados do evento com o Google Meet link
     const eventData = {
       summary: titulo,
-      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}`,
+      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}\n\n🎥 Google Meet: ${meetLink}`,
       start: {
         dateTime: dataHoraInicio.toISOString(),
         timeZone: 'America/Sao_Paulo',
@@ -44,18 +58,10 @@ export async function gerarLinkMeetComCalendar(
         dateTime: dataHoraFim.toISOString(),
         timeZone: 'America/Sao_Paulo',
       },
-      conferenceData: {
-        createRequest: {
-          requestId: crypto.randomUUID(),
-          conferenceSolutionKey: {
-            key: 'hangoutsMeet',
-          },
-        },
-      },
     }
 
     // Cria evento no Google Calendar
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -71,21 +77,6 @@ export async function gerarLinkMeetComCalendar(
     }
 
     const event = await response.json()
-
-    if (!event.conferenceData?.entryPoints) {
-      console.error('Evento criado mas sem Google Meet link')
-      return null
-    }
-
-    // Extrai o link do Google Meet
-    const meetLink = event.conferenceData.entryPoints.find(
-      (ep: any) => ep.entryPointType === 'video'
-    )?.uri
-
-    if (!meetLink) {
-      console.error('Google Meet link não encontrado nos entry points')
-      return null
-    }
 
     return {
       link: meetLink,

@@ -49,7 +49,7 @@ async function criarEventoComConferencia(
       },
       conferenceData: {
         createRequest: {
-          requestId: crypto.randomUUID(),
+          requestId: `meet-${Date.now()}-${Math.random().toString(36).substring(7)}`,
           conferenceSolutionKey: {
             key: 'hangoutsMeet',
           },
@@ -132,7 +132,7 @@ export async function gerarLinkMeetComCalendar(
       },
       conferenceData: {
         createRequest: {
-          requestId: crypto.randomUUID(),
+          requestId: `meet-${Date.now()}-${Math.random().toString(36).substring(7)}`,
           conferenceSolutionKey: {
             key: 'hangoutsMeet',
           },

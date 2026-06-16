@@ -100,7 +100,7 @@ export async function enviarEmailConfirmacaoAgendamento(
     `
 
     const result = await resend.emails.send({
-      from: 'projetodoisclicks@gmail.com',
+      from: 'onboarding@resend.dev',
       to: emailCliente,
       subject: `Agendamento Confirmado - ${dataFormatada}`,
       html: htmlContent,

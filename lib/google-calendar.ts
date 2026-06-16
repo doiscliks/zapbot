@@ -101,6 +101,7 @@ export async function gerarLinkMeetComCalendar(
     }
 
     let accessToken = config.google_access_token
+    console.log('[MEET] Token original:', accessToken.slice(0, 20) + '...')
 
     // Se tem refresh token, tenta renovar
     if (config.google_refresh_token) {
@@ -108,8 +109,12 @@ export async function gerarLinkMeetComCalendar(
       const novoToken = await renovarTokenGoogle(userId, config.google_refresh_token)
       if (novoToken) {
         accessToken = novoToken
-        console.log('[MEET] Token renovado com sucesso')
+        console.log('[MEET] Token renovado com sucesso:', novoToken.slice(0, 20) + '...')
+      } else {
+        console.log('[MEET] Falha ao renovar, usando token original')
       }
+    } else {
+      console.log('[MEET] Sem refresh token, usando access token atual')
     }
 
     // Cria evento no calendário COM Google Meet

@@ -158,12 +158,7 @@ export async function gerarLinkMeetComCalendar(
 
     const patchData = {
       conferenceData: {
-        createRequest: {
-          requestId: `req-${userId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          conferenceSolutionKey: {
-            key: 'hangoutsMeet',
-          },
-        },
+        generateConferenceRequest: {},
       },
     }
 

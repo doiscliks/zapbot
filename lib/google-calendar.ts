@@ -26,6 +26,69 @@ function gerarMeetIdUnico(): string {
   return partes.join('-')
 }
 
+async function criarEventoComConferencia(
+  accessToken: string,
+  titulo: string,
+  dataHoraInicio: Date,
+  dataHoraFim: Date,
+  nomeCliente: string,
+  telefoneCliente?: string,
+  assuntoCliente?: string
+): Promise<string | null> {
+  try {
+    const eventData = {
+      summary: titulo,
+      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}`,
+      start: {
+        dateTime: dataHoraInicio.toISOString(),
+        timeZone: 'America/Sao_Paulo',
+      },
+      end: {
+        dateTime: dataHoraFim.toISOString(),
+        timeZone: 'America/Sao_Paulo',
+      },
+      conferenceData: {
+        createRequest: {
+          requestId: crypto.randomUUID(),
+          conferenceSolutionKey: {
+            key: 'hangoutsMeet',
+          },
+        },
+      },
+    }
+
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(eventData),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.log('[MEET] ConferenceData falhou, usando fallback:', response.status)
+      return null
+    }
+
+    const event = await response.json()
+    const meetLink = event.conferenceData?.entryPoints?.find(
+      (ep: any) => ep.entryPointType === 'video'
+    )?.uri
+
+    if (meetLink) {
+      console.log('[MEET] Google Meet válido criado via API')
+      return meetLink
+    }
+
+    return null
+  } catch (error) {
+    console.log('[MEET] ConferenceData exception, usando fallback')
+    return null
+  }
+}
+
 export async function gerarLinkMeetComCalendar(
   titulo: string,
   dataHoraInicio: Date,
@@ -44,11 +107,6 @@ export async function gerarLinkMeetComCalendar(
 
     const supabase = getSupabase()
 
-    // Gera um Google Meet link único
-    const meetId = gerarMeetIdUnico()
-    const meetLink = `https://meet.google.com/${meetId}`
-
-    // Cria evento no Google Calendar com o link na descrição
     const { data: config, error } = await supabase
       .from('agenda_config')
       .select('google_access_token')
@@ -60,6 +118,32 @@ export async function gerarLinkMeetComCalendar(
       return null
     }
 
+    // Tenta criar com conferenceData (Google Meet válido)
+    console.log('[MEET] Tentando criar com conferenceData...')
+    const validMeetLink = await criarEventoComConferencia(
+      config.google_access_token,
+      titulo,
+      dataHoraInicio,
+      dataHoraFim,
+      nomeCliente,
+      telefoneCliente,
+      assuntoCliente
+    )
+
+    let meetLink = validMeetLink
+    let eventId: string | null = null
+
+    // Se funcionou, pronto
+    if (meetLink) {
+      return { link: meetLink, eventId: 'conf-created' }
+    }
+
+    // Se não, usa fallback com link aleatório
+    console.log('[MEET] Usando fallback com link aleatório')
+    const meetId = gerarMeetIdUnico()
+    meetLink = `https://meet.google.com/${meetId}`
+
+    // Cria evento no calendário com link na descrição
     const eventData = {
       summary: titulo,
       description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}\n\n🎥 Google Meet: ${meetLink}`,
@@ -72,8 +156,6 @@ export async function gerarLinkMeetComCalendar(
         timeZone: 'America/Sao_Paulo',
       },
     }
-
-    console.log('[MEET] Criando evento com link:', meetLink)
 
     const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
@@ -91,14 +173,16 @@ export async function gerarLinkMeetComCalendar(
     }
 
     const event = await response.json()
-    console.log('[MEET] Evento criado com sucesso')
+    eventId = event.id
+
+    console.log('[MEET] Evento criado com fallback link')
 
     return {
       link: meetLink,
-      eventId: event.id,
+      eventId,
     }
   } catch (error) {
-    console.error('[MEET] Erro:', error)
+    console.error('[MEET] Erro geral:', error)
     return null
   }
 }

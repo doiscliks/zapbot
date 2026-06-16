@@ -1,14 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { readConfig } from '@/lib/config-server'
-import { gerarLinkMeetComCalendar } from '@/lib/google-calendar'
-import { enviarEmailConfirmacaoAgendamento } from '@/lib/resend-email'
 
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
   )
+}
+
+async function getAccessToken(config: { google_access_token: string; google_refresh_token: string | null; user_id: string }) {
+  if (!config.google_access_token) return null
+
+  // Testa se o token atual é válido
+  const test = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + config.google_access_token)
+  if (test.ok) return config.google_access_token
+
+  // Token expirado — usa refresh token
+  if (!config.google_refresh_token) return null
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID!,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+      refresh_token: config.google_refresh_token,
+      grant_type: 'refresh_token',
+    }),
+  })
+
+  const data = await res.json()
+  if (!data.access_token) return null
+
+  // Salva novo access token
+  const supabase = getSupabase()
+  await supabase
+    .from('agenda_config')
+    .update({ google_access_token: data.access_token })
+    .eq('user_id', config.user_id)
+
+  return data.access_token as string
+}
+
+async function criarEventoCalendar(accessToken: string, calendarId: string, evento: {
+  titulo: string; nome: string; email: string | null; telefone: string; assunto: string | null;
+  dataHoraInicio: string; dataHoraFim: string
+}) {
+  const body = {
+    summary: `${evento.titulo} — ${evento.nome}`,
+    description: [
+      evento.assunto ? `Assunto: ${evento.assunto}` : null,
+      `Telefone: ${evento.telefone}`,
+      evento.email ? `E-mail: ${evento.email}` : null,
+    ].filter(Boolean).join('\n'),
+    start: { dateTime: evento.dataHoraInicio, timeZone: 'America/Sao_Paulo' },
+    end:   { dateTime: evento.dataHoraFim,   timeZone: 'America/Sao_Paulo' },
+    attendees: [
+      { email: 'projetodoisclicks@gmail.com', responseStatus: 'accepted' },
+      ...(evento.email ? [{ email: evento.email }] : []),
+    ],
+    conferenceData: {
+      createRequest: {
+        requestId: `zapbot-${Date.now()}`,
+        conferenceSolutionKey: { type: 'hangoutsMeet' },
+      },
+    },
+  }
+
+  const res = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=all`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }
+  )
+
+  return res.json()
 }
 
 async function enviarWhatsApp(uazapiBase: string, instanceToken: string, telefone: string, texto: string): Promise<string> {
@@ -28,7 +97,6 @@ async function enviarWhatsApp(uazapiBase: string, instanceToken: string, telefon
 }
 
 export async function POST(request: NextRequest) {
-  console.log('\n\n========== NOVO CODIGO DO ENDPOINT ==========\n\n')
   const { slug, nome, telefone, email, assunto, data, hora } = await request.json()
 
   if (!slug || !nome || !telefone || !data || !hora) {
@@ -65,7 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Horário não disponível' }, { status: 409 })
   }
 
-  // Cria agendamento
+  // Cria agendamento no banco
   const { data: agendamento, error: errAg } = await supabase
     .from('agendamentos')
     .insert({
@@ -84,60 +152,44 @@ export async function POST(request: NextRequest) {
   if (errAg) return NextResponse.json({ error: errAg.message }, { status: 500 })
 
   let meetLink: string | null = null
+  let googleEventId: string | null = null
   let googleErro: string | null = null
 
-  // Gera Google Meet link
-  try {
-    const meetResult = await gerarLinkMeetComCalendar(
-      config.titulo,
-      dataHoraInicio,
-      dataHoraFim,
-      nome.trim(),
-      email?.trim() || undefined,
-      telefone.trim(),
-      assunto?.trim() || undefined,
-      config.user_id
-    )
-
-    if (meetResult) {
-      meetLink = meetResult.link
-      await supabase
-        .from('agendamentos')
-        .update({ meet_link: meetLink })
-        .eq('id', agendamento.id)
-      googleErro = 'ok'
-    } else {
-      googleErro = 'falha_ao_gerar_link'
-    }
-  } catch (e) {
-    googleErro = e instanceof Error ? e.message : 'erro_desconhecido'
-  }
-
-  // Envia Email
-  let emailDebug = 'nao_tentado'
-  if (email?.trim()) {
+  // Cria evento no Google Calendar
+  if (config.google_access_token) {
     try {
-      console.log('[EMAIL-ENDPOINT] Tentando enviar email para:', email.trim())
-      const emailEnviado = await enviarEmailConfirmacaoAgendamento(
-        email.trim(),
-        nome.trim(),
-        dataHoraInicio,
-        config.duracao_minutos,
-        telefone.trim(),
-        assunto?.trim(),
-        meetLink || undefined
-      )
-      emailDebug = emailEnviado ? 'enviado_ok' : 'falha_ao_enviar'
-      console.log('[EMAIL-ENDPOINT] Resultado:', emailDebug)
+      const accessToken = await getAccessToken(config)
+      if (accessToken) {
+        const evento = await criarEventoCalendar(accessToken, config.google_calendar_id, {
+          titulo: config.titulo,
+          nome: nome.trim(),
+          email: email?.trim() || null,
+          telefone: telefone.trim(),
+          assunto: assunto?.trim() || null,
+          dataHoraInicio: dataHoraInicio.toISOString(),
+          dataHoraFim: dataHoraFim.toISOString(),
+        })
+        if (evento.error) {
+          googleErro = `${evento.error.code}: ${evento.error.message}`
+        } else {
+          meetLink = evento.conferenceData?.entryPoints?.find((e: { entryPointType: string; uri: string }) => e.entryPointType === 'video')?.uri ?? null
+          googleEventId = evento.id ?? null
+          await supabase
+            .from('agendamentos')
+            .update({ google_event_id: googleEventId, meet_link: meetLink })
+            .eq('id', agendamento.id)
+        }
+      } else {
+        googleErro = 'token_invalido_ou_expirado'
+      }
     } catch (e) {
-      emailDebug = `excecao: ${e instanceof Error ? e.message : 'desconhecida'}`
-      console.error('[EMAIL-ENDPOINT] Erro:', e)
+      googleErro = e instanceof Error ? e.message : 'erro_desconhecido'
     }
   } else {
-    emailDebug = 'sem_email_do_cliente'
+    googleErro = 'google_nao_conectado'
   }
 
-  // Envia WhatsApp
+  // Envia WhatsApp de confirmação
   let whatsappDebug = 'nao_tentado'
   if (!config.whatsapp_instancia_id) {
     whatsappDebug = 'sem_instancia_na_config_da_agenda'
@@ -178,22 +230,15 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const debugInfo = {
-    versao: 'v7-felipe-test',
-    google_meet: googleErro,
-    email: emailDebug,
-    whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,
-    whatsapp: whatsappDebug,
-    timestamp: new Date().toISOString(),
-    felipe: 'codigo-novo-rodando',
-  }
-
-  console.log('[RESPONSE] Debug info:', JSON.stringify(debugInfo))
-
   return NextResponse.json({
     ok: true,
     agendamento: { id: agendamento.id, data_hora: agendamento.data_hora },
     meet_link: meetLink,
-    debug: debugInfo,
+    _debug: {
+      google_token_presente: !!config.google_access_token,
+      google_erro: googleErro,
+      whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,
+      whatsapp: whatsappDebug,
+    },
   })
 }

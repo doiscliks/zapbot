@@ -117,7 +117,7 @@ export async function gerarLinkMeetComCalendar(
       console.log('[MEET] Sem refresh token, usando access token atual')
     }
 
-    // Cria evento no calendário SEM Meet primeiro
+    // Cria evento COM Meet em uma única requisição
     const eventData = {
       summary: titulo,
       description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}`,
@@ -129,11 +129,18 @@ export async function gerarLinkMeetComCalendar(
         dateTime: dataHoraFim.toISOString(),
         timeZone: 'America/Sao_Paulo',
       },
+      conferenceData: {
+        generateConferenceRequest: {
+          conferenceSolutionKey: {
+            key: 'hangoutsMeet',
+          },
+        },
+      },
     }
 
-    console.log('[MEET] Criando evento no calendário...')
+    console.log('[MEET] Criando evento no calendário com Meet...')
 
-    const createResponse = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    const createResponse = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -152,56 +159,20 @@ export async function gerarLinkMeetComCalendar(
 
     const event = await createResponse.json()
     console.log('[MEET] Evento criado:', event.id)
+    console.log('[MEET] Conference data:', JSON.stringify(event.conferenceData, null, 2))
 
-    // Agora adiciona Meet via PATCH
-    console.log('[MEET] Adicionando Google Meet ao evento...')
-
-    const patchData = {
-      conferenceData: {
-        generateConferenceRequest: {
-          conferenceSolutionKey: {
-            key: 'hangoutsMeet',
-          },
-        },
-      },
-    }
-
-    const patchResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}?conferenceDataVersion=1`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(patchData),
-      }
-    )
-
-    console.log('[MEET] Patch response status:', patchResponse.status)
-
-    if (!patchResponse.ok) {
-      const errorText = await patchResponse.text()
-      console.error('[MEET] Erro ao adicionar Meet:', patchResponse.status, errorText)
-      return null
-    }
-
-    const eventWithMeet = await patchResponse.json()
-    console.log('[MEET] Conference data:', JSON.stringify(eventWithMeet.conferenceData, null, 2))
-    console.log('[MEET] Full PATCH response:', JSON.stringify(eventWithMeet, null, 2).slice(0, 1000))
-
-    const meetLink = eventWithMeet.conferenceData?.entryPoints?.[0]?.uri || null
+    const meetLink = event.conferenceData?.entryPoints?.[0]?.uri || null
     console.log('[MEET] Link gerado pelo Google:', meetLink)
 
     if (!meetLink) {
       console.error('[MEET] Google não gerou o link de Meet')
-      console.error('[MEET] Conference data completo:', JSON.stringify(eventWithMeet.conferenceData))
+      console.error('[MEET] Full event:', JSON.stringify(event, null, 2).slice(0, 500))
       return null
     }
 
     return {
       link: meetLink,
-      eventId: eventWithMeet.id,
+      eventId: event.id,
     }
   } catch (error) {
     console.error('[MEET] Erro catch:', error)

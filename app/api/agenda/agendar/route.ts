@@ -177,17 +177,21 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const debugInfo = {
+    versao: 'v6-rebuild-forcado',
+    google_meet: googleErro,
+    email: emailDebug,
+    whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,
+    whatsapp: whatsappDebug,
+    timestamp: new Date().toISOString(),
+  }
+
+  console.log('[RESPONSE] Debug info:', JSON.stringify(debugInfo))
+
   return NextResponse.json({
     ok: true,
     agendamento: { id: agendamento.id, data_hora: agendamento.data_hora },
     meet_link: meetLink,
-    _debug: {
-      versao: 'v5-novo-rebuild',
-      google_meet: googleErro,
-      email: emailDebug,
-      whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,
-      whatsapp: whatsappDebug,
-      timestamp: new Date().toISOString(),
-    },
+    debug: debugInfo,
   })
 }

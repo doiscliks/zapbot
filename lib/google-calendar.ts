@@ -23,6 +23,59 @@ function gerarMeetIdUnico(): string {
   ).join('-')
 }
 
+async function renovarTokenGoogle(userId: string, refreshToken: string): Promise<string | null> {
+  try {
+    console.log('[MEET] Renovando token...')
+
+    const clientId = process.env.GOOGLE_CLIENT_ID
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+    if (!clientId || !clientSecret) {
+      console.error('[MEET] Credenciais Google não configuradas')
+      return null
+    }
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }),
+    })
+
+    if (!response.ok) {
+      console.error('[MEET] Erro ao renovar:', response.status)
+      return null
+    }
+
+    const tokens = await response.json()
+
+    if (!tokens.access_token) {
+      console.error('[MEET] Novo token não recebido')
+      return null
+    }
+
+    // Atualiza no banco
+    const supabase = getSupabase()
+    await supabase
+      .from('agenda_config')
+      .update({
+        google_access_token: tokens.access_token,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+
+    console.log('[MEET] Token renovado com sucesso')
+    return tokens.access_token
+  } catch (error) {
+    console.error('[MEET] Erro ao renovar token:', error)
+    return null
+  }
+}
+
 export async function gerarLinkMeetComCalendar(
   titulo: string,
   dataHoraInicio: Date,
@@ -46,15 +99,27 @@ export async function gerarLinkMeetComCalendar(
 
     const { data: config, error } = await supabase
       .from('agenda_config')
-      .select('google_access_token')
+      .select('google_access_token, google_refresh_token')
       .eq('user_id', userId)
       .single()
 
-    console.log('[MEET] Config:', { temToken: !!config?.google_access_token, erro: error })
+    console.log('[MEET] Config:', { temToken: !!config?.google_access_token, temRefresh: !!config?.google_refresh_token, erro: error })
 
     if (error || !config?.google_access_token) {
       console.error('[MEET] Token não configurado:', error)
       return null
+    }
+
+    let accessToken = config.google_access_token
+
+    // Se tem refresh token, tenta renovar
+    if (config.google_refresh_token) {
+      console.log('[MEET] Tentando renovar token...')
+      const novoToken = await renovarTokenGoogle(userId, config.google_refresh_token)
+      if (novoToken) {
+        accessToken = novoToken
+        console.log('[MEET] Token renovado com sucesso')
+      }
     }
 
     // Gera link único
@@ -82,7 +147,7 @@ export async function gerarLinkMeetComCalendar(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.google_access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(eventData),
     })

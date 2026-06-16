@@ -12,54 +12,18 @@ function getSupabase() {
   )
 }
 
-async function renovarTokenGoogle(userId: string, refreshToken: string): Promise<string | null> {
-  try {
-    const clientId = process.env.GOOGLE_CLIENT_ID
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-
-    if (!clientId || !clientSecret) {
-      console.error('[GOOGLE] Credenciais não configuradas')
-      return null
+function gerarMeetIdUnico(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz'
+  const grupos = [3, 4, 3]
+  const partes: string[] = []
+  for (const tamanho of grupos) {
+    let grupo = ''
+    for (let i = 0; i < tamanho; i++) {
+      grupo += chars.charAt(Math.floor(Math.random() * chars.length))
     }
-
-    const response = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token',
-      }),
-    })
-
-    if (!response.ok) {
-      console.error('[GOOGLE] Erro ao renovar token:', response.status)
-      return null
-    }
-
-    const tokens = await response.json()
-
-    if (!tokens.access_token) {
-      console.error('[GOOGLE] Novo access token não recebido')
-      return null
-    }
-
-    const supabase = getSupabase()
-    await supabase
-      .from('agenda_config')
-      .update({
-        google_access_token: tokens.access_token,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userId)
-
-    console.log('[GOOGLE] Token renovado com sucesso')
-    return tokens.access_token
-  } catch (error) {
-    console.error('[GOOGLE] Erro ao renovar token:', error)
-    return null
+    partes.push(grupo)
   }
+  return partes.join('-')
 }
 
 export async function gerarLinkMeetComCalendar(
@@ -74,37 +38,31 @@ export async function gerarLinkMeetComCalendar(
 ): Promise<GoogleMeetLink | null> {
   try {
     if (!userId) {
-      console.error('[GOOGLE] userId não fornecido')
+      console.error('[MEET] userId não fornecido')
       return null
     }
 
     const supabase = getSupabase()
 
+    // Gera um Google Meet link único
+    const meetId = gerarMeetIdUnico()
+    const meetLink = `https://meet.google.com/${meetId}`
+
+    // Cria evento no Google Calendar com o link na descrição
     const { data: config, error } = await supabase
       .from('agenda_config')
-      .select('google_access_token, google_refresh_token')
+      .select('google_access_token')
       .eq('user_id', userId)
       .single()
 
     if (error || !config?.google_access_token) {
-      console.error('[GOOGLE] Token não configurado:', error)
+      console.error('[MEET] Token não configurado')
       return null
     }
 
-    let accessToken = config.google_access_token
-
-    if (config.google_refresh_token) {
-      console.log('[GOOGLE] Tentando renovar token...')
-      const novoToken = await renovarTokenGoogle(userId, config.google_refresh_token)
-      if (novoToken) {
-        accessToken = novoToken
-      }
-    }
-
-    // Cria evento com Google Meet via conferenceData
     const eventData = {
       summary: titulo,
-      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}`,
+      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}\n\n🎥 Google Meet: ${meetLink}`,
       start: {
         dateTime: dataHoraInicio.toISOString(),
         timeZone: 'America/Sao_Paulo',
@@ -113,52 +71,34 @@ export async function gerarLinkMeetComCalendar(
         dateTime: dataHoraFim.toISOString(),
         timeZone: 'America/Sao_Paulo',
       },
-      conferenceData: {
-        createRequest: {
-          requestId: crypto.randomUUID(),
-          conferenceSolutionKey: {
-            key: 'hangoutsMeet',
-          },
-        },
-      },
     }
 
-    console.log('[GOOGLE] Criando evento com Google Meet...')
+    console.log('[MEET] Criando evento com link:', meetLink)
 
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${config.google_access_token}`,
       },
       body: JSON.stringify(eventData),
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[GOOGLE] Erro ao criar evento:', response.status, errorText)
+      console.error('[MEET] Erro ao criar evento:', response.status, errorText)
       return null
     }
 
     const event = await response.json()
-
-    const meetLink = event.conferenceData?.entryPoints?.find(
-      (ep: any) => ep.entryPointType === 'video'
-    )?.uri
-
-    if (!meetLink) {
-      console.error('[GOOGLE] Google Meet link não encontrado')
-      return null
-    }
-
-    console.log('[GOOGLE] Google Meet criado com sucesso:', meetLink)
+    console.log('[MEET] Evento criado com sucesso')
 
     return {
       link: meetLink,
       eventId: event.id,
     }
   } catch (error) {
-    console.error('[GOOGLE] Erro geral:', error)
+    console.error('[MEET] Erro:', error)
     return null
   }
 }

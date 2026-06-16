@@ -12,16 +12,6 @@ function getSupabase() {
   )
 }
 
-function gerarMeetIdUnico(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz'
-  const grupos = [3, 4, 3]
-  return grupos.map(tamanho =>
-    Array(tamanho)
-      .fill(null)
-      .map(() => chars.charAt(Math.floor(Math.random() * chars.length)))
-      .join('')
-  ).join('-')
-}
 
 async function renovarTokenGoogle(userId: string, refreshToken: string): Promise<string | null> {
   try {
@@ -122,15 +112,10 @@ export async function gerarLinkMeetComCalendar(
       }
     }
 
-    // Gera link único
-    const meetId = gerarMeetIdUnico()
-    const meetLink = `https://meet.google.com/${meetId}`
-    console.log('[MEET] Link gerado:', meetLink)
-
-    // Cria evento no calendário
+    // Cria evento no calendário COM Google Meet
     const eventData = {
       summary: titulo,
-      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}\n\n🎥 Google Meet: ${meetLink}`,
+      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}`,
       start: {
         dateTime: dataHoraInicio.toISOString(),
         timeZone: 'America/Sao_Paulo',
@@ -139,11 +124,19 @@ export async function gerarLinkMeetComCalendar(
         dateTime: dataHoraFim.toISOString(),
         timeZone: 'America/Sao_Paulo',
       },
+      conferenceData: {
+        createRequest: {
+          requestId: `meet-${Date.now()}`,
+          conferenceSolutionKey: {
+            key: 'hangoutsMeet',
+          },
+        },
+      },
     }
 
     console.log('[MEET] Criando evento no calendário...')
 
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -162,6 +155,14 @@ export async function gerarLinkMeetComCalendar(
 
     const event = await response.json()
     console.log('[MEET] Evento criado:', event.id)
+
+    const meetLink = event.conferenceData?.entryPoints?.[0]?.uri || null
+    console.log('[MEET] Link gerado pelo Google:', meetLink)
+
+    if (!meetLink) {
+      console.error('[MEET] Google não gerou o link de Meet')
+      return null
+    }
 
     return {
       link: meetLink,

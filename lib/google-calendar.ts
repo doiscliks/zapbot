@@ -188,12 +188,14 @@ export async function gerarLinkMeetComCalendar(
 
     const eventWithMeet = await patchResponse.json()
     console.log('[MEET] Conference data:', JSON.stringify(eventWithMeet.conferenceData, null, 2))
+    console.log('[MEET] Full PATCH response:', JSON.stringify(eventWithMeet, null, 2).slice(0, 1000))
 
     const meetLink = eventWithMeet.conferenceData?.entryPoints?.[0]?.uri || null
     console.log('[MEET] Link gerado pelo Google:', meetLink)
 
     if (!meetLink) {
       console.error('[MEET] Google não gerou o link de Meet')
+      console.error('[MEET] Conference data completo:', JSON.stringify(eventWithMeet.conferenceData))
       return null
     }
 

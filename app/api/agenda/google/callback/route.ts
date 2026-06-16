@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get('state')
   const error = searchParams.get('error')
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zapbot-orcin.vercel.app'
+  const protocol = request.headers.get('x-forwarded-proto') || 'https'
+  const host = request.headers.get('host') || 'zapbot-orcin.vercel.app'
+  const appUrl = `${protocol}://${host}`
 
   if (error || !code || !userId) {
     const msg = encodeURIComponent(error || (!code ? 'sem_code' : 'sem_userId'))

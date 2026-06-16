@@ -6,7 +6,9 @@ export async function GET(request: NextRequest) {
   if (!userId) return NextResponse.redirect(new URL('/login', request.url))
 
   const clientId = process.env.GOOGLE_CLIENT_ID
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zapbot-orcin.vercel.app'
+  const protocol = request.headers.get('x-forwarded-proto') || 'https'
+  const host = request.headers.get('host') || 'zapbot-orcin.vercel.app'
+  const appUrl = `${protocol}://${host}`
   const redirectUri = `${appUrl}/api/agenda/google/callback`
 
   const params = new URLSearchParams({

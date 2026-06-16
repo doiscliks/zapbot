@@ -118,35 +118,10 @@ export async function gerarLinkMeetComCalendar(
       return null
     }
 
-    // Tenta criar com conferenceData (Google Meet válido)
-    console.log('[MEET] Tentando criar com conferenceData...')
-    const validMeetLink = await criarEventoComConferencia(
-      config.google_access_token,
-      titulo,
-      dataHoraInicio,
-      dataHoraFim,
-      nomeCliente,
-      telefoneCliente,
-      assuntoCliente
-    )
-
-    let meetLink = validMeetLink
-    let eventId: string | null = null
-
-    // Se funcionou, pronto
-    if (meetLink) {
-      return { link: meetLink, eventId: 'conf-created' }
-    }
-
-    // Se não, usa fallback com link aleatório
-    console.log('[MEET] Usando fallback com link aleatório')
-    const meetId = gerarMeetIdUnico()
-    meetLink = `https://meet.google.com/${meetId}`
-
-    // Cria evento no calendário com link na descrição
+    // Cria com conferenceData (Google Meet válido)
     const eventData = {
       summary: titulo,
-      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}\n\n🎥 Google Meet: ${meetLink}`,
+      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}`,
       start: {
         dateTime: dataHoraInicio.toISOString(),
         timeZone: 'America/Sao_Paulo',
@@ -155,9 +130,19 @@ export async function gerarLinkMeetComCalendar(
         dateTime: dataHoraFim.toISOString(),
         timeZone: 'America/Sao_Paulo',
       },
+      conferenceData: {
+        createRequest: {
+          requestId: crypto.randomUUID(),
+          conferenceSolutionKey: {
+            key: 'hangoutsMeet',
+          },
+        },
+      },
     }
 
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    console.log('[MEET] Criando evento com Google Meet...')
+
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -168,21 +153,29 @@ export async function gerarLinkMeetComCalendar(
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[MEET] Erro ao criar evento:', response.status, errorText)
+      console.error('[MEET] Erro resposta:', response.status, errorText)
       return null
     }
 
     const event = await response.json()
-    eventId = event.id || 'fallback-created'
 
-    console.log('[MEET] Evento criado com fallback link')
+    const meetLink = event.conferenceData?.entryPoints?.find(
+      (ep: any) => ep.entryPointType === 'video'
+    )?.uri
+
+    if (!meetLink) {
+      console.error('[MEET] Link não encontrado na resposta:', JSON.stringify(event.conferenceData))
+      return null
+    }
+
+    console.log('[MEET] Google Meet criado:', meetLink)
 
     return {
       link: meetLink,
-      eventId: eventId || 'fallback-created',
+      eventId: event.id,
     }
   } catch (error) {
-    console.error('[MEET] Erro geral:', error)
+    console.error('[MEET] Erro:', error)
     return null
   }
 }

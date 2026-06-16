@@ -184,6 +184,7 @@ export async function POST(request: NextRequest) {
     agendamento: { id: agendamento.id, data_hora: agendamento.data_hora },
     meet_link: meetLink,
     _debug: {
+      versao_codigo: 'v3-com-email',
       google_meet: googleErro,
       email: emailDebug,
       whatsapp_instancia_configurada: !!config.whatsapp_instancia_id,

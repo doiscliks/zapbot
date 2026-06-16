@@ -117,7 +117,7 @@ export async function gerarLinkMeetComCalendar(
       console.log('[MEET] Sem refresh token, usando access token atual')
     }
 
-    // Cria evento no calendário COM Google Meet
+    // Cria evento no calendário SEM Meet primeiro
     const eventData = {
       summary: titulo,
       description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}`,
@@ -129,6 +129,34 @@ export async function gerarLinkMeetComCalendar(
         dateTime: dataHoraFim.toISOString(),
         timeZone: 'America/Sao_Paulo',
       },
+    }
+
+    console.log('[MEET] Criando evento no calendário...')
+
+    const createResponse = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(eventData),
+    })
+
+    console.log('[MEET] Create response status:', createResponse.status)
+
+    if (!createResponse.ok) {
+      const errorText = await createResponse.text()
+      console.error('[MEET] Erro ao criar evento:', createResponse.status, errorText)
+      return null
+    }
+
+    const event = await createResponse.json()
+    console.log('[MEET] Evento criado:', event.id)
+
+    // Agora adiciona Meet via PATCH
+    console.log('[MEET] Adicionando Google Meet ao evento...')
+
+    const patchData = {
       conferenceData: {
         createRequest: {
           requestId: `req-${userId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -139,41 +167,40 @@ export async function gerarLinkMeetComCalendar(
       },
     }
 
-    console.log('[MEET] Criando evento no calendário...')
+    const patchResponse = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}?conferenceDataVersion=1`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(patchData),
+      }
+    )
 
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(eventData),
-    })
+    console.log('[MEET] Patch response status:', patchResponse.status)
 
-    console.log('[MEET] Response status:', response.status)
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[MEET] Erro HTTP:', response.status, errorText)
+    if (!patchResponse.ok) {
+      const errorText = await patchResponse.text()
+      console.error('[MEET] Erro ao adicionar Meet:', patchResponse.status, errorText)
       return null
     }
 
-    const event = await response.json()
-    console.log('[MEET] Evento criado:', event.id)
-    console.log('[MEET] Conference data:', JSON.stringify(event.conferenceData, null, 2))
+    const eventWithMeet = await patchResponse.json()
+    console.log('[MEET] Conference data:', JSON.stringify(eventWithMeet.conferenceData, null, 2))
 
-    const meetLink = event.conferenceData?.entryPoints?.[0]?.uri || null
+    const meetLink = eventWithMeet.conferenceData?.entryPoints?.[0]?.uri || null
     console.log('[MEET] Link gerado pelo Google:', meetLink)
 
     if (!meetLink) {
       console.error('[MEET] Google não gerou o link de Meet')
-      console.error('[MEET] Full event:', JSON.stringify(event, null, 2).slice(0, 500))
       return null
     }
 
     return {
       link: meetLink,
-      eventId: event.id,
+      eventId: eventWithMeet.id,
     }
   } catch (error) {
     console.error('[MEET] Erro catch:', error)

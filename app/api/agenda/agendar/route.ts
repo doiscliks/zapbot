@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
   let meetLink: string | null = null
   let googleErro: string | null = null
 
-  // Gera link do Google Meet via Google Calendar API
+  // Gera link do Google Meet via Google Calendar API (usando token OAuth do usuário)
   try {
     const meetResult = await gerarLinkMeetComCalendar(
       config.titulo,
@@ -95,7 +95,8 @@ export async function POST(request: NextRequest) {
       nome.trim(),
       email?.trim() || undefined,
       telefone.trim(),
-      assunto?.trim() || undefined
+      assunto?.trim() || undefined,
+      config.user_id
     )
 
     if (meetResult) {

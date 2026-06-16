@@ -1,25 +1,15 @@
-import { JWT } from 'google-auth-library'
+import { createClient } from '@supabase/supabase-js'
 
 interface GoogleMeetLink {
   link: string
   eventId: string
 }
 
-function gerarMeetIdFormatado(): string {
-  // Gera ID no formato padrão do Google Meet: abc-defg-hij (com hífens)
-  const chars = 'abcdefghijklmnopqrstuvwxyz'
-  const grupos = [3, 4, 3] // Tamanho de cada grupo
-  const partes: string[] = []
-
-  for (const tamanho of grupos) {
-    let grupo = ''
-    for (let i = 0; i < tamanho; i++) {
-      grupo += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    partes.push(grupo)
-  }
-
-  return partes.join('-')
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+  )
 }
 
 export async function gerarLinkMeetComCalendar(
@@ -29,34 +19,35 @@ export async function gerarLinkMeetComCalendar(
   nomeCliente: string,
   emailCliente?: string,
   telefoneCliente?: string,
-  assuntoCliente?: string
+  assuntoCliente?: string,
+  userId?: string
 ): Promise<GoogleMeetLink | null> {
   try {
-    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
-    if (!serviceAccountJson) {
-      console.error('GOOGLE_SERVICE_ACCOUNT_JSON não configurado')
+    if (!userId) {
+      console.error('userId não fornecido')
       return null
     }
 
-    const serviceAccount = JSON.parse(serviceAccountJson)
+    const supabase = getSupabase()
 
-    // Cria JWT para autenticação
-    const jwtClient = new JWT({
-      email: serviceAccount.client_email,
-      key: serviceAccount.private_key,
-      scopes: ['https://www.googleapis.com/auth/calendar'],
-    })
+    // Busca o token de acesso do Google da config da agenda
+    const { data: config, error } = await supabase
+      .from('agenda_config')
+      .select('google_access_token')
+      .eq('user_id', userId)
+      .single()
 
-    const accessToken = await jwtClient.getAccessToken()
+    if (error || !config?.google_access_token) {
+      console.error('Token de acesso do Google não configurado:', error)
+      return null
+    }
 
-    // Gera Google Meet link no formato padrão
-    const meetId = gerarMeetIdFormatado()
-    const meetLink = `https://meet.google.com/${meetId}`
+    const accessToken = config.google_access_token
 
-    // Cria evento no Google Calendar (sem tentar criar conferência via API)
+    // Prepara dados do evento com Google Meet conferência
     const eventData = {
       summary: titulo,
-      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}\n\n🎥 Google Meet: ${meetLink}`,
+      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}`,
       start: {
         dateTime: dataHoraInicio.toISOString(),
         timeZone: 'America/Sao_Paulo',
@@ -65,13 +56,22 @@ export async function gerarLinkMeetComCalendar(
         dateTime: dataHoraFim.toISOString(),
         timeZone: 'America/Sao_Paulo',
       },
+      conferenceData: {
+        createRequest: {
+          requestId: crypto.randomUUID(),
+          conferenceSolutionKey: {
+            key: 'hangoutsMeet',
+          },
+        },
+      },
     }
 
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    // Cria evento no Google Calendar com Google Meet
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken.token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(eventData),
     })
@@ -84,7 +84,17 @@ export async function gerarLinkMeetComCalendar(
 
     const event = await response.json()
 
-    console.log('Evento criado com sucesso. Meet link:', meetLink)
+    // Extrai o Google Meet link
+    const meetLink = event.conferenceData?.entryPoints?.find(
+      (ep: any) => ep.entryPointType === 'video'
+    )?.uri
+
+    if (!meetLink) {
+      console.error('Google Meet link não gerado')
+      return null
+    }
+
+    console.log('Google Meet criado com sucesso:', meetLink)
 
     return {
       link: meetLink,

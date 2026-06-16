@@ -46,7 +46,7 @@ export async function gerarLinkMeetComCalendar(
       },
       conferenceData: {
         createRequest: {
-          requestId: `meet-${Date.now()}`,
+          requestId: crypto.randomUUID(),
           conferenceSolutionKey: {
             key: 'hangoutsMeet',
           },

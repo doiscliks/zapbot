@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
   let emailDebug = 'nao_tentado'
   if (email?.trim()) {
     try {
+      console.log('Tentando enviar email para:', email.trim())
       const emailEnviado = await enviarEmailConfirmacaoAgendamento(
         email.trim(),
         nome.trim(),
@@ -127,8 +128,10 @@ export async function POST(request: NextRequest) {
         meetLink || undefined
       )
       emailDebug = emailEnviado ? 'ok' : 'falha_ao_enviar'
+      console.log('Email resultado:', emailDebug)
     } catch (e) {
       emailDebug = `excecao: ${e instanceof Error ? e.message : 'desconhecida'}`
+      console.error('Erro ao enviar email:', e)
     }
   } else {
     emailDebug = 'sem_email_do_cliente'

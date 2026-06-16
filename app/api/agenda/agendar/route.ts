@@ -28,6 +28,7 @@ async function enviarWhatsApp(uazapiBase: string, instanceToken: string, telefon
 }
 
 export async function POST(request: NextRequest) {
+  console.log('\n\n========== NOVO CODIGO DO ENDPOINT ==========\n\n')
   const { slug, nome, telefone, email, assunto, data, hora } = await request.json()
 
   if (!slug || !nome || !telefone || !data || !hora) {

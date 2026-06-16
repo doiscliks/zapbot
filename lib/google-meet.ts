@@ -54,7 +54,7 @@ export async function gerarLinkMeet(
         createRequest: {
           requestId: `zapbot-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           conferenceSolutionKey: {
-            type: 'hangoutsMeet',
+            type: 'eventHangout',
           },
         },
       },

@@ -12,20 +12,6 @@ function getSupabase() {
   )
 }
 
-function gerarMeetIdUnico(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz'
-  const grupos = [3, 4, 3]
-  const partes: string[] = []
-  for (const tamanho of grupos) {
-    let grupo = ''
-    for (let i = 0; i < tamanho; i++) {
-      grupo += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    partes.push(grupo)
-  }
-  return partes.join('-')
-}
-
 export async function gerarLinkMeetComCalendar(
   titulo: string,
   dataHoraInicio: Date,
@@ -55,14 +41,14 @@ export async function gerarLinkMeetComCalendar(
       return null
     }
 
-    // Gera link único
-    const meetId = gerarMeetIdUnico()
-    const meetLink = `https://meet.google.com/${meetId}`
+    const accessToken = config.google_access_token
 
-    // Cria evento no Google Calendar com link na descrição
-    const eventData = {
+    // Criar evento com Google Meet usando conferenceData
+    const requestId = `meet-${Date.now()}`
+
+    const eventPayload = {
       summary: titulo,
-      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}\n\n🎥 Google Meet: ${meetLink}`,
+      description: `Cliente: ${nomeCliente}\nTelefone: ${telefoneCliente}${assuntoCliente ? `\nAssunto: ${assuntoCliente}` : ''}`,
       start: {
         dateTime: dataHoraInicio.toISOString(),
         timeZone: 'America/Sao_Paulo',
@@ -71,30 +57,53 @@ export async function gerarLinkMeetComCalendar(
         dateTime: dataHoraFim.toISOString(),
         timeZone: 'America/Sao_Paulo',
       },
+      conferenceData: {
+        createRequest: {
+          requestId: requestId,
+          conferenceSolutionKey: {
+            key: 'hangoutsMeet',
+          },
+        },
+      },
     }
 
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.google_access_token}`,
-      },
-      body: JSON.stringify(eventData),
-    })
+    console.log('[MEET] Criando evento com conferenceData...')
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[MEET] Erro ao criar evento:', response.status, errorText)
+    const createResponse = await fetch(
+      'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(eventPayload),
+      }
+    )
+
+    if (!createResponse.ok) {
+      const errorData = await createResponse.text()
+      console.error('[MEET] Erro na criação:', createResponse.status, errorData)
       return null
     }
 
-    const event = await response.json()
+    const eventData = await createResponse.json()
 
-    console.log('[MEET] Evento criado com sucesso:', meetLink)
+    // Extrair o link do Google Meet
+    const meetLink = eventData.conferenceData?.entryPoints?.find(
+      (ep: any) => ep.entryPointType === 'video'
+    )?.uri
+
+    if (!meetLink) {
+      console.error('[MEET] Link não encontrado na resposta')
+      return null
+    }
+
+    console.log('[MEET] Google Meet link criado:', meetLink)
 
     return {
       link: meetLink,
-      eventId: event.id,
+      eventId: eventData.id,
     }
   } catch (error) {
     console.error('[MEET] Erro:', error)

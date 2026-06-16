@@ -159,10 +159,17 @@ export async function POST(request: NextRequest) {
   let googleErro: string | null = null
 
   // Cria evento no Google Calendar
+  console.log('[MEET] google_access_token presente?', !!config.google_access_token)
+  console.log('[MEET] google_calendar_id?', config.google_calendar_id)
+
   if (config.google_access_token) {
     try {
+      console.log('[MEET] Token presente, validando...')
       const accessToken = await getAccessToken(config)
+      console.log('[MEET] Access token após validação?', !!accessToken)
+
       if (accessToken) {
+        console.log('[MEET] Criando evento no Google Calendar...')
         const evento = await criarEventoCalendar(accessToken, config.google_calendar_id, {
           titulo: config.titulo,
           nome: nome.trim(),
@@ -172,11 +179,15 @@ export async function POST(request: NextRequest) {
           dataHoraInicio: dataHoraInicio.toISOString(),
           dataHoraFim: dataHoraFim.toISOString(),
         })
+        console.log('[MEET] Resposta do Google:', { temError: !!evento.error, temConference: !!evento.conferenceData, temId: !!evento.id })
+
         if (evento.error) {
           googleErro = `${evento.error.code}: ${evento.error.message}`
+          console.log('[MEET] Erro do Google:', googleErro)
         } else {
           meetLink = evento.conferenceData?.entryPoints?.find((e: { entryPointType: string; uri: string }) => e.entryPointType === 'video')?.uri ?? null
           googleEventId = evento.id ?? null
+          console.log('[MEET] Link gerado?', !!meetLink)
           await supabase
             .from('agendamentos')
             .update({ google_event_id: googleEventId, meet_link: meetLink })
@@ -184,12 +195,15 @@ export async function POST(request: NextRequest) {
         }
       } else {
         googleErro = 'token_invalido_ou_expirado'
+        console.log('[MEET]', googleErro)
       }
     } catch (e) {
       googleErro = e instanceof Error ? e.message : 'erro_desconhecido'
+      console.log('[MEET] Erro na catch:', googleErro)
     }
   } else {
     googleErro = 'google_nao_conectado'
+    console.log('[MEET]', googleErro)
   }
 
   // Envia Email de confirmação

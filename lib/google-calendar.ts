@@ -130,7 +130,8 @@ export async function gerarLinkMeetComCalendar(
         timeZone: 'America/Sao_Paulo',
       },
       conferenceData: {
-        generateConferenceRequest: {
+        createRequest: {
+          requestId: `req-${userId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           conferenceSolutionKey: {
             key: 'hangoutsMeet',
           },

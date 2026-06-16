@@ -28,6 +28,7 @@ async function enviarWhatsApp(uazapiBase: string, instanceToken: string, telefon
 }
 
 export async function POST(request: NextRequest) {
+  // Force rebuild v2
   const { slug, nome, telefone, email, assunto, data, hora } = await request.json()
 
   if (!slug || !nome || !telefone || !data || !hora) {

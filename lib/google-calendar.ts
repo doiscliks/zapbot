@@ -12,6 +12,56 @@ function getSupabase() {
   )
 }
 
+async function renovarTokenGoogle(userId: string, refreshToken: string): Promise<string | null> {
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+    if (!clientId || !clientSecret) {
+      console.error('Credenciais do Google não configuradas')
+      return null
+    }
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }),
+    })
+
+    if (!response.ok) {
+      console.error('Erro ao renovar token:', response.status)
+      return null
+    }
+
+    const tokens = await response.json()
+
+    if (!tokens.access_token) {
+      console.error('Novo access token não recebido')
+      return null
+    }
+
+    // Atualiza o token no banco
+    const supabase = getSupabase()
+    await supabase
+      .from('agenda_config')
+      .update({
+        google_access_token: tokens.access_token,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+
+    return tokens.access_token
+  } catch (error) {
+    console.error('Erro ao renovar token do Google:', error)
+    return null
+  }
+}
+
 export async function gerarLinkMeetComCalendar(
   titulo: string,
   dataHoraInicio: Date,
@@ -33,7 +83,7 @@ export async function gerarLinkMeetComCalendar(
     // Busca o token de acesso do Google da config da agenda
     const { data: config, error } = await supabase
       .from('agenda_config')
-      .select('google_access_token')
+      .select('google_access_token, google_refresh_token')
       .eq('user_id', userId)
       .single()
 
@@ -42,7 +92,15 @@ export async function gerarLinkMeetComCalendar(
       return null
     }
 
-    const accessToken = config.google_access_token
+    let accessToken = config.google_access_token
+
+    // Se o token estiver inválido, tenta renovar com o refresh_token
+    if (config.google_refresh_token) {
+      const novoToken = await renovarTokenGoogle(userId, config.google_refresh_token)
+      if (novoToken) {
+        accessToken = novoToken
+      }
+    }
 
     // Prepara dados do evento com Google Meet conferência
     const eventData = {

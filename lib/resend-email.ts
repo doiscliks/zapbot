@@ -104,6 +104,7 @@ export async function enviarEmailConfirmacaoAgendamento(
     `
 
     console.log('[EMAIL] Enviando para:', emailCliente)
+    console.log('[EMAIL] API Key presente?', !!process.env.RESEND_API_KEY)
 
     const result = await resend.emails.send({
       from: 'onboarding@resend.dev',
@@ -112,14 +113,15 @@ export async function enviarEmailConfirmacaoAgendamento(
       html: htmlContent,
     })
 
-    console.log('[EMAIL] Resposta do Resend:', result)
+    console.log('[EMAIL] Resposta status:', result.data ? 'sucesso' : 'erro')
+    console.log('[EMAIL] Resposta completa:', JSON.stringify(result))
 
     if (result.error) {
-      console.error('[EMAIL] Erro:', result.error)
+      console.error('[EMAIL] Erro Resend:', result.error)
       return false
     }
 
-    console.log('[EMAIL] Enviado com sucesso! ID:', result.data?.id)
+    console.log('[EMAIL] Enviado! ID:', result.data?.id)
     return !!result.data?.id
   } catch (error) {
     console.error('Erro ao enviar email:', error)

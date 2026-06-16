@@ -52,7 +52,6 @@ export async function gerarLinkMeetComCalendar(
           },
         },
       },
-      attendees: emailCliente ? [{ email: emailCliente }] : [],
     }
 
     // Cria evento no Google Calendar

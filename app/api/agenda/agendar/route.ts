@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { readConfig } from '@/lib/config-server'
-import { gerarLinkMeet } from '@/lib/google-meet'
+import { gerarLinkMeetComCalendar } from '@/lib/google-calendar'
 import { enviarEmailConfirmacaoAgendamento } from '@/lib/resend-email'
 
 function getSupabase() {
@@ -86,9 +86,9 @@ export async function POST(request: NextRequest) {
   let meetLink: string | null = null
   let googleErro: string | null = null
 
-  // Gera link do Google Meet usando Service Account
+  // Gera link do Google Meet via Google Calendar API
   try {
-    meetLink = await gerarLinkMeet(
+    const meetResult = await gerarLinkMeetComCalendar(
       config.titulo,
       dataHoraInicio,
       dataHoraFim,
@@ -98,7 +98,8 @@ export async function POST(request: NextRequest) {
       assunto?.trim() || undefined
     )
 
-    if (meetLink) {
+    if (meetResult) {
+      meetLink = meetResult.link
       await supabase
         .from('agendamentos')
         .update({ meet_link: meetLink })

@@ -11,11 +11,16 @@ export async function GET(request: NextRequest) {
   const appUrl = `${protocol}://${host}`
   const redirectUri = `${appUrl}/api/agenda/google/callback`
 
+  const scopes = [
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/calendar.events',
+  ].join(' ')
+
   const params = new URLSearchParams({
     client_id: clientId!,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: 'https://www.googleapis.com/auth/calendar',
+    scope: scopes,
     access_type: 'offline',
     prompt: 'consent',
     state: userId,

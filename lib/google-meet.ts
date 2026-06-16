@@ -9,8 +9,10 @@ export async function gerarLinkMeet(
 ): Promise<string | null> {
   try {
     // Gera um ID único para a reunião do Google Meet
-    // O Google Meet aceita qualquer ID válido (alphanumério e hífens)
-    const meetId = `zapbot-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+    // Google Meet aceita apenas letras minúsculas e números (sem hífens)
+    const timestamp = Date.now().toString().slice(-8) // últimos 8 dígitos
+    const random = Math.random().toString(36).substring(2, 10) // caracteres aleatórios
+    const meetId = `zapbot${timestamp}${random}`
 
     // Constrói o link do Google Meet
     const meetLink = `https://meet.google.com/${meetId}`

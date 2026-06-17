@@ -151,6 +151,23 @@ export async function POST(request: NextRequest) {
       currentUserId = usuario.parent_id
       depth++
     }
+
+    // Se ainda não encontrou Google, procura qualquer admin que tenha Google
+    if (!configGoogle.google_access_token) {
+      console.log('[AGENDAR] Não encontrou na árvore, procurando qualquer admin com Google...')
+      const { data: configAdmin } = await supabase
+        .from('agenda_config')
+        .select('*')
+        .eq('ativo', true)
+        .not('google_access_token', 'is', null)
+        .limit(1)
+        .single()
+
+      if (configAdmin?.google_access_token) {
+        console.log('[AGENDAR] Encontrado Google em admin diferente')
+        configGoogle = configAdmin
+      }
+    }
   }
 
   // Verifica se o slot ainda está disponível

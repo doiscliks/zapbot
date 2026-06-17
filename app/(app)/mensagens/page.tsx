@@ -29,9 +29,10 @@ export default function MensagensPage() {
     try {
       const res = await fetch('/api/usuarios')
       const data = await res.json()
+      console.log('[MENSAGENS] Atendentes carregados:', data)
       setAtendentes(Array.isArray(data) ? data : [])
-    } catch {
-      // Erro ao carregar atendentes
+    } catch (e) {
+      console.log('[MENSAGENS] Erro ao carregar atendentes:', e)
     }
   }, [])
 

@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
   if (secoesRes.error) return NextResponse.json({ error: secoesRes.error.message }, { status: 500 })
 
   // Deduplicar por telefone
-  const unicosPorTelefone: Record<string, Record<string, unknown>> = {}
-  for (const c of clientesRes.data ?? []) {
+  const unicosPorTelefone: Record<string, Cliente> = {}
+  for (const c of (clientesRes.data ?? []) as Cliente[]) {
     if (!c.telefone) continue
-    if (!unicosPorTelefone[c.telefone] || c.id > (unicosPorTelefone[c.telefone].id as number)) {
+    if (!unicosPorTelefone[c.telefone] || c.id > unicosPorTelefone[c.telefone].id) {
       unicosPorTelefone[c.telefone] = c
     }
   }
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Adiciona nome do atendente em cada cliente
-  const clientesComAtendente: (Cliente & { nome_atendente: string | null })[] = (clientes as Cliente[]).map(c => ({
+  const clientesComAtendente: (Cliente & { nome_atendente: string | null })[] = clientes.map(c => ({
     ...c,
     nome_atendente: c.assigned_user_id ? usuariosMap[c.assigned_user_id as string]?.nome : null,
   }))

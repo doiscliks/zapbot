@@ -57,12 +57,28 @@ export default function MensagensPage() {
     }
   }, [])
 
+  // Verificar se é admin
+  useEffect(() => {
+    const verificarAdmin = async () => {
+      try {
+        const res = await fetch('/api/tenant/me')
+        if (res.ok) {
+          const data = await res.json()
+          setIsAdmin(!data.parent_id)
+        }
+      } catch {
+        // Erro ao verificar
+      }
+    }
+    verificarAdmin()
+  }, [])
+
   // Carregar lista de clientes, etiquetas e atendentes
   useEffect(() => {
     carregarClientes()
     carregarEtiquetas()
-    carregarAtendentes()
-  }, [carregarClientes, carregarEtiquetas, carregarAtendentes])
+    if (isAdmin) carregarAtendentes()
+  }, [carregarClientes, carregarEtiquetas, carregarAtendentes, isAdmin])
 
   // Sincroniza as fotos de perfil que faltam, em lotes, atualizando a lista a cada passo
   const sincronizarFotos = useCallback(async () => {
@@ -175,6 +191,7 @@ export default function MensagensPage() {
   const [novaEtiquetaCor, setNovaEtiquetaCor] = useState('#3B82F6')
   const [atendentes, setAtendentes] = useState<any[]>([])
   const [nomeAtendente, setNomeAtendente] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   async function carregarMensagens(telefone: string) {
     setLoadingMensagens(true)
@@ -421,22 +438,30 @@ export default function MensagensPage() {
               </div>
             )}
 
-            {/* Associado a */}
-            <div className="mb-3 pb-4 border-b border-gray-100">
-              <p className="text-xs text-gray-500 mb-2">Associado a</p>
-              <select
-                value={clienteSelecionado.assigned_user_id || ''}
-                onChange={(e) => trocarAtendente(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
-              >
-                <option value="">Nenhum atendente</option>
-                {atendentes.map((atendente: any) => (
-                  <option key={atendente.id} value={atendente.id}>
-                    👤 {atendente.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Associado a - apenas admin pode ver/editar */}
+            {isAdmin && (
+              <div className="mb-3 pb-4 border-b border-gray-100">
+                <p className="text-xs text-gray-500 mb-2">Associado a</p>
+                <select
+                  value={clienteSelecionado.assigned_user_id || ''}
+                  onChange={(e) => trocarAtendente(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  <option value="">Nenhum atendente</option>
+                  {atendentes.map((atendente: any) => (
+                    <option key={atendente.id} value={atendente.id}>
+                      👤 {atendente.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {!isAdmin && clienteSelecionado.assigned_user_id && (
+              <div className="mb-3 pb-4 border-b border-gray-100">
+                <p className="text-xs text-gray-500 mb-2">Associado a</p>
+                <p className="text-sm text-gray-900 font-medium">👤 Você</p>
+              </div>
+            )}
 
             {/* Etiquetas */}
             <div className="mt-4 border-t border-gray-100 pt-4">

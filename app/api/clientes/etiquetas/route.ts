@@ -9,6 +9,36 @@ function getSupabase() {
   )
 }
 
+async function verificarPermissao(userId: string, clienteId: number) {
+  const supabase = getSupabase()
+
+  const { data: cliente } = await supabase
+    .from('clientes')
+    .select('user_id, assigned_user_id')
+    .eq('id', clienteId)
+    .single()
+
+  if (!cliente) return { permitido: false, erro: 'Cliente não encontrado' }
+
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id')
+    .eq('id', userId)
+    .single()
+
+  if (!usuario) return { permitido: false, erro: 'Usuário não encontrado' }
+
+  const isAdmin = !usuario.parent_id
+  const isClienteDoAtendente = cliente.assigned_user_id === userId
+  const isOwner = cliente.user_id === userId
+
+  if (!isAdmin && !isClienteDoAtendente && !isOwner) {
+    return { permitido: false, erro: 'Sem permissão' }
+  }
+
+  return { permitido: true }
+}
+
 export async function POST(request: NextRequest) {
   const userId = getTenantId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -18,35 +48,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'clienteId e etiquetaId obrigatórios' }, { status: 400 })
   }
 
-  const supabase = getSupabase()
-
-  // Busca o cliente para verificar permissão
-  const { data: cliente } = await supabase
-    .from('clientes')
-    .select('user_id, assigned_user_id')
-    .eq('id', clienteId)
-    .single()
-
-  if (!cliente) return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 })
-
-  // Verifica permissão (admin ou atendente do cliente)
-  const { data: usuario } = await supabase
-    .from('usuarios')
-    .select('parent_id')
-    .eq('id', userId)
-    .single()
-
-  if (!usuario) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
-
-  const isAdmin = !usuario.parent_id
-  const isClienteDoAtendente = cliente.assigned_user_id === userId
-  const isOwner = cliente.user_id === userId
-
-  if (!isAdmin && !isClienteDoAtendente && !isOwner) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  const permissao = await verificarPermissao(userId, clienteId)
+  if (!permissao.permitido) {
+    return NextResponse.json({ error: permissao.erro }, { status: permissao.erro === 'Sem permissão' ? 403 : 404 })
   }
 
-  // Associa etiqueta ao cliente
+  const supabase = getSupabase()
+
   const { data, error } = await supabase
     .from('cliente_etiquetas')
     .insert({ cliente_id: clienteId, etiqueta_id: etiquetaId })
@@ -54,7 +62,6 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) {
-    // Verifica se é erro de constraint (já associado)
     if (error.code === '23505') {
       return NextResponse.json({ error: 'Etiqueta já associada' }, { status: 409 })
     }
@@ -73,35 +80,13 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'clienteId e etiquetaId obrigatórios' }, { status: 400 })
   }
 
-  const supabase = getSupabase()
-
-  // Busca o cliente para verificar permissão
-  const { data: cliente } = await supabase
-    .from('clientes')
-    .select('user_id, assigned_user_id')
-    .eq('id', clienteId)
-    .single()
-
-  if (!cliente) return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 })
-
-  // Verifica permissão
-  const { data: usuario } = await supabase
-    .from('usuarios')
-    .select('parent_id')
-    .eq('id', userId)
-    .single()
-
-  if (!usuario) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
-
-  const isAdmin = !usuario.parent_id
-  const isClienteDoAtendente = cliente.assigned_user_id === userId
-  const isOwner = cliente.user_id === userId
-
-  if (!isAdmin && !isClienteDoAtendente && !isOwner) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  const permissao = await verificarPermissao(userId, clienteId)
+  if (!permissao.permitido) {
+    return NextResponse.json({ error: permissao.erro }, { status: permissao.erro === 'Sem permissão' ? 403 : 404 })
   }
 
-  // Remove etiqueta
+  const supabase = getSupabase()
+
   const { error } = await supabase
     .from('cliente_etiquetas')
     .delete()

@@ -1,11 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ClienteComUltimaMensagem, MensagemWhatsapp } from '@/types'
+import { ClienteComUltimaMensagem, MensagemWhatsapp, ClienteHistoricoItem } from '@/types'
 import { supabase } from '@/lib/supabase'
 import ListaClientes from '@/components/ListaClientes'
 import ChatMensagens from '@/components/ChatMensagens'
-import { Loader2, AlertCircle, Search } from 'lucide-react'
+import { Loader2, AlertCircle, Search, Plus } from 'lucide-react'
 
 export default function MensagensPage() {
   const [clientes, setClientes] = useState<ClienteComUltimaMensagem[]>([])
@@ -145,6 +145,8 @@ export default function MensagensPage() {
   }, [busca, clientes])
 
   const [erroMensagens, setErroMensagens] = useState<string | null>(null)
+  const [historico, setHistorico] = useState<ClienteHistoricoItem[]>([])
+  const [novaNotaTexto, setNovaNotaTexto] = useState('')
 
   async function carregarMensagens(telefone: string) {
     setLoadingMensagens(true)
@@ -170,7 +172,31 @@ export default function MensagensPage() {
   async function handleSelecionarCliente(cliente: ClienteComUltimaMensagem) {
     setClienteSelecionado(cliente)
     setMensagens([])
+    setHistorico(cliente.historico || [])
+    setNovaNotaTexto('')
     await carregarMensagens(cliente.telefone)
+  }
+
+  async function adicionarNota() {
+    if (!novaNotaTexto.trim() || !clienteSelecionado) return
+    const novaNota: ClienteHistoricoItem = {
+      data: new Date().toISOString(),
+      texto: novaNotaTexto,
+    }
+    const novoHistorico = [novaNota, ...historico]
+    setHistorico(novoHistorico)
+    setNovaNotaTexto('')
+
+    // Salva no backend
+    try {
+      await fetch(`/api/clientes/${clienteSelecionado.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ historico: novoHistorico }),
+      })
+    } catch {
+      // Erro ao salvar, mas a anotação já foi adicionada localmente
+    }
   }
 
   function handleMensagemEnviada(msg: MensagemWhatsapp) {
@@ -284,12 +310,39 @@ export default function MensagensPage() {
             )}
 
             {/* Histórico */}
-            <div className="mt-4">
-              <p className="text-xs text-gray-500 mb-2 font-semibold">HISTÓRICO</p>
-              <div className="space-y-1 text-xs">
-                <p className="text-gray-600">📅 <span className="text-gray-500">Criado:</span> {new Date(clienteSelecionado.created_at || '').toLocaleDateString('pt-BR')}</p>
-                {clienteSelecionado.dt_ultima_mensagem && (
-                  <p className="text-gray-600">💬 <span className="text-gray-500">Última mensagem:</span> {new Date(clienteSelecionado.dt_ultima_mensagem).toLocaleDateString('pt-BR')}</p>
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <p className="text-xs text-gray-500 mb-3 font-semibold">HISTÓRICO DE ANOTAÇÕES</p>
+
+              {/* Nova Anotação */}
+              <div className="mb-3 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Adicionar anotação..."
+                  value={novaNotaTexto}
+                  onChange={(e) => setNovaNotaTexto(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && adicionarNota()}
+                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <button
+                  onClick={adicionarNota}
+                  className="p-2 rounded-lg text-white hover:opacity-90 transition-opacity"
+                  style={{ background: '#12C6D6' }}
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+
+              {/* Anotações */}
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {historico.length === 0 ? (
+                  <p className="text-xs text-center py-4 text-gray-400">Nenhuma anotação ainda</p>
+                ) : (
+                  historico.map((nota, idx) => (
+                    <div key={idx} className="p-2 rounded-lg bg-gray-50 text-xs">
+                      <p className="text-gray-900">{nota.texto}</p>
+                      <p className="text-gray-500 mt-1">{new Date(nota.data).toLocaleString('pt-BR')}</p>
+                    </div>
+                  ))
                 )}
               </div>
             </div>

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getUsuarioId } from '@/lib/tenant-auth'
+import { getTenantId, getUsuarioId } from '@/lib/tenant-auth'
 
 function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
 }
 
 export async function GET(request: NextRequest) {
+  const tenantId = getTenantId(request)
   const userId = getUsuarioId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
       .from('clientes')
       .select('assigned_user_id')
       .eq('telefone', telefoneSemSufixo)
-      .eq('user_id', userId)
+      .eq('user_id', tenantId)
       .maybeSingle()
 
     if (!cliente || cliente.assigned_user_id !== userId) {

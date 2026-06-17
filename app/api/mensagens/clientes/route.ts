@@ -30,12 +30,11 @@ export async function GET(request: NextRequest) {
     .select('*')
     .eq('user_id', userId)
 
-  // Se não é admin: atendentes veem apenas conversas atribuídas a eles (e com mensagens)
+  // Se não é admin: atendentes veem apenas clientes atribuídos a eles
   if (!isAdmin && isAtendente) {
-    query = query.eq('assigned_user_id', userId).not('dt_ultima_mensagem', 'is', null)
+    query = query.eq('assigned_user_id', userId)
   } else if (isAdmin) {
-    // Admin vê todos os clientes, mas prioriza os com mensagens
-    // (não filtra por dt_ultima_mensagem, só ordena)
+    // Admin vê todos os clientes
   }
 
   const { data, error } = await query

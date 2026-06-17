@@ -8,6 +8,10 @@ function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
 }
 
+function getSupabaseAdmin() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '')
+}
+
 function normalizarPermissoes(input: unknown): string[] {
   if (!Array.isArray(input)) return []
   return input.filter((k): k is string => typeof k === 'string' && SCREEN_KEYS.includes(k))
@@ -89,6 +93,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }, { status: 409 })
   }
 
+  // Deleta do Supabase Auth
+  const supabaseAdmin = getSupabaseAdmin()
+  await supabaseAdmin.auth.admin.deleteUser(id).catch(() => {})
+
+  // Deleta do banco de dados
   const { error } = await supabase
     .from('usuarios')
     .delete()

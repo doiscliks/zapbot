@@ -279,7 +279,7 @@ export default function MensagensPage() {
             {clienteSelecionado.assigned_user_id && (
               <div className="mb-3 pb-4 border-b border-gray-100">
                 <p className="text-xs text-gray-500 mb-1">Associado a</p>
-                <p className="text-sm text-gray-900 font-medium">👤 {clienteSelecionado.assigned_user_nome || 'Não atribuído'}</p>
+                <p className="text-sm text-gray-900 font-medium">👤 Atendente atribuído</p>
               </div>
             )}
 

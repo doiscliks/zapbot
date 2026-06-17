@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('clientes')
-    .select('*, assigned_user:assigned_user_id(id, nome)')
+    .select('*')
     .eq('user_id', userId)
 
   // Se não é admin: atendentes veem apenas conversas atribuídas a eles (e com mensagens)

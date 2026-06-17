@@ -94,12 +94,27 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Gera slug automático baseado no primeiro nome
+  // Gera slug automático baseado no primeiro nome + tenant
   const primeiroNome = nome.split(' ')[0].toLowerCase()
-  const slug = primeiroNome
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]/g, '')
+
+  // Busca o nome do tenant (parent) para suffix
+  const { data: tenant } = await supabase
+    .from('usuarios')
+    .select('nome')
+    .eq('id', ownerId)
+    .single()
+
+  const sufixoTenant = tenant?.nome
+    .split(' ')[0]
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]/g, '') || 'tenant'
+
+  const slug = `${primeiroNome}.${sufixoTenant}`
 
   // Verifica se slug já existe, se sim adiciona número
   let slugFinal = slug
@@ -111,7 +126,7 @@ export async function POST(request: NextRequest) {
       .eq('slug', slugFinal)
 
     if (count === 0) break
-    slugFinal = `${slug}${contador}`
+    slugFinal = `${primeiroNome}.${sufixoTenant}${contador}`
     contador++
   }
 

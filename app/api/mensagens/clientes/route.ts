@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { data, error } = await query
-    .order('dt_ultima_mensagem', { ascending: false, nullsFirst: false })
+    .order('dt_ultima_mensagem', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

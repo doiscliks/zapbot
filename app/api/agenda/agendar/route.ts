@@ -118,17 +118,23 @@ export async function POST(request: NextRequest) {
 
   console.log('[AGENDAR] Config encontrada:', { slug, user_id: config.user_id, titulo: config.titulo })
 
-  // Se não tem Google conectado, procura na árvore (no pai)
+  // Se não tem Google conectado, procura na árvore (pais e admins acima)
   let configGoogle = config
   if (!config.google_access_token) {
     console.log('[AGENDAR] Usuário sem Google, procurando na árvore...')
-    const { data: usuario } = await supabase
-      .from('usuarios')
-      .select('parent_id')
-      .eq('id', config.user_id)
-      .single()
+    let currentUserId = config.user_id
+    let depth = 0
+    const maxDepth = 10 // evita loop infinito
 
-    if (usuario?.parent_id) {
+    while (depth < maxDepth) {
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('parent_id')
+        .eq('id', currentUserId)
+        .single()
+
+      if (!usuario?.parent_id) break
+
       const { data: configPai } = await supabase
         .from('agenda_config')
         .select('*')
@@ -137,9 +143,13 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (configPai?.google_access_token) {
-        console.log('[AGENDAR] Encontrado Google na árvore (pai)')
+        console.log(`[AGENDAR] Encontrado Google na árvore (nível ${depth + 1})`)
         configGoogle = configPai
+        break
       }
+
+      currentUserId = usuario.parent_id
+      depth++
     }
   }
 

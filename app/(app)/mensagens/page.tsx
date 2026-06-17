@@ -273,6 +273,20 @@ export default function MensagensPage() {
     setEtiquetasCliente([])
   }
 
+  async function deletarEtiqueta(etiquetaId: string) {
+    try {
+      const res = await fetch(`/api/etiquetas/${etiquetaId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      if (res.ok) {
+        setEtiquetas(etiquetas.filter((e) => e.id !== etiquetaId))
+      }
+    } catch {
+      // Erro ao deletar
+    }
+  }
+
   function handleMensagemEnviada(msg: MensagemWhatsapp) {
     setMensagens((prev) => [...prev, msg])
   }
@@ -414,14 +428,26 @@ export default function MensagensPage() {
                   <p className="text-xs text-gray-500 mb-2">Adicionar:</p>
                   <div className="flex flex-wrap gap-2">
                     {etiquetas.map((etiq) => (
-                      <button
-                        key={etiq.id}
-                        onClick={() => adicionarEtiquetaAoCliente(etiq.id)}
-                        className="px-3 py-1 rounded-full text-xs text-white hover:opacity-90 transition-opacity"
-                        style={{ background: etiq.cor }}
-                      >
-                        + {etiq.nome}
-                      </button>
+                      <div key={etiq.id} className="group relative">
+                        <button
+                          onClick={() => adicionarEtiquetaAoCliente(etiq.id)}
+                          className="px-3 py-1 rounded-full text-xs text-white hover:opacity-90 transition-opacity"
+                          style={{ background: etiq.cor }}
+                        >
+                          + {etiq.nome}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Excluir etiqueta "${etiq.nome}"?`)) {
+                              deletarEtiqueta(etiq.id)
+                            }
+                          }}
+                          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Excluir etiqueta"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>

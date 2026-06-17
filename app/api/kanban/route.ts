@@ -11,10 +11,26 @@ export async function GET(request: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const supabase = getSupabase()
 
-  const [secoesRes, clientesRes] = await Promise.all([
-    supabase.from('kanban_secoes').select('*').eq('user_id', userId).order('ordem', { ascending: true }),
-    supabase.from('clientes').select('*').eq('user_id', userId).order('nome', { ascending: true }).limit(2000),
-  ])
+  // Verifica se é atendente
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id, is_attendant')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!usuario) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const isAdmin = !usuario.parent_id
+  const isAtendente = usuario.is_attendant
+
+  const secoesFetch = supabase.from('kanban_secoes').select('*').eq('user_id', userId).order('ordem', { ascending: true })
+
+  let clientesFetch = supabase.from('clientes').select('*').eq('user_id', userId).order('nome', { ascending: true }).limit(2000)
+  if (!isAdmin && isAtendente) {
+    clientesFetch = clientesFetch.eq('assigned_user_id', userId)
+  }
+
+  const [secoesRes, clientesRes] = await Promise.all([secoesFetch, clientesFetch])
 
   if (secoesRes.error) return NextResponse.json({ error: secoesRes.error.message }, { status: 500 })
 

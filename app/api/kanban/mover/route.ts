@@ -13,11 +13,30 @@ export async function POST(request: NextRequest) {
   const { clienteId, secaoId } = await request.json()
   const supabase = getSupabase()
 
-  const { error } = await supabase
+  // Verifica se é atendente
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id, is_attendant')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!usuario) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const isAdmin = !usuario.parent_id
+  const isAtendente = usuario.is_attendant
+
+  // Verifica se cliente pertence ao usuário (ou atendente pode mover)
+  let updateQuery = supabase
     .from('clientes')
     .update({ kanban_secao_id: secaoId ?? null })
     .eq('id', clienteId)
     .eq('user_id', userId)
+
+  if (!isAdmin && isAtendente) {
+    updateQuery = updateQuery.eq('assigned_user_id', userId)
+  }
+
+  const { error } = await updateQuery
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

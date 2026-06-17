@@ -55,15 +55,33 @@ export async function GET(request: NextRequest) {
     porStatus[statusKey].push(c)
   }
 
-  return NextResponse.json({ secoes: secoesRes.data ?? [], clientes: porSecao, clientesPorStatus: porStatus })
+  return NextResponse.json({
+    secoes: secoesRes.data ?? [],
+    clientes: porSecao,
+    clientesPorStatus: porStatus,
+    ehAdmin: isAdmin,
+  })
 }
 
 export async function POST(request: NextRequest) {
   const userId = getTenantId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const supabase = getSupabase()
+
+  // Verifica se é admin (sem parent_id)
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!usuario || usuario.parent_id) {
+    return NextResponse.json({ error: 'Apenas administradores podem criar seções' }, { status: 403 })
+  }
+
   const { nome, facebook_evento, cor } = await request.json()
   if (!nome?.trim()) return NextResponse.json({ error: 'Nome obrigatório' }, { status: 400 })
-  const supabase = getSupabase()
 
   const { data: existentes } = await supabase
     .from('kanban_secoes').select('ordem').eq('user_id', userId).order('ordem', { ascending: false }).limit(1)

@@ -9,9 +9,22 @@ function getSupabase() {
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = getTenantId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const supabase = getSupabase()
+
+  // Verifica se é admin
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!usuario || usuario.parent_id) {
+    return NextResponse.json({ error: 'Apenas administradores podem editar seções' }, { status: 403 })
+  }
+
   const { id } = await params
   const body = await request.json()
-  const supabase = getSupabase()
 
   const updates: Record<string, unknown> = {}
   if (body.cor !== undefined) updates.cor = body.cor
@@ -26,8 +39,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = getTenantId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { id } = await params
+
   const supabase = getSupabase()
+
+  // Verifica se é admin
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('parent_id')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!usuario || usuario.parent_id) {
+    return NextResponse.json({ error: 'Apenas administradores podem deletar seções' }, { status: 403 })
+  }
+
+  const { id } = await params
 
   await supabase.from('clientes').update({ kanban_secao_id: null }).eq('kanban_secao_id', id).eq('user_id', userId)
   const { error } = await supabase.from('kanban_secoes').delete().eq('id', id).eq('user_id', userId)

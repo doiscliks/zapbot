@@ -92,6 +92,7 @@ export default function KanbanPage() {
   const [dragSobreSecao, setDragSobreSecao] = useState<string | null>(null)
   const [fbNotif, setFbNotif] = useState<{ ok: boolean; msg: string } | null>(null)
   const [erroSecao, setErroSecao] = useState<string | null>(null)
+  const [ehAdmin, setEhAdmin] = useState(false)
   const fbNotifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -103,6 +104,7 @@ export default function KanbanPage() {
       setSecoes(data.secoes ?? [])
       setClientes(data.clientes ?? { sem_secao: [] })
       setClientesPorStatus(data.clientesPorStatus ?? {})
+      setEhAdmin(data.ehAdmin ?? false)
     } finally {
       setLoading(false)
     }
@@ -275,7 +277,7 @@ export default function KanbanPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {aba === 'personalizado' && mostrarInput ? (
+          {ehAdmin && aba === 'personalizado' && mostrarInput ? (
             <form onSubmit={handleCriarSecao} className="flex flex-col items-end gap-2">
               {erroSecao && (
                 <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 w-full text-center">
@@ -347,7 +349,7 @@ export default function KanbanPage() {
                 )}
               </div>
             </form>
-          ) : aba === 'personalizado' ? (
+          ) : ehAdmin && aba === 'personalizado' ? (
             <button
               onClick={() => setMostrarInput(true)}
               className="flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-xl transition-all"
@@ -473,7 +475,7 @@ export default function KanbanPage() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     {/* Bolinha de cor clicável */}
-                    {secaoId ? (
+                    {secaoId && ehAdmin ? (
                       <div className="relative group">
                         <button
                           type="button"
@@ -512,7 +514,7 @@ export default function KanbanPage() {
                       </span>
                     )}
                   </div>
-                  {secaoId && (
+                  {secaoId && ehAdmin && (
                     <button
                       onClick={() => handleDeletarSecao(secaoId)}
                       className="p-1 text-gray-300 hover:text-red-400 transition-colors rounded"

@@ -29,10 +29,9 @@ export default function MensagensPage() {
     try {
       const res = await fetch('/api/usuarios')
       const data = await res.json()
-      console.log('[MENSAGENS] Atendentes carregados:', data)
       setAtendentes(Array.isArray(data) ? data : [])
-    } catch (e) {
-      console.log('[MENSAGENS] Erro ao carregar atendentes:', e)
+    } catch {
+      // Erro ao carregar atendentes
     }
   }, [])
 
@@ -215,25 +214,18 @@ export default function MensagensPage() {
 
   async function trocarAtendente(novoAtendentId: string) {
     if (!clienteSelecionado) return
-    console.log('[MENSAGENS] Trocando atendente para:', novoAtendentId, 'Cliente:', clienteSelecionado.id)
     try {
       const res = await fetch(`/api/clientes/${clienteSelecionado.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assigned_user_id: novoAtendentId }),
+        body: JSON.stringify({ assigned_user_id: novoAtendentId || null }),
       })
-      console.log('[MENSAGENS] Resposta:', res.status, res.ok)
       if (res.ok) {
-        const atendente = atendentes.find((a: any) => a.id === novoAtendentId)
-        setNomeAtendente(atendente?.nome || null)
-        setClienteSelecionado({ ...clienteSelecionado, assigned_user_id: novoAtendentId })
-        console.log('[MENSAGENS] Atendente trocado com sucesso!')
-      } else {
-        const erro = await res.json()
-        console.log('[MENSAGENS] Erro ao trocar:', erro)
+        const dados = await res.json()
+        setClienteSelecionado(dados)
       }
     } catch (e) {
-      console.log('[MENSAGENS] Exceção ao trocar atendente:', e)
+      console.error('Erro ao trocar atendente:', e)
     }
   }
 

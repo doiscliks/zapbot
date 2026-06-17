@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const secoesFetch = supabase.from('kanban_secoes').select('*').eq('user_id', userId).order('ordem', { ascending: true })
 
-  let clientesFetch = supabase.from('clientes').select('*, usuarios:assigned_user_id(id, nome)').eq('user_id', userId).order('nome', { ascending: true }).limit(2000)
+  let clientesFetch = supabase.from('clientes').select('*').eq('user_id', userId).order('nome', { ascending: true }).limit(2000)
   if (!isAdmin && isAtendente) {
     clientesFetch = clientesFetch.eq('assigned_user_id', userId)
   }

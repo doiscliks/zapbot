@@ -25,6 +25,16 @@ export default function MensagensPage() {
   const clientesRef = useRef<ClienteComUltimaMensagem[]>([])
   clientesRef.current = clientes
 
+  const carregarAtendentes = useCallback(async () => {
+    try {
+      const res = await fetch('/api/usuarios')
+      const data = await res.json()
+      setAtendentes(Array.isArray(data) ? data : [])
+    } catch {
+      // Erro ao carregar atendentes
+    }
+  }, [])
+
   const carregarEtiquetas = useCallback(async () => {
     try {
       const res = await fetch('/api/etiquetas')
@@ -47,11 +57,12 @@ export default function MensagensPage() {
     }
   }, [])
 
-  // Carregar lista de clientes e etiquetas
+  // Carregar lista de clientes, etiquetas e atendentes
   useEffect(() => {
     carregarClientes()
     carregarEtiquetas()
-  }, [carregarClientes, carregarEtiquetas])
+    carregarAtendentes()
+  }, [carregarClientes, carregarEtiquetas, carregarAtendentes])
 
   // Sincroniza as fotos de perfil que faltam, em lotes, atualizando a lista a cada passo
   const sincronizarFotos = useCallback(async () => {
@@ -162,6 +173,8 @@ export default function MensagensPage() {
   const [etiquetasCliente, setEtiquetasCliente] = useState<any[]>([])
   const [novaEtiquetaNome, setNovaEtiquetaNome] = useState('')
   const [novaEtiquetaCor, setNovaEtiquetaCor] = useState('#3B82F6')
+  const [atendentes, setAtendentes] = useState<any[]>([])
+  const [nomeAtendente, setNomeAtendente] = useState<string | null>(null)
 
   async function carregarMensagens(telefone: string) {
     setLoadingMensagens(true)
@@ -189,7 +202,32 @@ export default function MensagensPage() {
     setMensagens([])
     setHistorico(cliente.historico || [])
     setNovaNotaTexto('')
+    // Busca nome do atendente
+    if (cliente.assigned_user_id && atendentes.length > 0) {
+      const atendente = atendentes.find((a: any) => a.id === cliente.assigned_user_id)
+      setNomeAtendente(atendente?.nome || null)
+    } else {
+      setNomeAtendente(null)
+    }
     await carregarMensagens(cliente.telefone)
+  }
+
+  async function trocarAtendente(novoAtendentId: string) {
+    if (!clienteSelecionado) return
+    try {
+      const res = await fetch(`/api/clientes/${clienteSelecionado.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigned_user_id: novoAtendentId }),
+      })
+      if (res.ok) {
+        const atendente = atendentes.find((a: any) => a.id === novoAtendentId)
+        setNomeAtendente(atendente?.nome || null)
+        setClienteSelecionado({ ...clienteSelecionado, assigned_user_id: novoAtendentId })
+      }
+    } catch {
+      // Erro ao trocar atendente
+    }
   }
 
   async function adicionarNota() {
@@ -385,12 +423,21 @@ export default function MensagensPage() {
             )}
 
             {/* Associado a */}
-            {clienteSelecionado.assigned_user_id && (
-              <div className="mb-3 pb-4 border-b border-gray-100">
-                <p className="text-xs text-gray-500 mb-1">Associado a</p>
-                <p className="text-sm text-gray-900 font-medium">👤 Atendente atribuído</p>
-              </div>
-            )}
+            <div className="mb-3 pb-4 border-b border-gray-100">
+              <p className="text-xs text-gray-500 mb-2">Associado a</p>
+              <select
+                value={clienteSelecionado.assigned_user_id || ''}
+                onChange={(e) => trocarAtendente(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">Nenhum atendente</option>
+                {atendentes.map((atendente: any) => (
+                  <option key={atendente.id} value={atendente.id}>
+                    👤 {atendente.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Etiquetas */}
             <div className="mt-4 border-t border-gray-100 pt-4">

@@ -93,5 +93,42 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Gera slug automático baseado no primeiro nome
+  const primeiroNome = nome.split(' ')[0].toLowerCase()
+  const slug = primeiroNome
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+
+  // Verifica se slug já existe, se sim adiciona número
+  let slugFinal = slug
+  let contador = 2
+  while (true) {
+    const { count } = await supabase
+      .from('agenda_config')
+      .select('*', { count: 'exact', head: true })
+      .eq('slug', slugFinal)
+
+    if (count === 0) break
+    slugFinal = `${slug}${contador}`
+    contador++
+  }
+
+  // Cria agenda_config para o novo usuário
+  const { error: configError } = await supabase
+    .from('agenda_config')
+    .insert({
+      user_id: data.id,
+      slug: slugFinal,
+      titulo: `Agendamento de ${nome}`,
+      duracao_minutos: 30,
+      ativo: true,
+    })
+
+  if (configError) {
+    console.warn('[USUARIOS] Erro ao criar agenda_config:', configError.message)
+  }
+
   return NextResponse.json(data)
 }

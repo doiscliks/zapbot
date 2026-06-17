@@ -47,13 +47,13 @@ export async function GET(request: NextRequest) {
     supabase
       .from('mensagens_whatsapp')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', tenantId)
       .eq('numero_cliente', telefoneSemSufixo)
       .order('data_criacao', { ascending: true }),
     supabase
       .from('mensagens_whatsapp')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', tenantId)
       .like('numero_cliente', `${telefoneSemSufixo}@%`)
       .order('data_criacao', { ascending: true }),
   ])

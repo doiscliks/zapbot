@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getTenantId } from '@/lib/tenant-auth'
+import { getTenantId, getUsuarioId } from '@/lib/tenant-auth'
 
 function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
 }
 
 export async function GET(request: NextRequest) {
-  const userId = getTenantId(request)
+  const tenantId = getTenantId(request)
+  const userId = getUsuarioId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const supabase = getSupabase()
 
@@ -23,9 +24,9 @@ export async function GET(request: NextRequest) {
   const isAdmin = !usuario.parent_id
   const isAtendente = usuario.is_attendant
 
-  const secoesFetch = supabase.from('kanban_secoes').select('*').eq('user_id', userId).order('ordem', { ascending: true })
+  const secoesFetch = supabase.from('kanban_secoes').select('*').eq('user_id', tenantId).order('ordem', { ascending: true })
 
-  let clientesFetch = supabase.from('clientes').select('*').eq('user_id', userId).order('nome', { ascending: true }).limit(2000)
+  let clientesFetch = supabase.from('clientes').select('*').eq('user_id', tenantId).order('nome', { ascending: true }).limit(2000)
   if (!isAdmin && isAtendente) {
     clientesFetch = clientesFetch.eq('assigned_user_id', userId)
   }

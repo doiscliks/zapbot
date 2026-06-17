@@ -153,7 +153,14 @@ export default function MensagensPage() {
                   nova.numero_cliente === tel ||
                   nova.numero_cliente === `${tel}@s.whatsapp.net` ||
                   nova.numero_cliente.replace('@s.whatsapp.net', '') === tel
-                return match ? { ...c, ultima_mensagem: nova } : c
+                if (match) {
+                  return {
+                    ...c,
+                    ultima_mensagem: nova,
+                    nao_lido: atual ? false : true, // marca como não lido se não é o cliente aberto
+                  }
+                }
+                return c
               })
             )
           } else {
@@ -163,7 +170,7 @@ export default function MensagensPage() {
       )
       .subscribe()
 
-    // Polling de fallback a cada 5s se nenhuma mensagem nova chegou nos últimos 5s
+    // Polling de fallback a cada 5s
     const pollInterval = setInterval(() => {
       if (clienteSelecionadoRef.current) {
         carregarMensagens(clienteSelecionadoRef.current.telefone)
@@ -224,7 +231,7 @@ export default function MensagensPage() {
   }
 
   async function handleSelecionarCliente(cliente: ClienteComUltimaMensagem) {
-    setClienteSelecionado(cliente)
+    setClienteSelecionado({ ...cliente, nao_lido: false })
     setMensagens([])
     setHistorico(cliente.historico || [])
     setNovaNotaTexto('')
@@ -235,6 +242,10 @@ export default function MensagensPage() {
     } else {
       setNomeAtendente(null)
     }
+    // Marca mensagens como lidas na lista
+    setClientes((prev) =>
+      prev.map((c) => (c.id === cliente.id ? { ...c, nao_lido: false } : c))
+    )
     await carregarMensagens(cliente.telefone)
   }
 

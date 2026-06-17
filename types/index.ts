@@ -50,6 +50,7 @@ export interface MensagemWhatsapp {
 export interface ClienteComUltimaMensagem extends Cliente {
   ultima_mensagem?: MensagemWhatsapp | null
   assigned_user?: { id: string; nome: string } | null
+  nao_lido?: boolean
 }
 
 export interface KanbanSecao {

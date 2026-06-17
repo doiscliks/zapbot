@@ -268,15 +268,10 @@ export default function MensagensPage() {
           <div className="p-4">
             <h3 className="font-semibold text-gray-900 mb-4 text-sm">Informações do Cliente</h3>
 
-            {/* Avatar e Nome */}
-            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700">
-                {clienteSelecionado.nome.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="font-medium text-gray-900 text-sm">{clienteSelecionado.nome}</p>
-                <p className="text-xs text-gray-500">{clienteSelecionado.telefone}</p>
-              </div>
+            {/* Nome e Telefone */}
+            <div className="mb-4 pb-4 border-b border-gray-100">
+              <p className="font-medium text-gray-900 text-sm">{clienteSelecionado.nome}</p>
+              <p className="text-xs text-gray-500">{clienteSelecionado.telefone}</p>
             </div>
 
             {/* Telefone */}

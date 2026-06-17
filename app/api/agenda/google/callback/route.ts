@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   const supabase = getSupabase()
 
   // Atualiza apenas os tokens — nunca toca no slug ou outras configurações
-  await supabase
+  const { error: updateError, data: updateData } = await supabase
     .from('agenda_config')
     .update({
       google_access_token: tokens.access_token,
@@ -58,6 +58,20 @@ export async function GET(request: NextRequest) {
       updated_at: new Date().toISOString(),
     })
     .eq('user_id', userId)
+    .select()
+
+  console.log('[GOOGLE_CALLBACK] Update result:', { userId, updateError, updateDataCount: updateData?.length })
+
+  if (updateError) {
+    const msg = encodeURIComponent(`update_error: ${updateError.message}`)
+    return NextResponse.redirect(`${appUrl}/agenda/config?google=erro&msg=${msg}`)
+  }
+
+  if (!updateData || updateData.length === 0) {
+    console.log('[GOOGLE_CALLBACK] AVISO: nenhuma config encontrada para atualizar!', { userId })
+    const msg = encodeURIComponent('nenhuma_config_encontrada')
+    return NextResponse.redirect(`${appUrl}/agenda/config?google=erro&msg=${msg}`)
+  }
 
   return NextResponse.redirect(`${appUrl}/agenda/config?google=ok`)
 }

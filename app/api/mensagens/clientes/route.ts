@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
   const isAdmin = !usuario.parent_id // parent_id nulo = conta de topo (admin)
   const isAtendente = usuario.is_attendant
 
+  console.log('[MENSAGENS/CLIENTES] userId:', userId, 'isAdmin:', isAdmin, 'isAtendente:', isAtendente)
+
   let query = supabase
     .from('clientes')
     .select('*, assigned_user:assigned_user_id(id, nome)')
@@ -39,7 +41,12 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
     .order('dt_ultima_mensagem', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.log('[MENSAGENS/CLIENTES] Erro ao buscar:', error.message)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  console.log('[MENSAGENS/CLIENTES] Clientes encontrados:', data?.length ?? 0)
 
   // Deduplica por telefone (mantém o de maior id)
   const unicosPorTelefone: Record<string, Record<string, unknown>> = {}

@@ -45,9 +45,33 @@ export async function GET(request: NextRequest) {
   }
   const clientes = Object.values(unicosPorTelefone)
 
+  // Busca nomes dos atendentes associados
+  const assignedUserIds = new Set<string>()
+  for (const c of clientes) {
+    if (c.assigned_user_id) assignedUserIds.add(c.assigned_user_id as string)
+  }
+
+  const usuariosMap: Record<string, { nome: string }> = {}
+  if (assignedUserIds.size > 0) {
+    const { data: usuarios } = await supabase
+      .from('usuarios')
+      .select('id, nome')
+      .in('id', Array.from(assignedUserIds))
+
+    for (const u of usuarios ?? []) {
+      usuariosMap[u.id] = { nome: u.nome }
+    }
+  }
+
+  // Adiciona nome do atendente em cada cliente
+  const clientesComAtendente = clientes.map(c => ({
+    ...c,
+    nome_atendente: c.assigned_user_id ? usuariosMap[c.assigned_user_id as string]?.nome : null,
+  }))
+
   const porSecao: Record<string, unknown[]> = { sem_secao: [] }
   const porStatus: Record<string, unknown[]> = {}
-  for (const c of clientes) {
+  for (const c of clientesComAtendente) {
     const key = c.kanban_secao_id ? String(c.kanban_secao_id) : 'sem_secao'
     if (!porSecao[key]) porSecao[key] = []
     porSecao[key].push(c)

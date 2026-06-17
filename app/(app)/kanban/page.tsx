@@ -397,8 +397,8 @@ export default function KanbanPage() {
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{cliente.nome}</p>
                             <p className="text-xs text-gray-400 truncate">{cliente.cidade || cliente.telefone}</p>
-                            {(cliente as any).usuarios?.nome && (
-                              <p className="text-[10px] text-gray-500 truncate mt-1">👤 {(cliente as any).usuarios.nome}</p>
+                            {(cliente as any).nome_atendente && (
+                              <p className="text-[10px] text-gray-500 truncate mt-1">👤 {(cliente as any).nome_atendente}</p>
                             )}
                           </div>
                         </div>
@@ -440,8 +440,8 @@ export default function KanbanPage() {
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{cliente.nome}</p>
                             <p className="text-xs text-gray-400 truncate">{cliente.status_atual || 'sem status'}</p>
-                            {(cliente as any).usuarios?.nome && (
-                              <p className="text-[10px] text-gray-500 truncate mt-1">👤 {(cliente as any).usuarios.nome}</p>
+                            {(cliente as any).nome_atendente && (
+                              <p className="text-[10px] text-gray-500 truncate mt-1">👤 {(cliente as any).nome_atendente}</p>
                             )}
                           </div>
                         </div>
@@ -562,8 +562,8 @@ export default function KanbanPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">{cliente.nome}</p>
                           <p className="text-xs text-gray-400 truncate">{cliente.cidade || cliente.telefone}</p>
-                          {(cliente as any).usuarios?.nome && (
-                            <p className="text-[10px] text-gray-500 truncate mt-1">👤 {(cliente as any).usuarios.nome}</p>
+                          {(cliente as any).nome_atendente && (
+                            <p className="text-[10px] text-gray-500 truncate mt-1">👤 {(cliente as any).nome_atendente}</p>
                           )}
                         </div>
                       </div>

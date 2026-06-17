@@ -218,7 +218,7 @@ export default function MensagensPage() {
         </div>
       </div>
 
-      {/* Coluna direita — chat */}
+      {/* Coluna central — chat */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {erroMensagens && (
           <div className="flex items-center gap-2 bg-red-50 border-b border-red-200 text-red-700 px-4 py-2 text-xs">
@@ -235,6 +235,67 @@ export default function MensagensPage() {
           />
         </div>
       </div>
+
+      {/* Coluna direita — dados do cliente */}
+      {clienteSelecionado && (
+        <div className="w-80 border-l border-gray-200 bg-white overflow-y-auto shrink-0">
+          <div className="p-4">
+            <h3 className="font-semibold text-gray-900 mb-4 text-sm">Informações do Cliente</h3>
+
+            {/* Avatar e Nome */}
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700">
+                {clienteSelecionado.nome.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 text-sm">{clienteSelecionado.nome}</p>
+                <p className="text-xs text-gray-500">{clienteSelecionado.telefone}</p>
+              </div>
+            </div>
+
+            {/* Telefone */}
+            <div className="mb-3">
+              <p className="text-xs text-gray-500 mb-1">Telefone</p>
+              <p className="text-sm text-gray-900 font-medium">{clienteSelecionado.telefone}</p>
+            </div>
+
+            {/* Endereço */}
+            {clienteSelecionado.endereco && (
+              <div className="mb-3">
+                <p className="text-xs text-gray-500 mb-1">Endereço</p>
+                <p className="text-sm text-gray-900">{clienteSelecionado.endereco}</p>
+              </div>
+            )}
+
+            {/* Cidade */}
+            {clienteSelecionado.cidade && (
+              <div className="mb-3">
+                <p className="text-xs text-gray-500 mb-1">Cidade</p>
+                <p className="text-sm text-gray-900">{clienteSelecionado.cidade}</p>
+              </div>
+            )}
+
+            {/* Associado a */}
+            {clienteSelecionado.assigned_user_id && (
+              <div className="mb-3 pb-4 border-b border-gray-100">
+                <p className="text-xs text-gray-500 mb-1">Associado a</p>
+                <p className="text-sm text-gray-900 font-medium">👤 {clienteSelecionado.assigned_user_nome || 'Não atribuído'}</p>
+              </div>
+            )}
+
+            {/* Histórico */}
+            <div className="mt-4">
+              <p className="text-xs text-gray-500 mb-2 font-semibold">HISTÓRICO</p>
+              <div className="space-y-1 text-xs">
+                <p className="text-gray-600">📅 <span className="text-gray-500">Criado:</span> {new Date(clienteSelecionado.created_at || '').toLocaleDateString('pt-BR')}</p>
+                {clienteSelecionado.dt_ultima_mensagem && (
+                  <p className="text-gray-600">💬 <span className="text-gray-500">Última mensagem:</span> {new Date(clienteSelecionado.dt_ultima_mensagem).toLocaleDateString('pt-BR')}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

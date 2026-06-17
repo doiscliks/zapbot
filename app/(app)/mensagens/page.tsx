@@ -163,8 +163,17 @@ export default function MensagensPage() {
       )
       .subscribe()
 
+    // Polling de fallback a cada 5s se nenhuma mensagem nova chegou nos últimos 5s
+    const pollInterval = setInterval(() => {
+      if (clienteSelecionadoRef.current) {
+        carregarMensagens(clienteSelecionadoRef.current.telefone)
+      }
+      carregarClientes()
+    }, 5000)
+
     return () => {
       supabase.removeChannel(channel)
+      clearInterval(pollInterval)
     }
   }, [carregarClientes])
 

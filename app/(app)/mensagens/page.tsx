@@ -25,6 +25,16 @@ export default function MensagensPage() {
   const clientesRef = useRef<ClienteComUltimaMensagem[]>([])
   clientesRef.current = clientes
 
+  const carregarEtiquetas = useCallback(async () => {
+    try {
+      const res = await fetch('/api/etiquetas')
+      const data = await res.json()
+      setEtiquetas(Array.isArray(data) ? data : [])
+    } catch {
+      // Erro ao carregar etiquetas
+    }
+  }, [])
+
   const carregarClientes = useCallback(async () => {
     try {
       const res = await fetch('/api/mensagens/clientes')
@@ -37,10 +47,11 @@ export default function MensagensPage() {
     }
   }, [])
 
-  // Carregar lista de clientes
+  // Carregar lista de clientes e etiquetas
   useEffect(() => {
     carregarClientes()
-  }, [carregarClientes])
+    carregarEtiquetas()
+  }, [carregarClientes, carregarEtiquetas])
 
   // Sincroniza as fotos de perfil que faltam, em lotes, atualizando a lista a cada passo
   const sincronizarFotos = useCallback(async () => {
@@ -147,6 +158,10 @@ export default function MensagensPage() {
   const [erroMensagens, setErroMensagens] = useState<string | null>(null)
   const [historico, setHistorico] = useState<ClienteHistoricoItem[]>([])
   const [novaNotaTexto, setNovaNotaTexto] = useState('')
+  const [etiquetas, setEtiquetas] = useState<any[]>([])
+  const [etiquetasCliente, setEtiquetasCliente] = useState<any[]>([])
+  const [novaEtiquetaNome, setNovaEtiquetaNome] = useState('')
+  const [novaEtiquetaCor, setNovaEtiquetaCor] = useState('#3B82F6')
 
   async function carregarMensagens(telefone: string) {
     setLoadingMensagens(true)
@@ -197,6 +212,65 @@ export default function MensagensPage() {
     } catch {
       // Erro ao salvar, mas a anotação já foi adicionada localmente
     }
+  }
+
+  async function criarNovaEtiqueta() {
+    if (!novaEtiquetaNome.trim()) return
+    try {
+      const res = await fetch('/api/etiquetas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: novaEtiquetaNome, cor: novaEtiquetaCor }),
+      })
+      const novaEtiqueta = await res.json()
+      if (res.ok) {
+        setEtiquetas([...etiquetas, novaEtiqueta])
+        setNovaEtiquetaNome('')
+        // Adiciona ao cliente
+        if (clienteSelecionado) {
+          await adicionarEtiquetaAoCliente(novaEtiqueta.id)
+        }
+      }
+    } catch {
+      // Erro ao criar etiqueta
+    }
+  }
+
+  async function adicionarEtiquetaAoCliente(etiquetaId: string) {
+    if (!clienteSelecionado) return
+    try {
+      const res = await fetch('/api/clientes/etiquetas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clienteId: clienteSelecionado.id, etiquetaId }),
+      })
+      if (res.ok) {
+        await carregarEtiquetasCliente()
+      }
+    } catch {
+      // Erro ao adicionar etiqueta
+    }
+  }
+
+  async function removerEtiquetaDoCliente(etiquetaId: string) {
+    if (!clienteSelecionado) return
+    try {
+      await fetch('/api/clientes/etiquetas', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clienteId: clienteSelecionado.id, etiquetaId }),
+      })
+      await carregarEtiquetasCliente()
+    } catch {
+      // Erro ao remover etiqueta
+    }
+  }
+
+  async function carregarEtiquetasCliente() {
+    if (!clienteSelecionado) return
+    // Carrega etiquetas do cliente a partir do histórico ou estado
+    // Por enquanto, vamos simular com estado local
+    setEtiquetasCliente([])
   }
 
   function handleMensagemEnviada(msg: MensagemWhatsapp) {
@@ -303,6 +377,75 @@ export default function MensagensPage() {
                 <p className="text-sm text-gray-900 font-medium">👤 Atendente atribuído</p>
               </div>
             )}
+
+            {/* Etiquetas */}
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <p className="text-xs text-gray-500 mb-3 font-semibold">ETIQUETAS</p>
+
+              {/* Nova Etiqueta */}
+              <div className="mb-3 space-y-2">
+                <input
+                  type="text"
+                  placeholder="Nome da etiqueta..."
+                  value={novaEtiquetaNome}
+                  onChange={(e) => setNovaEtiquetaNome(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={novaEtiquetaCor}
+                    onChange={(e) => setNovaEtiquetaCor(e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer"
+                  />
+                  <button
+                    onClick={criarNovaEtiqueta}
+                    className="flex-1 px-3 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90"
+                    style={{ background: '#12C6D6' }}
+                  >
+                    Criar
+                  </button>
+                </div>
+              </div>
+
+              {/* Etiquetas Disponíveis */}
+              {etiquetas.length > 0 && (
+                <div className="mb-3 pb-3 border-b border-gray-100">
+                  <p className="text-xs text-gray-500 mb-2">Adicionar:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {etiquetas.map((etiq) => (
+                      <button
+                        key={etiq.id}
+                        onClick={() => adicionarEtiquetaAoCliente(etiq.id)}
+                        className="px-3 py-1 rounded-full text-xs text-white hover:opacity-90 transition-opacity"
+                        style={{ background: etiq.cor }}
+                      >
+                        + {etiq.nome}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Etiquetas do Cliente */}
+              {etiquetasCliente.length > 0 && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Associadas:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {etiquetasCliente.map((etiq) => (
+                      <button
+                        key={etiq.id}
+                        onClick={() => removerEtiquetaDoCliente(etiq.id)}
+                        className="px-3 py-1 rounded-full text-xs text-white hover:opacity-90 transition-opacity flex items-center gap-1"
+                        style={{ background: etiq.cor }}
+                      >
+                        {etiq.nome} ✕
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Histórico */}
             <div className="mt-4 border-t border-gray-100 pt-4">

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const isAdmin = !usuario.parent_id // parent_id nulo = conta de topo (admin)
   const isAtendente = usuario.is_attendant
 
-  console.log('[MENSAGENS/CLIENTES] userId:', userId, 'isAdmin:', isAdmin, 'isAtendente:', isAtendente)
+  console.log('[MENSAGENS/CLIENTES] userId:', userId, 'isAdmin:', isAdmin, 'isAtendente:', isAtendente, 'parent_id:', usuario.parent_id)
 
   let query = supabase
     .from('clientes')
@@ -32,9 +32,10 @@ export async function GET(request: NextRequest) {
 
   // Se não é admin: atendentes veem apenas clientes atribuídos a eles
   if (!isAdmin && isAtendente) {
+    console.log('[MENSAGENS/CLIENTES] Filtrando por assigned_user_id:', userId)
     query = query.eq('assigned_user_id', userId)
   } else if (isAdmin) {
-    // Admin vê todos os clientes
+    console.log('[MENSAGENS/CLIENTES] Admin - vendo todos')
   }
 
   const { data, error } = await query

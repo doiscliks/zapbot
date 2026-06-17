@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getTenantId, getUsuarioId } from '@/lib/tenant-auth'
+import { Cliente } from '@/types'
 
 function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Adiciona nome do atendente em cada cliente
-  const clientesComAtendente = clientes.map(c => ({
+  const clientesComAtendente: (Cliente & { nome_atendente: string | null })[] = (clientes as Cliente[]).map(c => ({
     ...c,
     nome_atendente: c.assigned_user_id ? usuariosMap[c.assigned_user_id as string]?.nome : null,
   }))

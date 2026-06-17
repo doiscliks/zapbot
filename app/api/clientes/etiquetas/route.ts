@@ -36,6 +36,8 @@ export async function POST(request: NextRequest) {
     .eq('id', userId)
     .single()
 
+  if (!usuario) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
+
   const isAdmin = !usuario.parent_id
   const isClienteDoAtendente = cliente.assigned_user_id === userId
   const isOwner = cliente.user_id === userId
@@ -88,6 +90,8 @@ export async function DELETE(request: NextRequest) {
     .select('parent_id')
     .eq('id', userId)
     .single()
+
+  if (!usuario) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
 
   const isAdmin = !usuario.parent_id
   const isClienteDoAtendente = cliente.assigned_user_id === userId

@@ -215,19 +215,25 @@ export default function MensagensPage() {
 
   async function trocarAtendente(novoAtendentId: string) {
     if (!clienteSelecionado) return
+    console.log('[MENSAGENS] Trocando atendente para:', novoAtendentId, 'Cliente:', clienteSelecionado.id)
     try {
       const res = await fetch(`/api/clientes/${clienteSelecionado.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assigned_user_id: novoAtendentId }),
       })
+      console.log('[MENSAGENS] Resposta:', res.status, res.ok)
       if (res.ok) {
         const atendente = atendentes.find((a: any) => a.id === novoAtendentId)
         setNomeAtendente(atendente?.nome || null)
         setClienteSelecionado({ ...clienteSelecionado, assigned_user_id: novoAtendentId })
+        console.log('[MENSAGENS] Atendente trocado com sucesso!')
+      } else {
+        const erro = await res.json()
+        console.log('[MENSAGENS] Erro ao trocar:', erro)
       }
-    } catch {
-      // Erro ao trocar atendente
+    } catch (e) {
+      console.log('[MENSAGENS] Exceção ao trocar atendente:', e)
     }
   }
 

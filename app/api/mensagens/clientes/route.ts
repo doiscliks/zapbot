@@ -27,15 +27,17 @@ export async function GET(request: NextRequest) {
     .from('clientes')
     .select('*, assigned_user:assigned_user_id(id, nome)')
     .eq('user_id', userId)
-    .not('dt_ultima_mensagem', 'is', null)
 
-  // Se não é admin: atendentes veem apenas conversas atribuídas a eles
+  // Se não é admin: atendentes veem apenas conversas atribuídas a eles (e com mensagens)
   if (!isAdmin && isAtendente) {
-    query = query.eq('assigned_user_id', userId)
+    query = query.eq('assigned_user_id', userId).not('dt_ultima_mensagem', 'is', null)
+  } else if (isAdmin) {
+    // Admin vê todos os clientes, mas prioriza os com mensagens
+    // (não filtra por dt_ultima_mensagem, só ordena)
   }
 
   const { data, error } = await query
-    .order('dt_ultima_mensagem', { ascending: false })
+    .order('dt_ultima_mensagem', { ascending: false, nullsFirst: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

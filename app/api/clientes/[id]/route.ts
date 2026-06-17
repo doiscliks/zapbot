@@ -57,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const campos: Record<string, unknown> = {}
 
   // Campos permitidos para atualização
-  const camposPermitidos = ['email', 'cpf_cnpj', 'empresa', 'endereco', 'cidade', 'numero_endereco', 'complemento', 'bairro', 'cep', 'cargo', 'notas', 'data_nascimento', 'ia_desabilitada', 'historico']
+  const camposPermitidos = ['email', 'cpf_cnpj', 'empresa', 'endereco', 'cidade', 'numero_endereco', 'complemento', 'bairro', 'cep', 'cargo', 'notas', 'data_nascimento', 'ia_desabilitada', 'historico', 'assigned_user_id']
   for (const campo of camposPermitidos) {
     if (campo in body) campos[campo] = body[campo]
   }

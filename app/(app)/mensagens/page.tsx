@@ -192,15 +192,6 @@ export default function MensagensPage() {
   }, [busca, clientes])
 
   const [erroMensagens, setErroMensagens] = useState<string | null>(null)
-  const [historico, setHistorico] = useState<ClienteHistoricoItem[]>([])
-  const [novaNotaTexto, setNovaNotaTexto] = useState('')
-  const [etiquetas, setEtiquetas] = useState<any[]>([])
-  const [etiquetasCliente, setEtiquetasCliente] = useState<any[]>([])
-  const [novaEtiquetaNome, setNovaEtiquetaNome] = useState('')
-  const [novaEtiquetaCor, setNovaEtiquetaCor] = useState('#3B82F6')
-  const [atendentes, setAtendentes] = useState<any[]>([])
-  const [nomeAtendente, setNomeAtendente] = useState<string | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
 
   async function carregarMensagens(telefone: string) {
     setLoadingMensagens(true)

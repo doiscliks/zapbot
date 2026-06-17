@@ -4,19 +4,19 @@
 export const SCREENS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'mensagens', label: 'Mensagens' },
-  { key: 'disparos', label: 'Disparos' },
-  { key: 'remarketing', label: 'Remarketing' },
-  { key: 'fluxos', label: 'Fluxos' },
   { key: 'kanban', label: 'Kanban' },
   { key: 'agenda', label: 'Agenda' },
+  { key: 'clientes', label: 'Clientes' },
+  { key: 'remarketing', label: 'Remarketing' },
+  { key: 'fluxos', label: 'Fluxos' },
+  { key: 'disparos', label: 'Disparos' },
   { key: 'funil', label: 'Funil' },
   { key: 'ads', label: 'Ads' },
   { key: 'treinamento', label: 'Treinamento' },
-  { key: 'grupos', label: 'Grupos' },
   { key: 'conexao', label: 'Conexão' },
-  { key: 'configuracoes', label: 'Configurações' },
+  { key: 'grupos', label: 'Grupos' },
   { key: 'usuarios', label: 'Usuários' },
-  { key: 'clientes', label: 'Clientes' },
+  { key: 'configuracoes', label: 'Configurações' },
 ] as const
 
 export type ScreenKey = (typeof SCREENS)[number]['key']

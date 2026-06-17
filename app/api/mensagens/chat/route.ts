@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getTenantId } from '@/lib/tenant-auth'
+import { getUsuarioId } from '@/lib/tenant-auth'
 
 function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
 }
 
 export async function GET(request: NextRequest) {
-  const userId = getTenantId(request)
+  const userId = getUsuarioId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const telefone = request.nextUrl.searchParams.get('telefone') || ''

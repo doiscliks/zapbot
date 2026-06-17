@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getTenantId } from '@/lib/tenant-auth'
+import { getUsuarioId } from '@/lib/tenant-auth'
 import { readConfig } from '@/lib/config-server'
 import { getUazapiBase, buscarFotoPerfil } from '@/lib/uazapi'
 
@@ -12,7 +12,7 @@ const LOTE = 20
 
 // Busca a foto de perfil dos clientes que ainda não têm uma (em lotes).
 export async function POST(request: NextRequest) {
-  const userId = getTenantId(request)
+  const userId = getUsuarioId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabase = getSupabase()

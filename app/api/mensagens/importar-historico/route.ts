@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getTenantId } from '@/lib/tenant-auth'
+import { getUsuarioId } from '@/lib/tenant-auth'
 import { readConfig } from '@/lib/config-server'
 
 function getSupabase() {
@@ -19,7 +19,7 @@ function extrairTexto(msg: Record<string, unknown>): string {
 }
 
 export async function POST(request: NextRequest) {
-  const userId = getTenantId(request)
+  const userId = getUsuarioId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { telefone } = await request.json()

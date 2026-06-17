@@ -135,16 +135,17 @@ export async function POST(request: NextRequest) {
 
       if (!usuario?.parent_id) break
 
-      const { data: configPai } = await supabase
+      const { data: configsPai } = await supabase
         .from('agenda_config')
         .select('*')
         .eq('user_id', usuario.parent_id)
         .eq('ativo', true)
-        .single()
+        .not('google_access_token', 'is', null)
+        .limit(1)
 
-      if (configPai?.google_access_token) {
+      if (Array.isArray(configsPai) && configsPai.length > 0) {
         console.log(`[AGENDAR] Encontrado Google na árvore (nível ${depth + 1})`)
-        configGoogle = configPai
+        configGoogle = configsPai[0]
         break
       }
 

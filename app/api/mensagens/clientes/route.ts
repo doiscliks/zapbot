@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getUsuarioId } from '@/lib/tenant-auth'
+import { getTenantId, getUsuarioId } from '@/lib/tenant-auth'
 
 function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
 }
 
 export async function GET(request: NextRequest) {
-  const userId = getUsuarioId(request)
+  const tenantId = getTenantId(request) // Dono do workspace
+  const userId = getUsuarioId(request)  // Usuário logado
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const supabase = getSupabase()
 
-  // Verifica se o usuário é admin (parent_id nulo) ou atendente
+  // Verifica se o usuário é admin (sem parent_id) ou atendente
   const { data: usuario } = await supabase
     .from('usuarios')
     .select('parent_id, is_attendant')
@@ -20,22 +22,17 @@ export async function GET(request: NextRequest) {
 
   if (!usuario) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const isAdmin = !usuario.parent_id // parent_id nulo = conta de topo (admin)
+  const isAdmin = !usuario.parent_id
   const isAtendente = usuario.is_attendant
-
-  console.log('[MENSAGENS/CLIENTES] userId:', userId, 'isAdmin:', isAdmin, 'isAtendente:', isAtendente, 'parent_id:', usuario.parent_id)
 
   let query = supabase
     .from('clientes')
     .select('*')
-    .eq('user_id', userId)
+    .eq('user_id', tenantId) // Sempre filtra por workspace owner
 
-  // Se não é admin: atendentes veem apenas clientes atribuídos a eles
+  // Se é atendente: vê apenas seus clientes
   if (!isAdmin && isAtendente) {
-    console.log('[MENSAGENS/CLIENTES] Filtrando por assigned_user_id:', userId)
     query = query.eq('assigned_user_id', userId)
-  } else if (isAdmin) {
-    console.log('[MENSAGENS/CLIENTES] Admin - vendo todos')
   }
 
   const { data, error } = await query

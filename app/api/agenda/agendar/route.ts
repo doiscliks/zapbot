@@ -118,6 +118,31 @@ export async function POST(request: NextRequest) {
 
   console.log('[AGENDAR] Config encontrada:', { slug, user_id: config.user_id, titulo: config.titulo })
 
+  // Se não tem Google conectado, procura na árvore (no pai)
+  let configGoogle = config
+  if (!config.google_access_token) {
+    console.log('[AGENDAR] Usuário sem Google, procurando na árvore...')
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('parent_id')
+      .eq('id', config.user_id)
+      .single()
+
+    if (usuario?.parent_id) {
+      const { data: configPai } = await supabase
+        .from('agenda_config')
+        .select('*')
+        .eq('user_id', usuario.parent_id)
+        .eq('ativo', true)
+        .single()
+
+      if (configPai?.google_access_token) {
+        console.log('[AGENDAR] Encontrado Google na árvore (pai)')
+        configGoogle = configPai
+      }
+    }
+  }
+
   // Verifica se o slot ainda está disponível
   const [sh, sm] = hora.split(':').map(Number)
   const dataHoraInicio = new Date(`${data}T${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}:00-03:00`)
@@ -159,18 +184,18 @@ export async function POST(request: NextRequest) {
   let googleErro: string | null = null
 
   // Cria evento no Google Calendar
-  console.log('[MEET] google_access_token presente?', !!config.google_access_token)
-  console.log('[MEET] google_calendar_id?', config.google_calendar_id)
+  console.log('[MEET] google_access_token presente?', !!configGoogle.google_access_token)
+  console.log('[MEET] google_calendar_id?', configGoogle.google_calendar_id)
 
-  if (config.google_access_token) {
+  if (configGoogle.google_access_token) {
     try {
       console.log('[MEET] Token presente, validando...')
-      const accessToken = await getAccessToken(config)
+      const accessToken = await getAccessToken(configGoogle)
       console.log('[MEET] Access token após validação?', !!accessToken)
 
       if (accessToken) {
         console.log('[MEET] Criando evento no Google Calendar...')
-        const evento = await criarEventoCalendar(accessToken, config.google_calendar_id, {
+        const evento = await criarEventoCalendar(accessToken, configGoogle.google_calendar_id, {
           titulo: config.titulo,
           nome: nome.trim(),
           email: email?.trim() || null,

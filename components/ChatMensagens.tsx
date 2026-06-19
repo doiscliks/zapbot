@@ -41,6 +41,7 @@ function formatarDataHora(dateStr: string) {
 export default function ChatMensagens({ cliente, mensagens, loading, onMensagemEnviada }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [texto, setTexto] = useState('')
   const [errosPorId, setErrosPorId] = useState<Record<number, string>>({})
   const [statusPorId, setStatusPorId] = useState<Record<number, string>>({})
@@ -51,6 +52,7 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
   const [salvandoIa, setSalvandoIa] = useState(false)
   const [importandoHistorico, setImportandoHistorico] = useState(false)
   const [feedbackImport, setFeedbackImport] = useState<string | null>(null)
+  const [estaNoFinal, setEstaNoFinal] = useState(true)
 
   useEffect(() => {
     getSecoes().then(setSecoes).catch(() => {})
@@ -112,9 +114,19 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
     }
   }
 
+  // Detecta se usuário está no final da conversa
+  const handleScroll = () => {
+    if (!containerRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current
+    setEstaNoFinal(scrollHeight - scrollTop - clientHeight < 50)
+  }
+
+  // Scroll automático apenas se estiver no final
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [mensagens])
+    if (estaNoFinal) {
+      bottomRef.current?.scrollIntoView({ behavior: 'auto' })
+    }
+  }, [mensagens, estaNoFinal])
 
   async function enviarMensagem(mensagemTexto: string, msgId: number) {
     if (!cliente) return
@@ -265,7 +277,10 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
       )}
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 space-y-3 bg-[#f0f2f5]">
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 space-y-3 bg-[#f0f2f5]">
         {loading && (
           <div className="flex items-center justify-center py-10">
             <Loader2 size={24} className="animate-spin text-gray-400" />

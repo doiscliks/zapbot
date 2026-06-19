@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
   const telefone = request.nextUrl.searchParams.get('telefone') || ''
   if (!telefone) return NextResponse.json({ error: 'telefone obrigatório' }, { status: 400 })
 
+  console.log('[CHAT] Buscando mensagens:', { tenantId, userId, telefone })
+
   const supabase = getSupabase()
   const telefoneSemSufixo = telefone.split('@')[0]
 
@@ -58,7 +60,16 @@ export async function GET(request: NextRequest) {
       .order('data_criacao', { ascending: true }),
   ])
 
-  if (semSufixo.error) return NextResponse.json({ error: semSufixo.error.message }, { status: 500 })
+  if (semSufixo.error) {
+    console.log('[CHAT] Erro semSufixo:', semSufixo.error)
+    return NextResponse.json({ error: semSufixo.error.message }, { status: 500 })
+  }
+
+  console.log('[CHAT] Resultados:', {
+    telefoneSemSufixo,
+    semSufixoCount: semSufixo.data?.length ?? 0,
+    comSufixoCount: comSufixo.data?.length ?? 0,
+  })
 
   const ids = new Set<string>()
   const todasMensagens = [...(semSufixo.data ?? []), ...(comSufixo.data ?? [])]
@@ -69,5 +80,6 @@ export async function GET(request: NextRequest) {
     })
     .sort((a, b) => new Date(a.data_criacao).getTime() - new Date(b.data_criacao).getTime())
 
+  console.log('[CHAT] Total de mensagens retornadas:', todasMensagens.length)
   return NextResponse.json(todasMensagens)
 }

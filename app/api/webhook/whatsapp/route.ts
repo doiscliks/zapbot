@@ -408,6 +408,8 @@ export async function POST(request: NextRequest) {
   if (userId) clienteQuery.eq('user_id', userId)
   const { data: clienteExistente } = await clienteQuery.maybeSingle()
 
+  console.log('[WEBHOOK] Cliente encontrado:', { telefone, clienteExistente: !!clienteExistente, ia_desabilitada: clienteExistente?.ia_desabilitada })
+
   let clienteId: number | null = clienteExistente?.id ?? null
 
   if (clienteExistente) {

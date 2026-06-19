@@ -475,30 +475,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (clienteExistente?.ia_desabilitada) {
-    console.log('[WEBHOOK] IA desabilitada, salvando mensagem:', { telefone, userId, temUserId: !!userId })
-    await log(supabase, '3_ia_desabilitada', { telefone, userId })
-
-    const msgInsert = {
-      numero_cliente: telefone,
-      mensagem: texto || (isAudio ? '[Áudio]' : isImage ? '[Imagem]' : ''),
-      quem_mandou: 'cliente' as const,
-      status: 'recebida' as const,
-      message_id: (msg.messageid as string) || null,
-      data_criacao: new Date().toISOString(),
-    }
-
-    // Garante que userId seja incluído se disponível
-    if (userId) {
-      Object.assign(msgInsert, { user_id: userId })
-    }
-
-    const { error: insertErr } = await supabase.from('mensagens_whatsapp').insert(msgInsert)
-    console.log('[WEBHOOK] Insert com IA desabilitada:', { erro: !!insertErr, code: insertErr?.code })
-    return NextResponse.json({ ok: true })
-  }
-
-  // 3. Deduplicação por message_id
+  // 3. Deduplicação por message_id (fazer antes de qualquer insert)
   const messageId = (msg.messageid as string) || null
   if (messageId) {
     const { data: jaExiste } = await supabase
@@ -507,10 +484,39 @@ export async function POST(request: NextRequest) {
       .eq('message_id', messageId)
       .maybeSingle()
     if (jaExiste) {
+      console.log('[WEBHOOK] Webhook duplicado detectado:', { messageId })
       await log(supabase, '3_webhook_duplicado', { messageId })
       return NextResponse.json({ ok: true })
     }
   }
+
+  if (clienteExistente?.ia_desabilitada) {
+    console.log('[WEBHOOK] IA desabilitada, salvando mensagem:', { telefone, userId, temUserId: !!userId, messageId })
+    await log(supabase, '3_ia_desabilitada', { telefone, userId, messageId })
+
+    const msgInsert: Record<string, unknown> = {
+      numero_cliente: telefone,
+      mensagem: texto || (isAudio ? '[Áudio]' : isImage ? '[Imagem]' : ''),
+      quem_mandou: 'cliente',
+      status: 'recebida',
+      data_criacao: new Date().toISOString(),
+    }
+
+    if (messageId) msgInsert.message_id = messageId
+    if (userId) msgInsert.user_id = userId
+
+    console.log('[WEBHOOK] Tentando inserir:', msgInsert)
+
+    const { error: insertErr, data: insertData } = await supabase.from('mensagens_whatsapp').insert(msgInsert).select()
+    console.log('[WEBHOOK] Resultado insert:', { erro: !!insertErr, code: insertErr?.code, message: insertErr?.message, data: !!insertData })
+
+    if (insertErr) {
+      await log(supabase, '3_ia_desabilitada_erro_insert', { error: insertErr.message, code: insertErr.code })
+    }
+
+    return NextResponse.json({ ok: true })
+  }
+
 
   // 4. Carrega config (necessário antes de baixar mídia)
   const [config, tenantConfig] = await Promise.all([

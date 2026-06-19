@@ -468,15 +468,25 @@ export async function POST(request: NextRequest) {
   }
 
   if (clienteExistente?.ia_desabilitada) {
-    await log(supabase, '3_ia_desabilitada', { telefone })
-    await supabase.from('mensagens_whatsapp').insert({
+    console.log('[WEBHOOK] IA desabilitada, salvando mensagem:', { telefone, userId, temUserId: !!userId })
+    await log(supabase, '3_ia_desabilitada', { telefone, userId })
+
+    const msgInsert = {
       numero_cliente: telefone,
       mensagem: texto || (isAudio ? '[Áudio]' : isImage ? '[Imagem]' : ''),
-      quem_mandou: 'cliente',
-      status: 'recebida',
+      quem_mandou: 'cliente' as const,
+      status: 'recebida' as const,
       message_id: (msg.messageid as string) || null,
-      ...(userId ? { user_id: userId } : {}),
-    })
+      data_criacao: new Date().toISOString(),
+    }
+
+    // Garante que userId seja incluído se disponível
+    if (userId) {
+      Object.assign(msgInsert, { user_id: userId })
+    }
+
+    const { error: insertErr } = await supabase.from('mensagens_whatsapp').insert(msgInsert)
+    console.log('[WEBHOOK] Insert com IA desabilitada:', { erro: !!insertErr, code: insertErr?.code })
     return NextResponse.json({ ok: true })
   }
 

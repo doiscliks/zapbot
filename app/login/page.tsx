@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Loader2, Mail, Lock, Key, AlertCircle, User, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 
-type Tab = 'entrar' | 'cadastrar'
 type Step = 'auth' | 'chave'
 
 const inputClass =
@@ -15,7 +14,6 @@ const inputStyle = {
 } as React.CSSProperties
 
 export default function LoginPage() {
-  const [tab, setTab] = useState<Tab>('entrar')
   const [step, setStep] = useState<Step>('auth')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -29,18 +27,9 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErro(null)
-    setInfo(null)
     setLoading(true)
 
-    if (tab === 'cadastrar') {
-      const { error } = await supabase.auth.signUp({ email, password: senha })
-      if (error) { setErro(error.message); setLoading(false); return }
-      setInfo('Cadastro realizado! Verifique seu email para confirmar a conta.')
-      setLoading(false)
-      return
-    }
-
-    // 1) Tenta login de sub-usuário (email+senha próprios). Conta de topo cai no Supabase Auth.
+    // Tenta login de sub-usuário (email+senha próprios). Conta de topo cai no Supabase Auth.
     const subRes = await fetch('/api/tenant/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -230,38 +219,7 @@ export default function LoginPage() {
               </button>
             </form>
           ) : (
-            <>
-              {/* ── Tabs ── */}
-              <div
-                className="flex rounded-xl p-1 mb-6"
-                style={{ backgroundColor: '#F0FAFB' }}
-              >
-                {(['entrar', 'cadastrar'] as Tab[]).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => { setTab(t); setErro(null); setInfo(null) }}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
-                      tab === t ? 'bg-white shadow-sm' : 'hover:text-gray-700'
-                    }`}
-                    style={{
-                      color: tab === t ? '#1F2937' : '#9CA3AF',
-                      boxShadow: tab === t ? '0 1px 4px rgba(18,198,214,0.1)' : undefined,
-                    }}
-                  >
-                    {t === 'entrar' ? 'Entrar' : 'Criar conta'}
-                  </button>
-                ))}
-              </div>
-
-              {info ? (
-                <div
-                  className="text-sm px-4 py-3 rounded-xl text-center"
-                  style={{ backgroundColor: '#E8F9FB', color: '#0FBDCC', border: '1px solid rgba(18,198,214,0.2)' }}
-                >
-                  {info}
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
                       Email
@@ -319,11 +277,9 @@ export default function LoginPage() {
                     ) : (
                       <ArrowRight size={17} />
                     )}
-                    {loading ? 'Aguarde...' : tab === 'entrar' ? 'Entrar na plataforma' : 'Criar conta'}
+                    {loading ? 'Aguarde...' : 'Entrar na plataforma'}
                   </button>
-                </form>
-              )}
-            </>
+            </form>
           )}
         </div>
 

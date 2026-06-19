@@ -22,6 +22,7 @@ function extrairTexto(mensagem: string): string | null {
       const obj = JSON.parse(texto)
       return obj?.text?.trim() || obj?.caption?.trim() || null
     } catch {
+      console.log('[CHAT] Erro ao parse JSON:', texto.slice(0, 100))
       return null
     }
   }
@@ -291,6 +292,8 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
           const visiveis = mensagens
             .map((msg) => ({ msg, texto: extrairTexto(msg.mensagem) }))
             .filter(({ texto }) => texto !== null)
+
+          console.log('[CHAT] Renderizando:', { totalMensagens: mensagens.length, visiveis: visiveis.length })
 
           if (mensagens.length === 0 || visiveis.length === 0) {
             return (

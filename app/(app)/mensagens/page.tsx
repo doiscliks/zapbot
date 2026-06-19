@@ -170,16 +170,8 @@ export default function MensagensPage() {
       )
       .subscribe()
 
-    // Polling de fallback apenas para o chat aberto a cada 5s
-    const pollInterval = setInterval(() => {
-      if (clienteSelecionadoRef.current) {
-        carregarMensagens(clienteSelecionadoRef.current.telefone)
-      }
-    }, 5000)
-
     return () => {
       supabase.removeChannel(channel)
-      clearInterval(pollInterval)
     }
   }, [carregarClientes])
 

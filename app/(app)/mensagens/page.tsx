@@ -170,12 +170,11 @@ export default function MensagensPage() {
       )
       .subscribe()
 
-    // Polling de fallback a cada 5s
+    // Polling de fallback apenas para o chat aberto a cada 5s
     const pollInterval = setInterval(() => {
       if (clienteSelecionadoRef.current) {
         carregarMensagens(clienteSelecionadoRef.current.telefone)
       }
-      carregarClientes()
     }, 5000)
 
     return () => {

@@ -229,6 +229,21 @@ async function sincronizarHistorico(
   }
 }
 
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const mode = searchParams.get('hub.mode')
+  const challenge = searchParams.get('hub.challenge')
+  const verifyToken = searchParams.get('hub.verify_token')
+
+  const token = process.env.NEXT_PUBLIC_SUPABASE_URL || 'zapbot_webhook_token'
+
+  if (mode === 'subscribe' && verifyToken === token && challenge) {
+    return new NextResponse(challenge, { status: 200 })
+  }
+
+  return NextResponse.json({ error: 'Invalid token' }, { status: 403 })
+}
+
 export async function POST(request: NextRequest) {
   const supabase = getSupabase()
 

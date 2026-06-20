@@ -104,17 +104,6 @@ export async function atribuirClienteAAtendente(
 ): Promise<{ atendido: boolean; atendente?: AtendentInfo }> {
   console.log('[ATRIBUICAO] Iniciando atribuição de cliente:', { clienteId, clienteNome, clienteTelefone, workspaceAdminId })
 
-  // Salva log no banco para debug
-  await supabase.from('webhook_debug').insert({
-    payload: JSON.stringify({
-      step: 'atribuicao_iniciada',
-      clienteId,
-      clienteNome,
-      clienteTelefone,
-      workspaceAdminId,
-    }),
-  }).catch(() => {})
-
   // Busca atendentes ativos
   const atendentes = await buscarAtendentesAtivos(supabase, workspaceAdminId)
 
@@ -151,18 +140,6 @@ export async function atribuirClienteAAtendente(
     `[ATRIBUICAO] ✅ Conversa atribuída automaticamente ao atendente: ${atendenteFull?.nome} (${atendente}) | Cliente: ${clienteNome} (${clienteTelefone})`
   )
   console.log(`[ATENDENTE VINCULADO] ${clienteTelefone} → ${atendenteFull?.nome}`)
-
-  // Salva log no banco
-  await supabase.from('webhook_debug').insert({
-    payload: JSON.stringify({
-      step: 'atribuicao_sucesso',
-      clienteId,
-      clienteNome,
-      clienteTelefone,
-      atendenteSelecionado: atendenteFull?.nome,
-      atendenteSelecionadoId: atendente,
-    }),
-  }).catch(() => {})
 
   return {
     atendido: true,

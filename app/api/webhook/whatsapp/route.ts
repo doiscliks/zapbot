@@ -474,7 +474,7 @@ export async function POST(request: NextRequest) {
 
   const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && !!clienteId && !!workspaceAdminId
 
-  console.log('[WEBHOOK] === ATRIBUICAO === Verificando:', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temWorkspace: !!workspaceAdminId, userId, workspaceAdminId })
+  console.log('[WEBHOOK] === ATRIBUICAO === precisaAtribuir:', precisaAtribuir, '| isNovoCliente:', isNovoCliente, '| clienteSemAtendente:', clienteSemAtendente, '| clienteId:', clienteId, '| workspaceAdminId:', workspaceAdminId)
 
   try {
     await log(supabase, '1a_verificacao_atribuicao', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, clienteId, workspaceAdminId })
@@ -483,6 +483,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (precisaAtribuir && clienteId !== null && workspaceAdminId) {
+    console.log('[WEBHOOK] ✅ ENTRANDO NO IF DE ATRIBUICAO')
     try {
       await log(supabase, '1a_distribuicao_iniciando', { clienteId, isNovoCliente, clienteSemAtendente, workspaceAdminId })
       console.log('[WEBHOOK] Iniciando atribuição automática:', { clienteId, isNovoCliente, clienteSemAtendente, workspaceAdminId })

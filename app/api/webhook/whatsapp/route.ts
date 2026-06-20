@@ -461,16 +461,9 @@ export async function POST(request: NextRequest) {
   console.log('[WEBHOOK] Após upsert, antes de atribuir:', { clienteId, isNovoCliente, clienteSemAtendente, userId, temClienteId: !!clienteId })
 
   // 1a. Distribuição automática para atendentes
-  // Resolve o workspace admin ID a partir do userId
-  let workspaceAdminId: string | null = null
-  if (userId) {
-    const { data: usuario } = await supabase
-      .from('usuarios')
-      .select('parent_id')
-      .eq('id', userId)
-      .maybeSingle()
-    workspaceAdminId = usuario?.parent_id ?? userId
-  }
+  // O userId já é o admin ou um atendente do admin
+  // Se vem do webhook, já é confiável
+  const workspaceAdminId = userId
 
   const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && !!clienteId && !!workspaceAdminId
 

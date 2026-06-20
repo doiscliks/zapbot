@@ -34,6 +34,34 @@ export default function MensagensPage() {
   const clientesRef = useRef<ClienteComUltimaMensagem[]>([])
   clientesRef.current = clientes
 
+  // Polling rápido para atualizar mensagens quando conversa está aberta
+  useEffect(() => {
+    if (!clienteSelecionado) return
+
+    const intervalo = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/mensagens/chat?telefone=${encodeURIComponent(clienteSelecionado.telefone)}`)
+        if (!res.ok) return
+        const novasMsgs = await res.json()
+        if (!Array.isArray(novasMsgs)) return
+
+        // Verifica se há novas mensagens comparando com as atuais
+        setMensagens((prev) => {
+          // Se a quantidade de mensagens mudou, há algo novo
+          if (novasMsgs.length > prev.length) {
+            console.log('[POLLING] Nova mensagem detectada:', novasMsgs.length, 'vs', prev.length)
+            return novasMsgs
+          }
+          return prev
+        })
+      } catch (e) {
+        console.log('[POLLING] Erro ao polling:', e)
+      }
+    }, 2000) // A cada 2 segundos
+
+    return () => clearInterval(intervalo)
+  }, [clienteSelecionado])
+
   const carregarAtendentes = useCallback(async () => {
     try {
       const res = await fetch('/api/usuarios')

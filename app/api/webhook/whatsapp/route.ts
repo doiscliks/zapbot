@@ -424,13 +424,17 @@ export async function POST(request: NextRequest) {
       .update({ dt_ultima_mensagem: new Date().toISOString(), instancia_id: instanciaToken })
       .eq('id', clienteExistente.id)
   } else {
-    const { data: novoCliente } = await supabase.from('clientes').insert({
+    const { data: novoCliente, error: erroInsert } = await supabase.from('clientes').insert({
       nome: pushName || telefone,
       telefone,
       instancia_id: instanciaToken,
       dt_ultima_mensagem: new Date().toISOString(),
       ...(userId ? { user_id: userId } : {}),
     }).select('id').single()
+    if (erroInsert) {
+      console.error('[WEBHOOK] Erro ao criar cliente:', erroInsert)
+      await log(supabase, '1_erro_ao_criar_cliente', { error: String(erroInsert), telefone })
+    }
     clienteId = novoCliente?.id ?? null
   }
 

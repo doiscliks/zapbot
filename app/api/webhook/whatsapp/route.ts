@@ -459,11 +459,16 @@ export async function POST(request: NextRequest) {
   }
 
   console.log('[WEBHOOK] Após upsert, antes de atribuir:', { clienteId, isNovoCliente, clienteSemAtendente, userId, temClienteId: !!clienteId })
+  console.log('[DEBUG] userId VALUE:', userId)
+  console.log('[DEBUG] isNovoCliente:', isNovoCliente)
+  console.log('[DEBUG] clienteSemAtendente:', clienteSemAtendente)
+  console.log('[DEBUG] clienteId:', clienteId)
 
   // 1a. Distribuição automática para atendentes
   // O userId já é o admin ou um atendente do admin
   // Se vem do webhook, já é confiável
   const workspaceAdminId = userId
+  console.log('[DEBUG] workspaceAdminId:', workspaceAdminId)
 
   const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && !!clienteId && !!workspaceAdminId
 

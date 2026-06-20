@@ -442,8 +442,13 @@ export async function POST(request: NextRequest) {
   // Atribui se: é novo cliente OU cliente já existe mas não tem atendente
   const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && !!clienteId && !!userId
 
-  console.log('[WEBHOOK] Verificando necessidade de atribuição:', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId })
-  await log(supabase, '1a_verificacao_atribuicao', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, clienteId, userId })
+  console.log('[WEBHOOK] === INICIO ATRIBUICAO === Verificando necessidade:', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, clienteId, userId })
+
+  try {
+    await log(supabase, '1a_verificacao_atribuicao', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, clienteId, userId })
+  } catch (logError) {
+    console.error('[WEBHOOK] Erro ao logar 1a_verificacao_atribuicao:', logError)
+  }
 
   if (precisaAtribuir && clienteId && userId) {
     try {

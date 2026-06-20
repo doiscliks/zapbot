@@ -13,23 +13,30 @@ export async function buscarAtendentesAtivos(
   supabase: SupabaseClient,
   workspaceAdminId: string
 ): Promise<AtendentInfo[]> {
+  console.log('[ATENDENTES] Buscando atendentes para workspace:', workspaceAdminId)
+
   const { data, error } = await supabase
     .from('usuarios')
-    .select('id, nome')
+    .select('id, nome, is_attendant, ativo, parent_id')
     .eq('parent_id', workspaceAdminId)
     .eq('is_attendant', true)
     .eq('ativo', true)
     .order('nome', { ascending: true })
 
+  console.log('[ATENDENTES] Query result:', { error, data, dataLength: data?.length })
+
   if (error) {
-    console.error('Erro ao buscar atendentes:', error)
+    console.error('[ATENDENTES] Erro ao buscar atendentes:', error)
     return []
   }
 
-  return (data ?? []).map(u => ({
+  const atendentes = (data ?? []).map(u => ({
     id: u.id,
     nome: u.nome,
   }))
+
+  console.log('[ATENDENTES] Atendentes encontrados:', atendentes)
+  return atendentes
 }
 
 /**
@@ -93,21 +100,27 @@ export async function atribuirClienteAAtendente(
   clienteNome: string,
   clienteTelefone: string
 ): Promise<{ atendido: boolean; atendente?: AtendentInfo }> {
+  console.log('[ATRIBUICAO] Iniciando atribuição de cliente:', { clienteId, clienteNome, clienteTelefone, workspaceAdminId })
+
   // Busca atendentes ativos
   const atendentes = await buscarAtendentesAtivos(supabase, workspaceAdminId)
 
   if (atendentes.length === 0) {
-    console.log(`[Distribuição] Nenhum atendente ativo para workspace ${workspaceAdminId}`)
+    console.log(`[ATRIBUICAO] ❌ Nenhum atendente ativo para workspace ${workspaceAdminId}`)
     return { atendido: false }
   }
+
+  console.log(`[ATRIBUICAO] ✓ Encontrados ${atendentes.length} atendentes`)
 
   // Distribui via round-robin
   const atendente = await distribuirAtendente(supabase, workspaceAdminId, atendentes)
 
   if (!atendente) {
-    console.log(`[Distribuição] Erro ao distribuir atendente`)
+    console.log(`[ATRIBUICAO] ❌ Erro ao distribuir atendente`)
     return { atendido: false }
   }
+
+  console.log(`[ATRIBUICAO] ✓ Próximo atendente selecionado: ${atendente}`)
 
   // Atribui o cliente ao atendente
   const { error } = await supabase
@@ -116,13 +129,13 @@ export async function atribuirClienteAAtendente(
     .eq('id', clienteId)
 
   if (error) {
-    console.error(`[Distribuição] Erro ao atribuir cliente ${clienteId}:`, error)
+    console.error(`[ATRIBUICAO] ❌ Erro ao atribuir cliente ${clienteId}:`, error)
     return { atendido: false }
   }
 
   const atendenteFull = atendentes.find(a => a.id === atendente)
   console.log(
-    `[Distribuição] Conversa atribuída automaticamente ao atendente: ${atendenteFull?.nome} (${atendente}) | Cliente: ${clienteNome} (${clienteTelefone})`
+    `[ATRIBUICAO] ✅ Conversa atribuída automaticamente ao atendente: ${atendenteFull?.nome} (${atendente}) | Cliente: ${clienteNome} (${clienteTelefone})`
   )
 
   return {

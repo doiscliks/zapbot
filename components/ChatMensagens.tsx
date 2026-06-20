@@ -129,7 +129,7 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
     }
   }, [mensagens, estaNoFinal])
 
-  async function enviarMensagem(mensagemTexto: string, msgId: number) {
+  async function enviarMensagem(mensagemTexto: string, msgId: string) {
     if (!cliente) return
     try {
       // O servidor envia via uazapi E persiste a mensagem com o user_id do workspace
@@ -173,7 +173,7 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
     inputRef.current?.focus()
 
     // Envia em background — input já liberado
-    enviarMensagem(mensagemTexto, msgId as any)
+    enviarMensagem(mensagemTexto, msgId)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {

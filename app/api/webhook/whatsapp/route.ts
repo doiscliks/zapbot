@@ -461,31 +461,31 @@ export async function POST(request: NextRequest) {
   console.log('[WEBHOOK] Após upsert, antes de atribuir:', { clienteId, isNovoCliente, clienteSemAtendente, userId, temClienteId: !!clienteId })
 
   // 1a. Distribuição automática para atendentes
-  // Atribui se: é novo cliente OU cliente já existe mas não tem atendente
-  const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && !!clienteId && !!userId
+  // Resolve o workspace admin ID a partir do userId
+  let workspaceAdminId: string | null = null
+  if (userId) {
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('parent_id')
+      .eq('id', userId)
+      .maybeSingle()
+    workspaceAdminId = usuario?.parent_id ?? userId
+  }
 
-  console.log('[WEBHOOK] === INICIO ATRIBUICAO === Verificando necessidade:', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, clienteId, userId })
+  const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && !!clienteId && !!workspaceAdminId
+
+  console.log('[WEBHOOK] === ATRIBUICAO === Verificando:', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temWorkspace: !!workspaceAdminId, userId, workspaceAdminId })
 
   try {
-    await log(supabase, '1a_verificacao_atribuicao', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, clienteId, userId })
+    await log(supabase, '1a_verificacao_atribuicao', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, clienteId, workspaceAdminId })
   } catch (logError) {
     console.error('[WEBHOOK] Erro ao logar 1a_verificacao_atribuicao:', logError)
   }
 
-  if (precisaAtribuir && clienteId && userId) {
+  if (precisaAtribuir && clienteId && workspaceAdminId) {
     try {
-      await log(supabase, '1a_distribuicao_iniciando', { clienteId, isNovoCliente, clienteSemAtendente })
-      console.log('[WEBHOOK] Iniciando atribuição automática:', { clienteId, isNovoCliente, clienteSemAtendente })
-
-      // Resolve o workspace admin ID
-      const { data: usuarioAtual } = await supabase
-        .from('usuarios')
-        .select('parent_id')
-        .eq('id', userId)
-        .maybeSingle()
-
-      const workspaceAdminId = usuarioAtual?.parent_id ?? userId
-      await log(supabase, '1a_workspace_admin_id', { workspaceAdminId, userId })
+      await log(supabase, '1a_distribuicao_iniciando', { clienteId, isNovoCliente, clienteSemAtendente, workspaceAdminId })
+      console.log('[WEBHOOK] Iniciando atribuição automática:', { clienteId, isNovoCliente, clienteSemAtendente, workspaceAdminId })
 
       const resultado = await atribuirClienteAAtendente(
         supabase,

@@ -206,12 +206,15 @@ export default function MensagensPage() {
     try {
       const res = await fetch(`/api/mensagens/chat?telefone=${encodeURIComponent(telefone)}`)
       const data = await res.json()
+      console.log('[MENSAGENS] Carregadas:', { telefone, total: Array.isArray(data) ? data.length : 0 })
       if (!res.ok) {
         setErroMensagens(data.error ?? `Erro ${res.status}`)
         setMensagens([])
         return
       }
-      setMensagens(Array.isArray(data) ? data : [])
+      const msgs = Array.isArray(data) ? data : []
+      console.log('[MENSAGENS] Setando state com:', msgs.length, 'mensagens')
+      setMensagens(msgs)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? JSON.stringify(e)
       setErroMensagens(msg)

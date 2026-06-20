@@ -63,7 +63,6 @@ export async function distribuirAtendente(
   const { data: ultimoClienteAtribuido } = await supabase
     .from('clientes')
     .select('assigned_user_id')
-    .eq('user_id', workspaceAdminId)
     .not('assigned_user_id', 'is', null)
     .order('id', { ascending: false })
     .limit(1)

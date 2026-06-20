@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       ids.add(m.id)
       return true
     })
-    .sort((a, b) => new Date(a.data_criacao).getTime() - new Date(b.data_criacao).getTime())
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
   console.log('[CHAT] Total de mensagens retornadas:', todasMensagens.length)
   return NextResponse.json(todasMensagens)

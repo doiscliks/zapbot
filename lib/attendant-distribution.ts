@@ -85,7 +85,10 @@ export async function distribuirAtendente(
 
   // Próximo atendente (com wrap-around)
   const proximoIndice = (indiceUltimo + 1) % atendentes.length
-  return atendentes[proximoIndice].id
+  const proximoId = atendentes[proximoIndice].id
+  const proximoNome = atendentes[proximoIndice].nome
+  console.log(`[ROUND-ROBIN] Último: ${ultimoAtendente} | Próximo índice: ${proximoIndice} | Próximo: ${proximoNome} (${proximoId})`)
+  return proximoId
 }
 
 /**
@@ -136,6 +139,7 @@ export async function atribuirClienteAAtendente(
   console.log(
     `[ATRIBUICAO] ✅ Conversa atribuída automaticamente ao atendente: ${atendenteFull?.nome} (${atendente}) | Cliente: ${clienteNome} (${clienteTelefone})`
   )
+  console.log(`[ATENDENTE VINCULADO] ${clienteTelefone} → ${atendenteFull?.nome}`)
 
   return {
     atendido: true,

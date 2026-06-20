@@ -109,6 +109,7 @@ export default function MensagensPage() {
 
   // Realtime — escuta novas mensagens na tabela
   useEffect(() => {
+    console.log('[REALTIME] Conectando ao Supabase Realtime...')
     const channel = supabase
       .channel('mensagens_realtime')
       .on(
@@ -118,12 +119,24 @@ export default function MensagensPage() {
           const nova = payload.new as MensagemWhatsapp
           const atual = clienteSelecionadoRef.current
 
+          console.log('[REALTIME] Nova mensagem recebida:', {
+            id: nova.id,
+            numero_cliente: nova.numero_cliente,
+            quem_mandou: nova.quem_mandou,
+            cliente_aberto: atual?.telefone,
+            user_id: nova.user_id,
+            tenant_id: atual?.user_id
+          })
+
           // Adiciona no chat se for do cliente aberto
           const telAtual = atual?.telefone ?? ''
           const matchCliente =
             nova.numero_cliente === telAtual ||
             nova.numero_cliente === `${telAtual}@s.whatsapp.net` ||
             nova.numero_cliente.replace('@s.whatsapp.net', '') === telAtual
+
+          console.log('[REALTIME] Match cliente?', { matchCliente, telAtual, numero_cliente: nova.numero_cliente })
+
           if (atual && matchCliente) {
             setMensagens((prev) => {
               // Evita duplicar mensagens otimistas já inseridas
@@ -134,7 +147,9 @@ export default function MensagensPage() {
                   m.quem_mandou === nova.quem_mandou &&
                   Math.abs(new Date(m.created_at ?? 0).getTime() - new Date(nova.created_at ?? 0).getTime()) < 5000)
               )
+              console.log('[REALTIME] Já existe?', jaExiste)
               if (jaExiste) return prev
+              console.log('[REALTIME] Adicionando mensagem ao chat')
               return [...prev, nova]
             })
           }
@@ -171,13 +186,17 @@ export default function MensagensPage() {
               })
             })
           } else {
+            console.log('[REALTIME] Cliente novo, recarregando lista')
             carregarClientes()
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('[REALTIME] Status da conexão:', status)
+      })
 
     return () => {
+      console.log('[REALTIME] Desconectando do Supabase Realtime')
       supabase.removeChannel(channel)
     }
   }, [carregarClientes])

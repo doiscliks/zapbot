@@ -413,9 +413,11 @@ export async function POST(request: NextRequest) {
   if (userId) clienteQuery.eq('user_id', userId)
   const { data: clienteExistente } = await clienteQuery.maybeSingle()
 
-  console.log('[WEBHOOK] Cliente encontrado:', { telefone, clienteExistente: !!clienteExistente, ia_desabilitada: clienteExistente?.ia_desabilitada })
+  console.log('[WEBHOOK] Cliente encontrado:', { telefone, clienteExistente: !!clienteExistente, ia_desabilitada: clienteExistente?.ia_desabilitada, assigned_user_id: clienteExistente?.assigned_user_id })
 
   let clienteId: number | null = clienteExistente?.id ?? null
+  const isNovoCliente = !clienteExistente
+  const clienteSemAtendente = clienteExistente && !clienteExistente.assigned_user_id
 
   if (clienteExistente) {
     await supabase.from('clientes')
@@ -432,8 +434,11 @@ export async function POST(request: NextRequest) {
     clienteId = novoCliente?.id ?? null
   }
 
-  // 1a. Distribuição automática para atendentes (apenas se é novo cliente e workspace tem atendentes)
-  if (clienteId && userId && !clienteExistente) {
+  // 1a. Distribuição automática para atendentes
+  // Atribui se: é novo cliente OU cliente já existe mas não tem atendente
+  const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && clienteId && userId
+
+  if (precisaAtribuir) {
     try {
       // Resolve o workspace admin ID
       const { data: usuarioAtual } = await supabase
@@ -444,16 +449,24 @@ export async function POST(request: NextRequest) {
 
       const workspaceAdminId = usuarioAtual?.parent_id ?? userId
 
-      await atribuirClienteAAtendente(
+      console.log('[WEBHOOK] Iniciando atribuição automática:', { clienteId, isNovoCliente, clienteSemAtendente })
+
+      const resultado = await atribuirClienteAAtendente(
         supabase,
         clienteId,
         workspaceAdminId,
         pushName || telefone,
         telefone
       )
+
+      console.log('[WEBHOOK] Atribuição automática resultado:', { clienteId, atendido: resultado.atendido, atendente: resultado.atendente?.nome })
+      await log(supabase, '1a_distribuicao_sucesso', { clienteId, isNovoCliente, clienteSemAtendente, atendenteNome: resultado.atendente?.nome })
     } catch (e) {
-      await log(supabase, '1a_distribuicao_erro', { error: String(e), clienteId })
+      console.error('[WEBHOOK] Erro na atribuição automática:', e)
+      await log(supabase, '1a_distribuicao_erro', { error: String(e), clienteId, isNovoCliente, clienteSemAtendente })
     }
+  } else {
+    console.log('[WEBHOOK] Atribuição não necessária:', { isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, assigned_user_id: clienteExistente?.assigned_user_id })
   }
 
   // 1b. Busca a foto de perfil do WhatsApp se ainda não temos uma

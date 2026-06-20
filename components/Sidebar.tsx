@@ -5,13 +5,14 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, MessageSquare, LogOut, Kanban, BookOpen, TrendingUp,
-  Users, Menu, X, Filter, Send, Bell, Smartphone, Settings, Zap, CalendarDays, UserCog, Building2,
+  Users, Menu, X, Filter, Send, Bell, Smartphone, Settings, Zap, CalendarDays, UserCog, Building2, TrendingDown,
 } from 'lucide-react'
 import { SCREENS, podeAcessar } from '@/lib/screens'
 
 const ICONS: Record<string, React.ElementType> = {
   dashboard: LayoutDashboard,
   mensagens: MessageSquare,
+  fila: TrendingDown,
   disparos: Send,
   remarketing: Bell,
   fluxos: Zap,

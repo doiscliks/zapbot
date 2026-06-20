@@ -4,6 +4,7 @@
 export const SCREENS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'mensagens', label: 'Mensagens' },
+  { key: 'fila', label: 'Fila' },
   { key: 'kanban', label: 'Kanban' },
   { key: 'agenda', label: 'Agenda' },
   { key: 'clientes', label: 'Clientes' },

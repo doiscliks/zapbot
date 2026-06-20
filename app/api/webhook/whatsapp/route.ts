@@ -314,10 +314,9 @@ export async function POST(request: NextRequest) {
   const pushName: string = (msg.senderName as string) || ''
   const instanciaToken: string = (body.token as string) || ''
   const uazapiBase: string = ((body.BaseUrl as string) || '').replace(/\/+$/, '')
+  const isLid = remoteJid.endsWith('@lid')
 
   console.log('[WEBHOOK] Filtros iniciais:', { isGroup, wasSentByApi, remoteJid, isLid, fromMe, isAudio, isImage, temTexto: !!texto })
-
-  const isLid = remoteJid.endsWith('@lid')
   if (isGroup || wasSentByApi || !remoteJid || isLid) {
     console.log('[WEBHOOK] Mensagem ignorada por filtro inicial')
     await log(supabase, '2_ignorado_filtro', { fromMe, isGroup, wasSentByApi, texto, remoteJid, isLid })

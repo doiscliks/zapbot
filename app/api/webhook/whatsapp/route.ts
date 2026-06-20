@@ -595,21 +595,30 @@ export async function POST(request: NextRequest) {
   //    INSERT (não upsert) para dedup ATÔMICO: dois webhooks quase simultâneos podem
   //    passar pelo SELECT do passo 3; aqui a constraint unique de message_id garante que
   //    só um grava. O duplicado recebe 23505 e retornamos ANTES de responder de novo.
-  console.log('[WEBHOOK] Inserindo mensagem:', { telefone, userId, temMensagem: !!inputTexto, messageId })
+  console.log('[WEBHOOK] Inserindo mensagem:', { telefone, userId, temMensagem: !!inputTexto, messageId, iaDesabilitada: iaDesabilitadaParaCliente })
 
-  const { error: insertRecebidaErr } = await supabase.from('mensagens_whatsapp').insert({
+  const insertPayload = {
     numero_cliente: telefone,
     mensagem: inputTexto,
-    quem_mandou: 'cliente',
-    status: 'recebida',
+    quem_mandou: 'cliente' as const,
+    status: 'recebida' as const,
     message_id: messageId,
     data_criacao: new Date().toISOString(),
     ...(mediaUrl ? { media_url: mediaUrl } : {}),
     ...(mediaType ? { media_type: mediaType } : {}),
     ...(userId ? { user_id: userId } : {}),
-  })
+  }
 
-  console.log('[WEBHOOK] Insert result:', { erro: !!insertRecebidaErr, code: insertRecebidaErr?.code, message: insertRecebidaErr?.message })
+  console.log('[WEBHOOK] Payload a inserir:', insertPayload)
+
+  const { error: insertRecebidaErr, data: insertData } = await supabase.from('mensagens_whatsapp').insert(insertPayload).select()
+
+  console.log('[WEBHOOK] Insert result:', {
+    erro: !!insertRecebidaErr,
+    code: insertRecebidaErr?.code,
+    message: insertRecebidaErr?.message,
+    insertedCount: insertData?.length ?? 0
+  })
 
   if (insertRecebidaErr) {
     await log(supabase, '6_insert_recebida_erro', { code: insertRecebidaErr.code, message: insertRecebidaErr.message })

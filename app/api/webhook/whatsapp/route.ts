@@ -447,7 +447,7 @@ export async function POST(request: NextRequest) {
       telefone,
       instancia_id: instanciaToken,
       dt_ultima_mensagem: new Date().toISOString(),
-      ...(userId ? { user_id: userId } : {}),
+      user_id: userId,
     }).select('id').single()
     if (erroInsert) {
       console.error('[WEBHOOK] Erro ao criar cliente:', erroInsert)

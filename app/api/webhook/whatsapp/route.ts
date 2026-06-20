@@ -482,7 +482,7 @@ export async function POST(request: NextRequest) {
     console.error('[WEBHOOK] Erro ao logar 1a_verificacao_atribuicao:', logError)
   }
 
-  if (precisaAtribuir && clienteId && workspaceAdminId) {
+  if (precisaAtribuir && clienteId !== null && workspaceAdminId) {
     try {
       await log(supabase, '1a_distribuicao_iniciando', { clienteId, isNovoCliente, clienteSemAtendente, workspaceAdminId })
       console.log('[WEBHOOK] Iniciando atribuição automática:', { clienteId, isNovoCliente, clienteSemAtendente, workspaceAdminId })

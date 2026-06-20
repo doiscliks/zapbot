@@ -440,12 +440,12 @@ export async function POST(request: NextRequest) {
 
   // 1a. Distribuição automática para atendentes
   // Atribui se: é novo cliente OU cliente já existe mas não tem atendente
-  const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && clienteId && userId
+  const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && !!clienteId && !!userId
 
   console.log('[WEBHOOK] Verificando necessidade de atribuição:', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId })
   await log(supabase, '1a_verificacao_atribuicao', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, clienteId, userId })
 
-  if (precisaAtribuir) {
+  if (precisaAtribuir && clienteId && userId) {
     try {
       await log(supabase, '1a_distribuicao_iniciando', { clienteId, isNovoCliente, clienteSemAtendente })
       console.log('[WEBHOOK] Iniciando atribuição automática:', { clienteId, isNovoCliente, clienteSemAtendente })

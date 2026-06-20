@@ -597,15 +597,15 @@ export async function POST(request: NextRequest) {
   //    só um grava. O duplicado recebe 23505 e retornamos ANTES de responder de novo.
   console.log('[WEBHOOK] Inserindo mensagem:', { telefone, userId, temMensagem: !!inputTexto, messageId, iaDesabilitada: iaDesabilitadaParaCliente })
 
-  const agora = new Date().toISOString()
+  const agoraISO = new Date().toISOString()
   const insertPayload = {
     numero_cliente: telefone,
     mensagem: inputTexto,
     quem_mandou: 'cliente' as const,
     status: 'recebida' as const,
     message_id: messageId,
-    data_criacao: agora,
-    created_at: agora,
+    data_criacao: agoraISO,
+    created_at: agoraISO,
     ...(mediaUrl ? { media_url: mediaUrl } : {}),
     ...(mediaType ? { media_type: mediaType } : {}),
     ...(userId ? { user_id: userId } : {}),

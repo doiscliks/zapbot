@@ -44,8 +44,8 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [texto, setTexto] = useState('')
-  const [errosPorId, setErrosPorId] = useState<Record<number, string>>({})
-  const [statusPorId, setStatusPorId] = useState<Record<number, string>>({})
+  const [errosPorId, setErrosPorId] = useState<Record<string, string>>({})
+  const [statusPorId, setStatusPorId] = useState<Record<string, string>>({})
   const [secoes, setSecoes] = useState<KanbanSecao[]>([])
   const [secaoAtual, setSecaoAtual] = useState<number | null>(null)
   const [salvandoSecao, setSalvandoSecao] = useState(false)
@@ -154,7 +154,7 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
     if (!texto.trim() || !cliente) return
 
     const mensagemTexto = texto.trim()
-    const msgId = Date.now()
+    const msgId = `opt_${Date.now()}`
     const agora = new Date().toISOString()
 
     const msgOtimista: MensagemWhatsapp = {
@@ -166,13 +166,14 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
       status: 'processando',
       lote_id: null,
       data_criacao: agora,
+      created_at: agora,
     }
     onMensagemEnviada?.(msgOtimista)
     setTexto('')
     inputRef.current?.focus()
 
     // Envia em background — input já liberado
-    enviarMensagem(mensagemTexto, msgId)
+    enviarMensagem(mensagemTexto, msgId as any)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {

@@ -129,9 +129,10 @@ export default function MensagensPage() {
               // Evita duplicar mensagens otimistas já inseridas
               const jaExiste = prev.some(
                 (m) =>
-                  m.mensagem === nova.mensagem &&
+                  m.id === nova.id ||
+                  (m.mensagem === nova.mensagem &&
                   m.quem_mandou === nova.quem_mandou &&
-                  Math.abs(new Date(m.data_criacao).getTime() - new Date(nova.data_criacao).getTime()) < 5000
+                  Math.abs(new Date(m.created_at ?? 0).getTime() - new Date(nova.created_at ?? 0).getTime()) < 5000)
               )
               if (jaExiste) return prev
               return [...prev, nova]
@@ -146,8 +147,8 @@ export default function MensagensPage() {
             return nova.numero_cliente === t || nova.numero_cliente === `${t}@s.whatsapp.net` || telNova === t
           })
           if (existe) {
-            setClientes((prev) =>
-              prev.map((c) => {
+            setClientes((prev) => {
+              const atualizado = prev.map((c) => {
                 const tel = c.telefone ?? ''
                 const match =
                   nova.numero_cliente === tel ||
@@ -157,12 +158,18 @@ export default function MensagensPage() {
                   return {
                     ...c,
                     ultima_mensagem: nova,
-                    nao_lido: atual ? false : true, // marca como não lido se não é o cliente aberto
+                    nao_lido: !matchCliente, // marca como não lido se é mensagem de outro cliente
                   }
                 }
                 return c
               })
-            )
+              // Reordena a lista — conversa com nova mensagem sobe
+              return atualizado.sort((a, b) => {
+                const dataA = a.ultima_mensagem?.created_at ?? a.dt_ultima_mensagem ?? a.created_at ?? ''
+                const dataB = b.ultima_mensagem?.created_at ?? b.dt_ultima_mensagem ?? b.created_at ?? ''
+                return new Date(dataB).getTime() - new Date(dataA).getTime()
+              })
+            })
           } else {
             carregarClientes()
           }

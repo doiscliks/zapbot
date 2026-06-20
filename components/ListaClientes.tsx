@@ -44,7 +44,7 @@ export default function ListaClientes({ clientes, clienteSelecionadoId, onSeleci
     <ul className="divide-y divide-gray-100">
       {clientes.map((cliente) => {
         const ativo = cliente.id === clienteSelecionadoId
-        const dataLista = cliente.dt_ultima_mensagem || cliente.created_at
+        const dataLista = cliente.ultima_mensagem?.created_at || cliente.dt_ultima_mensagem || cliente.created_at
         const telefoneExibido = cliente.telefone?.split('@')[0] ?? ''
 
         return (

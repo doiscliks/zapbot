@@ -35,7 +35,7 @@ export interface Cliente {
 }
 
 export interface MensagemWhatsapp {
-  id: number
+  id: string
   cliente_id?: number
   mensagem: string
   quem_mandou: string
@@ -43,6 +43,8 @@ export interface MensagemWhatsapp {
   lote_id: string | number | null
   numero_cliente: string
   data_criacao: string
+  created_at?: string
+  user_id?: string
   media_url?: string | null
   media_type?: string | null
 }

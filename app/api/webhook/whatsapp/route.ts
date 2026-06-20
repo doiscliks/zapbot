@@ -438,8 +438,14 @@ export async function POST(request: NextRequest) {
   // Atribui se: é novo cliente OU cliente já existe mas não tem atendente
   const precisaAtribuir = (isNovoCliente || clienteSemAtendente) && clienteId && userId
 
+  console.log('[WEBHOOK] Verificando necessidade de atribuição:', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId })
+  await log(supabase, '1a_verificacao_atribuicao', { precisaAtribuir, isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, clienteId, userId })
+
   if (precisaAtribuir) {
     try {
+      await log(supabase, '1a_distribuicao_iniciando', { clienteId, isNovoCliente, clienteSemAtendente })
+      console.log('[WEBHOOK] Iniciando atribuição automática:', { clienteId, isNovoCliente, clienteSemAtendente })
+
       // Resolve o workspace admin ID
       const { data: usuarioAtual } = await supabase
         .from('usuarios')
@@ -448,8 +454,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
 
       const workspaceAdminId = usuarioAtual?.parent_id ?? userId
-
-      console.log('[WEBHOOK] Iniciando atribuição automática:', { clienteId, isNovoCliente, clienteSemAtendente })
+      await log(supabase, '1a_workspace_admin_id', { workspaceAdminId, userId })
 
       const resultado = await atribuirClienteAAtendente(
         supabase,
@@ -460,12 +465,13 @@ export async function POST(request: NextRequest) {
       )
 
       console.log('[WEBHOOK] Atribuição automática resultado:', { clienteId, atendido: resultado.atendido, atendente: resultado.atendente?.nome })
-      await log(supabase, '1a_distribuicao_sucesso', { clienteId, isNovoCliente, clienteSemAtendente, atendenteNome: resultado.atendente?.nome })
+      await log(supabase, '1a_distribuicao_sucesso', { clienteId, isNovoCliente, clienteSemAtendente, atendenteNome: resultado.atendente?.nome, atendido: resultado.atendido })
     } catch (e) {
       console.error('[WEBHOOK] Erro na atribuição automática:', e)
-      await log(supabase, '1a_distribuicao_erro', { error: String(e), clienteId, isNovoCliente, clienteSemAtendente })
+      await log(supabase, '1a_distribuicao_erro', { error: String(e), errorStack: (e as any)?.stack, clienteId, isNovoCliente, clienteSemAtendente })
     }
   } else {
+    await log(supabase, '1a_atribuicao_nao_necessaria', { isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, assigned_user_id: clienteExistente?.assigned_user_id })
     console.log('[WEBHOOK] Atribuição não necessária:', { isNovoCliente, clienteSemAtendente, temClienteId: !!clienteId, temUserId: !!userId, assigned_user_id: clienteExistente?.assigned_user_id })
   }
 

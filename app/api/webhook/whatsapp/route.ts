@@ -235,9 +235,9 @@ export async function GET(request: NextRequest) {
   const challenge = searchParams.get('hub.challenge')
   const verifyToken = searchParams.get('hub.verify_token')
 
-  const token = process.env.NEXT_PUBLIC_SUPABASE_URL || 'zapbot_webhook_token'
+  const expectedToken = process.env.WEBHOOK_VERIFY_TOKEN || 'zapbot_verify_token_secret'
 
-  if (mode === 'subscribe' && verifyToken === token && challenge) {
+  if (mode === 'subscribe' && verifyToken === expectedToken && challenge) {
     return new NextResponse(challenge, { status: 200 })
   }
 

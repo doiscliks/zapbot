@@ -419,10 +419,13 @@ export async function POST(request: NextRequest) {
   const isNovoCliente = !clienteExistente
   const clienteSemAtendente = clienteExistente && !clienteExistente.assigned_user_id
 
+  console.log('[WEBHOOK] Antes do upsert:', { clienteExistente: !!clienteExistente, isNovoCliente, clienteSemAtendente, telefone, userId })
+
   if (clienteExistente) {
     await supabase.from('clientes')
       .update({ dt_ultima_mensagem: new Date().toISOString(), instancia_id: instanciaToken })
       .eq('id', clienteExistente.id)
+    console.log('[WEBHOOK] Cliente atualizado:', { clienteId: clienteExistente.id })
   } else {
     const { data: novoCliente, error: erroInsert } = await supabase.from('clientes').insert({
       nome: pushName || telefone,
@@ -434,9 +437,13 @@ export async function POST(request: NextRequest) {
     if (erroInsert) {
       console.error('[WEBHOOK] Erro ao criar cliente:', erroInsert)
       await log(supabase, '1_erro_ao_criar_cliente', { error: String(erroInsert), telefone })
+      return NextResponse.json({ ok: false, error: 'Erro ao criar cliente' }, { status: 400 })
     }
     clienteId = novoCliente?.id ?? null
+    console.log('[WEBHOOK] Cliente criado:', { clienteId, novoCliente })
   }
+
+  console.log('[WEBHOOK] Após upsert, antes de atribuir:', { clienteId, isNovoCliente, clienteSemAtendente, userId, temClienteId: !!clienteId })
 
   // 1a. Distribuição automática para atendentes
   // Atribui se: é novo cliente OU cliente já existe mas não tem atendente

@@ -490,31 +490,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (clienteExistente?.ia_desabilitada) {
-    console.log('[WEBHOOK] IA desabilitada, salvando mensagem:', { telefone, userId, temUserId: !!userId, messageId })
-    await log(supabase, '3_ia_desabilitada', { telefone, userId, messageId })
-
-    const msgInsert: Record<string, unknown> = {
-      numero_cliente: telefone,
-      mensagem: texto || (isAudio ? '[Áudio]' : isImage ? '[Imagem]' : ''),
-      quem_mandou: 'cliente',
-      status: 'recebida',
-      data_criacao: new Date().toISOString(),
-    }
-
-    if (messageId) msgInsert.message_id = messageId
-    if (userId) msgInsert.user_id = userId
-
-    console.log('[WEBHOOK] Tentando inserir:', msgInsert)
-
-    const { error: insertErr, data: insertData } = await supabase.from('mensagens_whatsapp').insert(msgInsert).select()
-    console.log('[WEBHOOK] Resultado insert:', { erro: !!insertErr, code: insertErr?.code, message: insertErr?.message, data: !!insertData })
-
-    if (insertErr) {
-      await log(supabase, '3_ia_desabilitada_erro_insert', { error: insertErr.message, code: insertErr.code })
-    }
-
-    return NextResponse.json({ ok: true })
+  // Se IA está desabilitada, apenas salva a mensagem e não processa com IA
+  const iaDesabilitadaParaCliente = clienteExistente?.ia_desabilitada ?? false
+  if (iaDesabilitadaParaCliente) {
+    console.log('[WEBHOOK] IA desabilitada para este cliente, salvando apenas mensagem')
   }
 
 
@@ -639,6 +618,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true })
     }
     // Outro erro: segue o fluxo (mantém o comportamento anterior de tentar responder)
+  }
+
+  // Se IA está desabilitada para este cliente, apenas retorna (mensagem já foi salva)
+  if (iaDesabilitadaParaCliente) {
+    console.log('[WEBHOOK] IA desabilitada, retornando após salvar mensagem')
+    return NextResponse.json({ ok: true })
   }
 
   // 7. Verifica fluxos ativos antes de chamar a IA

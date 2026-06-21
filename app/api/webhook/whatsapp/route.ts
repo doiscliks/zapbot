@@ -245,9 +245,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('[WEBHOOK] ✅ POST CHAMADO!')
   const supabase = getSupabase()
-  await log(supabase, 'webhook_recebido', { timestamp: new Date().toISOString() })
 
   let body: Record<string, unknown>
   try {
@@ -256,7 +254,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'invalid json' }, { status: 400 })
   }
 
-  await log(supabase, '1_payload_recebido', {
+  // // await log(supabase, '1_payload_recebido', {
     EventType: body.EventType,
     token: body.token,
     BaseUrl: body.BaseUrl,
@@ -277,7 +275,7 @@ export async function POST(request: NextRequest) {
         const update: Record<string, unknown> = { status: 'conectado' }
         if (telefone) update.telefone = telefone
         await supabase.from('instancias_whatsapp').update(update).eq('token', token)
-        await log(supabase, 'connection_event', { rawState, novoStatus: 'conectado', telefone })
+        // // await log(supabase, 'connection_event', { rawState, novoStatus: 'conectado', telefone })
       } else {
         // Antes de marcar como desconectado, confirma direto na UAZAPI
         const uazapiBase = ((body.BaseUrl as string) || '').replace(/\/+$/, '')
@@ -294,9 +292,9 @@ export async function POST(request: NextRequest) {
             if (!aindaConectado) {
               const novoStatus = checkState === 'connecting' ? 'connecting' : 'desconectado'
               await supabase.from('instancias_whatsapp').update({ status: novoStatus }).eq('token', token)
-              await log(supabase, 'connection_event', { rawState, checkState, novoStatus })
+              // // await log(supabase, 'connection_event', { rawState, checkState, novoStatus })
             } else {
-              await log(supabase, 'connection_event_ignorado', { rawState, checkState, motivo: 'ainda conectado' })
+              // await log(supabase, 'connection_event_ignorado', { rawState, checkState, motivo: 'ainda conectado' })
             }
           }
         }
@@ -306,7 +304,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (eventType !== 'messages') {
-    await log(supabase, '2_ignorado_event_type', { eventType })
+    // // await log(supabase, '2_ignorado_event_type', { eventType })
     return NextResponse.json({ ok: true })
   }
 
@@ -336,12 +334,12 @@ export async function POST(request: NextRequest) {
   console.log('[WEBHOOK] Filtros iniciais:', { isGroup, wasSentByApi, remoteJid, isLid, fromMe, isAudio, isImage, temTexto: !!texto })
   if (isGroup || wasSentByApi || !remoteJid || isLid) {
     console.log('[WEBHOOK] Mensagem ignorada por filtro inicial')
-    await log(supabase, '2_ignorado_filtro', { fromMe, isGroup, wasSentByApi, texto, remoteJid, isLid })
+    // // await log(supabase, '2_ignorado_filtro', { fromMe, isGroup, wasSentByApi, texto, remoteJid, isLid })
     return NextResponse.json({ ok: true })
   }
   if (!isAudio && !isImage && !texto) {
     console.log('[WEBHOOK] Mensagem ignorada: sem texto')
-    await log(supabase, '2_ignorado_sem_texto', { messageType })
+    // // await log(supabase, '2_ignorado_sem_texto', { messageType })
     return NextResponse.json({ ok: true })
   }
 
@@ -349,7 +347,7 @@ export async function POST(request: NextRequest) {
 
   // Mensagem enviada manualmente pelo celular (não pelo sistema): salva como agente e retorna
   if (fromMe && !wasSentByApi) {
-    await log(supabase, '2_manual_fromMe', { telefone, texto })
+    // await log(supabase, '2_manual_fromMe', { telefone, texto })
 
     // Resolve userId pelo token da instância
     let userIdManual: string | null = null
@@ -420,7 +418,7 @@ export async function POST(request: NextRequest) {
     userId = clienteFallback?.user_id ?? null
   }
 
-  await log(supabase, '3_processando', { telefone, texto, instanciaToken, uazapiBase, userId })
+  // await log(supabase, '3_processando', { telefone, texto, instanciaToken, uazapiBase, userId })
 
   // 1. Upsert cliente
   const clienteQuery = supabase
@@ -453,7 +451,7 @@ export async function POST(request: NextRequest) {
     }).select('id').single()
     if (erroInsert) {
       console.error('[WEBHOOK] Erro ao criar cliente:', erroInsert)
-      await log(supabase, '1_erro_ao_criar_cliente', { error: String(erroInsert), telefone })
+      // await log(supabase, '1_erro_ao_criar_cliente', { error: String(erroInsert), telefone })
       return NextResponse.json({ ok: false, error: 'Erro ao criar cliente' }, { status: 400 })
     }
     clienteId = novoCliente?.id ?? null
@@ -522,9 +520,9 @@ export async function POST(request: NextRequest) {
     try {
       await sincronizarHistorico(supabase, remoteJid, instanciaToken, uazapiBase, userId)
       await supabase.from('clientes').update({ historico_sincronizado: true }).eq('id', clienteId)
-      await log(supabase, '3_historico_sincronizado', { clienteId, chatid: remoteJid })
+      // await log(supabase, '3_historico_sincronizado', { clienteId, chatid: remoteJid })
     } catch (e) {
-      await log(supabase, '3_historico_erro', { error: String(e) })
+      // await log(supabase, '3_historico_erro', { error: String(e) })
     }
   }
 
@@ -538,7 +536,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
     if (jaExiste) {
       console.log('[WEBHOOK] Webhook duplicado detectado:', { messageId })
-      await log(supabase, '3_webhook_duplicado', { messageId })
+      // await log(supabase, '3_webhook_duplicado', { messageId })
       return NextResponse.json({ ok: true })
     }
   }
@@ -558,15 +556,15 @@ export async function POST(request: NextRequest) {
 
   const openaiKey = tenantConfig?.openaiKey || ''
   const iaAtiva = tenantConfig?.iaAtiva !== false
-  await log(supabase, '4_config', { temOpenaiKey: !!openaiKey, iaAtiva, uazapiUrl: config.uazapiUrl, userId })
+  // await log(supabase, '4_config', { temOpenaiKey: !!openaiKey, iaAtiva, uazapiUrl: config.uazapiUrl, userId })
 
   if (!iaAtiva) {
-    await log(supabase, '4_ia_desativada_globalmente', { userId })
+    // await log(supabase, '4_ia_desativada_globalmente', { userId })
     return NextResponse.json({ ok: true })
   }
 
   if (!openaiKey) {
-    await log(supabase, '4_sem_openai_key', {})
+    // await log(supabase, '4_sem_openai_key', {})
     return NextResponse.json({ ok: true })
   }
 
@@ -594,7 +592,7 @@ export async function POST(request: NextRequest) {
         if (dlRes.ok) {
           const dlData = await dlRes.json()
           const fileURL: string = dlData.fileURL || ''
-          await log(supabase, '5_midia_download', { isAudio, isImage, temTranscricao: !!dlData.transcription, temURL: !!fileURL })
+          // await log(supabase, '5_midia_download', { isAudio, isImage, temTranscricao: !!dlData.transcription, temURL: !!fileURL })
 
           if (isAudio) {
             if (fileURL) mediaUrl = fileURL
@@ -631,15 +629,15 @@ export async function POST(request: NextRequest) {
             }
           }
         } else {
-          await log(supabase, '5_midia_download_erro', { status: dlRes.status })
+          // await log(supabase, '5_midia_download_erro', { status: dlRes.status })
         }
       } catch (e) {
-        await log(supabase, '5_midia_erro', { error: String(e) })
+        // await log(supabase, '5_midia_erro', { error: String(e) })
       }
     }
 
     if (!inputTexto) {
-      await log(supabase, '5_midia_sem_texto', { messageType })
+      // await log(supabase, '5_midia_sem_texto', { messageType })
       return NextResponse.json({ ok: true })
     }
   }
@@ -676,7 +674,7 @@ export async function POST(request: NextRequest) {
   })
 
   if (insertRecebidaErr) {
-    await log(supabase, '6_insert_recebida_erro', { code: insertRecebidaErr.code, message: insertRecebidaErr.message })
+    // await log(supabase, '6_insert_recebida_erro', { code: insertRecebidaErr.code, message: insertRecebidaErr.message })
     if (messageId && insertRecebidaErr.code === '23505') {
       // Webhook duplicado (mesmo message_id) — não responde de novo
       return NextResponse.json({ ok: true })
@@ -838,12 +836,12 @@ export async function POST(request: NextRequest) {
     ])
 
     const openaiData = await openaiRes.json()
-    await log(supabase, '5_openai', { status: openaiRes.status, error: openaiData.error })
+    // await log(supabase, '5_openai', { status: openaiRes.status, error: openaiData.error })
 
     if (!openaiRes.ok) return NextResponse.json({ ok: true })
     resposta = ((openaiData.choices[0]?.message?.content as string) || '').trim()
   } catch (e) {
-    await log(supabase, '5_openai_erro', { error: String(e) })
+    // await log(supabase, '5_openai_erro', { error: String(e) })
     return NextResponse.json({ ok: true })
   }
 
@@ -854,11 +852,11 @@ export async function POST(request: NextRequest) {
   const tokenEnvio = instanciaToken
 
   if (!urlEnvio || !tokenEnvio) {
-    await log(supabase, '6_sem_instancia_token', { urlEnvio, instanciaToken })
+    // await log(supabase, '6_sem_instancia_token', { urlEnvio, instanciaToken })
     return NextResponse.json({ ok: true })
   }
 
-  await log(supabase, '6_enviando', { urlEnvio, tokenEnvio: tokenEnvio.slice(0, 8) + '...', telefone, resposta })
+  // await log(supabase, '6_enviando', { urlEnvio, tokenEnvio: tokenEnvio.slice(0, 8) + '...', telefone, resposta })
 
   const sendRes = await fetch(`${urlEnvio}/send/text`, {
     method: 'POST',
@@ -867,7 +865,7 @@ export async function POST(request: NextRequest) {
   }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: String(e) }) }))
 
   const sendData = await (sendRes as Response).json().catch(() => ({}))
-  await log(supabase, '7_uazapi_send', { status: (sendRes as Response).status, body: sendData })
+  // await log(supabase, '7_uazapi_send', { status: (sendRes as Response).status, body: sendData })
 
   // 10. Salva resposta do agente
   await supabase.from('mensagens_whatsapp').insert({

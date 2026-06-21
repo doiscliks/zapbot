@@ -459,24 +459,27 @@ export async function POST(request: NextRequest) {
   }
 
   // 1a. Atribuição automática SIMPLES
-  console.log('[ATRIB] VERIFICANDO ATRIBUIÇÃO:', { clienteId, telefone, isNovoCliente, clienteSemAtendente, userId })
-
   if (clienteId && (isNovoCliente || clienteSemAtendente)) {
-    console.log('[ATRIB] ✅ ENTRANDO NO IF DE ATRIBUIÇÃO')
-
     try {
+      // Se userId é sub-usuário, precisa usar seu parent_id para buscar atendentes
+      const { data: usuarioAtual } = await supabase
+        .from('usuarios')
+        .select('parent_id, is_attendant')
+        .eq('id', userId)
+        .maybeSingle()
+
+      const workspaceAdminId = usuarioAtual?.parent_id || userId
+
       // Busca todos os atendentes ativos
-      console.log('[ATRIB] Buscando atendentes com parent_id:', userId)
-      const { data: atendentes, error: erroAtendentes } = await supabase
+      const { data: atendentes } = await supabase
         .from('usuarios')
         .select('id, nome')
-        .eq('parent_id', userId)
+        .eq('parent_id', workspaceAdminId)
         .eq('is_attendant', true)
         .eq('ativo', true)
         .order('nome')
 
-      console.log('[ATRIB] Erro ao buscar atendentes:', erroAtendentes)
-      console.log('[ATRIB] Atendentes encontrados:', atendentes?.length, atendentes)
+      console.log('[ATRIB] Atendentes encontrados:', atendentes?.length)
 
       if (atendentes && atendentes.length > 0) {
         // Busca o último cliente atribuído DESTE WORKSPACE

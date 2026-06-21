@@ -254,12 +254,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'invalid json' }, { status: 400 })
   }
 
-  // // await log(supabase, '1_payload_recebido', {
-    EventType: body.EventType,
-    token: body.token,
-    BaseUrl: body.BaseUrl,
-    message: body.message,
-  })
+  // await log(supabase, '1_payload_recebido', {
+  //   EventType: body.EventType,
+  //   token: body.token,
+  //   BaseUrl: body.BaseUrl,
+  //   message: body.message,
+  // })
 
   const eventType = (body.EventType as string) || ''
 
@@ -475,10 +475,11 @@ export async function POST(request: NextRequest) {
       console.log('[ATRIB] Atendentes encontrados:', atendentes?.length)
 
       if (atendentes && atendentes.length > 0) {
-        // Busca o último cliente atribuído
+        // Busca o último cliente atribuído DESTE WORKSPACE
         const { data: ultimoCliente } = await supabase
           .from('clientes')
           .select('assigned_user_id')
+          .eq('user_id', userId)
           .not('assigned_user_id', 'is', null)
           .order('id', { ascending: false })
           .limit(1)

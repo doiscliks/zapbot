@@ -459,12 +459,15 @@ export async function POST(request: NextRequest) {
   }
 
   // 1a. Atribuição automática SIMPLES
+  console.log('[ATRIB] VERIFICANDO ATRIBUIÇÃO:', { clienteId, telefone, isNovoCliente, clienteSemAtendente, userId })
+
   if (clienteId && (isNovoCliente || clienteSemAtendente)) {
-    console.log('[ATRIB] Tentando atribuir cliente:', { clienteId, telefone, isNovoCliente, clienteSemAtendente })
+    console.log('[ATRIB] ✅ ENTRANDO NO IF DE ATRIBUIÇÃO')
 
     try {
       // Busca todos os atendentes ativos
-      const { data: atendentes } = await supabase
+      console.log('[ATRIB] Buscando atendentes com parent_id:', userId)
+      const { data: atendentes, error: erroAtendentes } = await supabase
         .from('usuarios')
         .select('id, nome')
         .eq('parent_id', userId)
@@ -472,7 +475,8 @@ export async function POST(request: NextRequest) {
         .eq('ativo', true)
         .order('nome')
 
-      console.log('[ATRIB] Atendentes encontrados:', atendentes?.length)
+      console.log('[ATRIB] Erro ao buscar atendentes:', erroAtendentes)
+      console.log('[ATRIB] Atendentes encontrados:', atendentes?.length, atendentes)
 
       if (atendentes && atendentes.length > 0) {
         // Busca o último cliente atribuído DESTE WORKSPACE

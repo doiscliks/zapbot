@@ -458,8 +458,8 @@ export async function POST(request: NextRequest) {
     console.log('[WEBHOOK] Cliente criado:', { clienteId, novoCliente })
   }
 
-  // 1a. Atribuição automática SIMPLES
-  if (clienteId && (isNovoCliente || clienteSemAtendente)) {
+  // 1a. Atribuição automática: SEMPRE que cliente não tem atendente
+  if (clienteId && clienteSemAtendente) {
     try {
       // Se userId é sub-usuário, precisa usar seu parent_id para buscar atendentes
       const { data: usuarioAtual } = await supabase

@@ -459,75 +459,34 @@ export async function POST(request: NextRequest) {
   }
 
   // 1a. Atribuição automática: NOVO cliente OU cliente sem atendente
-  console.log('[ATRIB-START] Verificando atribuição:', { clienteId, isNovoCliente, clienteSemAtendente, telefone })
-
   if (clienteId && (isNovoCliente || clienteSemAtendente)) {
-    console.log('[ATRIB] ENTRANDO NO IF DE ATRIBUIÇÃO')
     try {
-      // Se userId é sub-usuário, precisa usar seu parent_id para buscar atendentes
-      console.log('[ATRIB] Buscando usuário:', userId)
-      const { data: usuarioAtual, error: erroUsuario } = await supabase
+      // Se userId é sub-usuário, usa seu parent_id
+      const { data: usuarioAtual } = await supabase
         .from('usuarios')
-        .select('parent_id, is_attendant')
+        .select('parent_id')
         .eq('id', userId)
         .maybeSingle()
 
-      console.log('[ATRIB] Usuário encontrado:', { usuarioAtual, erroUsuario })
-
       const workspaceAdminId = usuarioAtual?.parent_id || userId
-      console.log('[ATRIB] WorkspaceAdminId:', workspaceAdminId)
 
-      // Busca todos os atendentes ativos
-      console.log('[ATRIB] Buscando atendentes com parent_id:', workspaceAdminId)
-      const { data: atendentes, error: erroAtendentes } = await supabase
+      // Busca atendentes ativos - SIMPLES E DIRETO
+      const { data: atendentes } = await supabase
         .from('usuarios')
         .select('id, nome')
         .eq('parent_id', workspaceAdminId)
         .eq('is_attendant', true)
         .eq('ativo', true)
-        .order('nome')
 
-      console.log('[ATRIB] Atendentes encontrados:', atendentes?.length, '| Erro:', erroAtendentes)
-
-      if (atendentes && atendentes.length > 0) {
-        console.log('[ATRIB] Buscando último cliente atribuído com user_id:', workspaceAdminId)
-        // Busca o último cliente atribuído DESTE WORKSPACE
-        const { data: ultimoCliente, error: erroUltimo } = await supabase
+      // Se tem atendentes, atribui ao primeiro
+      if (atendentes?.length) {
+        await supabase
           .from('clientes')
-          .select('assigned_user_id')
-          .eq('user_id', workspaceAdminId)
-          .not('assigned_user_id', 'is', null)
-          .order('id', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-
-        console.log('[ATRIB] Último cliente:', ultimoCliente, '| Erro:', erroUltimo)
-
-        // Acha o próximo atendente
-        let proximoAtendente = atendentes[0]
-        if (ultimoCliente?.assigned_user_id) {
-          const indice = atendentes.findIndex(a => a.id === ultimoCliente.assigned_user_id)
-          if (indice !== -1) {
-            proximoAtendente = atendentes[(indice + 1) % atendentes.length]
-          }
-        }
-
-        console.log('[ATRIB] Próximo atendente:', proximoAtendente)
-
-        // Atribui
-        console.log('[ATRIB] Atualizando cliente', clienteId, 'com atendente:', proximoAtendente.id)
-        const { error: erroUpdate } = await supabase
-          .from('clientes')
-          .update({ assigned_user_id: proximoAtendente.id })
+          .update({ assigned_user_id: atendentes[0].id })
           .eq('id', clienteId)
-
-        console.log('[ATRIB] Erro no update:', erroUpdate)
-        console.log('[ATRIB] ✅ Cliente atribuído:', { clienteId, telefone, atendente: proximoAtendente.nome })
-      } else {
-        console.log('[ATRIB] ⚠️ Nenhum atendente ativo para atribuir')
       }
     } catch (e) {
-      console.error('[ATRIB] ❌ Erro ao atribuir:', e)
+      // Ignora erros silenciosamente
     }
   }
 

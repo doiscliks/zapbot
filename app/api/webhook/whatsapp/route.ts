@@ -245,7 +245,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('[WEBHOOK] ✅ POST CHAMADO!')
   const supabase = getSupabase()
+  await log(supabase, 'webhook_recebido', { timestamp: new Date().toISOString() })
 
   let body: Record<string, unknown>
   try {

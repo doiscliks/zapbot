@@ -60,7 +60,11 @@ export default function Sidebar() {
       .catch(() => {})
   }, [])
 
-  const itensVisiveis = navItems.filter((item) => podeAcessar(permissoes, item.key))
+  // Sempre mostra 'fila' e 'clientes' para admins
+  const itensVisiveis = navItems.filter((item) => {
+    if (permissoes === '*' && (item.key === 'fila' || item.key === 'clientes')) return true
+    return podeAcessar(permissoes, item.key)
+  })
 
   async function handleSignOut() {
     await fetch('/api/tenant/logout', { method: 'POST' })

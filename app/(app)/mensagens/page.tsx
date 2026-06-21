@@ -62,6 +62,23 @@ export default function MensagensPage() {
     return () => clearInterval(intervalo)
   }, [clienteSelecionado])
 
+  // Polling para atualizar lista de clientes SEMPRE (tipo WhatsApp Web)
+  useEffect(() => {
+    const intervalo = setInterval(async () => {
+      try {
+        const res = await fetch('/api/mensagens/clientes')
+        const novosClientes = await res.json()
+        if (Array.isArray(novosClientes)) {
+          setClientes(novosClientes)
+        }
+      } catch (e) {
+        console.log('[POLLING-CLIENTES] Erro:', e)
+      }
+    }, 2000) // A cada 2 segundos
+
+    return () => clearInterval(intervalo)
+  }, [])
+
   const carregarAtendentes = useCallback(async () => {
     try {
       const res = await fetch('/api/usuarios')

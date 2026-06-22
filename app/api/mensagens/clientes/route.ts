@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   }, {} as Record<string, number>)
 
   const resultado = Object.values(unicosPorTelefone)
-    .map((c) => ({
+    .map((c: any) => ({
       ...c,
       nao_lido: (() => {
         const telefone = c.telefone as string
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
         return timestampUltimaMensagem > timestampAcesso
       })(),
     }))
-    .sort((a, b) => {
+    .sort((a: any, b: any) => {
       const dataA = (a.dt_ultima_mensagem as string) ?? ''
       const dataB = (b.dt_ultima_mensagem as string) ?? ''
       return new Date(dataB).getTime() - new Date(dataA).getTime()

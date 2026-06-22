@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SCREEN_KEYS, screenKeyFromPath, podeAcessar } from '@/lib/screens'
 
-const PUBLIC_PATHS = ['/login', '/setup/login', '/g/']
+const PUBLIC_PATHS = ['/login', '/setup/login', '/g/', '/agendar', '/booking']
 const MASTER_PATHS = ['/setup']
 const API_PUBLIC_PREFIXES = ['/api/tenant/', '/api/master-login', '/api/webhook/']
 // /api/tenant/ já cobre sincronizar, ativar-chave, me, login, logout, entrar

@@ -11,6 +11,11 @@ export default function ConfigProvider({ children }: { children: React.ReactNode
   const router = useRouter()
   const [ready, setReady] = useState(false)
 
+  // Debug: mostra pathname IMEDIATAMENTE
+  if (typeof window !== 'undefined') {
+    console.log('[ConfigProvider] INICIAL pathname:', pathname, 'startsWith /agendar:', pathname.startsWith('/agendar'))
+  }
+
   useEffect(() => {
     console.log('[ConfigProvider] pathname:', pathname, 'isPublic:', PUBLIC_ROUTES.some((r) => pathname.startsWith(r)))
     fetch('/api/config')

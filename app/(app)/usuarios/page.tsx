@@ -160,6 +160,17 @@ export default function UsuariosPage() {
     }
   }
 
+  async function editarTelefone(u: Usuario) {
+    const novo = prompt(`Telefone de ${u.nome} (com DDD, ex: 5511999998888):`, u.telefone ?? '')
+    if (novo === null) return
+    try {
+      const atualizado = await patch(u.id, { telefone: novo })
+      setUsuarios((prev) => prev.map((x) => (x.id === u.id ? atualizado : x)))
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao atualizar telefone')
+    }
+  }
+
   function abrirEdicao(u: Usuario) {
     setEditando(u.id)
     setEditPermissoes(u.permissoes ?? [])
@@ -304,6 +315,7 @@ export default function UsuariosPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => abrirEdicao(u)} className="px-2.5 py-1.5 rounded-lg text-xs font-medium border" style={{ borderColor: '#E9EEF2', color: '#1F2937' }}>Permissões</button>
+                  <button onClick={() => editarTelefone(u)} title="Editar telefone" className="p-1.5 rounded-lg hover:bg-gray-50" style={{ color: '#6B7280' }}><Phone size={15} /></button>
                   <button onClick={() => resetarSenha(u)} title="Redefinir senha" className="p-1.5 rounded-lg hover:bg-gray-50" style={{ color: '#6B7280' }}><KeyRound size={15} /></button>
                   <button onClick={() => toggleAtivo(u)} title={u.ativo ? 'Desativar' : 'Ativar'} className="p-1.5 rounded-lg hover:bg-gray-50" style={{ color: u.ativo ? '#16a34a' : '#9CA3AF' }}>
                     {u.ativo ? <Check size={15} /> : <X size={15} />}

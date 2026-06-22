@@ -315,9 +315,15 @@ export async function POST(request: NextRequest) {
           await supabase.from('agendamentos').update({ whatsapp_enviado: true }).eq('id', agendamento.id)
         }
 
-        // Notifica o usuário dono da agenda no próprio WhatsApp
-        if (config.telefone_notificacao) {
-          await enviarWhatsApp(uazapiUrl, instancia.token, config.telefone_notificacao, msg)
+        // Notifica o usuário dono da agenda no próprio WhatsApp (telefone cadastrado em Usuários)
+        const { data: dono } = await supabase
+          .from('usuarios')
+          .select('telefone')
+          .eq('id', config.user_id)
+          .maybeSingle()
+
+        if (dono?.telefone) {
+          await enviarWhatsApp(uazapiUrl, instancia.token, dono.telefone, msg)
         }
       }
     } catch (e) {

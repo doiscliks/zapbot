@@ -40,7 +40,6 @@ export default function AgendaConfigPage() {
     whatsapp_instancia_id: '',
     mensagem_cancelamento: 'Olá, {nome}! Seu agendamento do dia {data} às {hora} foi cancelado. Entre em contato para remarcar.',
     lembrete_antecedencia_horas: 0,
-    telefone_notificacao: '',
   })
   const [instancias, setInstancias] = useState<{ id: string; nome: string }[]>([])
 
@@ -263,18 +262,9 @@ export default function AgendaConfigPage() {
               <option key={i.id} value={i.id}>{i.nome}</option>
             ))}
           </select>
-          <div className="mt-4">
-            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>Seu WhatsApp (receber notificação)</label>
-            <input
-              value={form.telefone_notificacao}
-              onChange={e => setForm(f => ({ ...f, telefone_notificacao: e.target.value }))}
-              placeholder="Ex: 5511999998888"
-              className={inputClass} style={inputStyle}
-            />
-            <p className="text-xs mt-1.5" style={{ color: '#9CA3AF' }}>
-              Você recebe a mesma mensagem de confirmação enviada ao cliente, sempre que alguém agendar.
-            </p>
-          </div>
+          <p className="text-xs mt-3" style={{ color: '#9CA3AF' }}>
+            Quando alguém agendar, a mesma mensagem de confirmação também é enviada ao seu WhatsApp cadastrado em <strong>Usuários</strong>.
+          </p>
         </div>
 
         {/* Mensagem de cancelamento */}

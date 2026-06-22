@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { readConfig } from '@/lib/config-server'
 import { getTenantId } from '@/lib/tenant-auth'
 
 function getSupabase() {
@@ -12,9 +11,6 @@ function getSupabase() {
 export async function POST(request: NextRequest) {
   const userId = getTenantId(request)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const config = await readConfig()
-  const uazapiBase = config.uazapiUrl?.replace(/\/+$/, '').replace(/\/send\/.*$/, '')
 
   const { numero, mensagem, instancia_id } = await request.json()
 
@@ -39,8 +35,6 @@ export async function POST(request: NextRequest) {
   // Se usuário é sub-usuário, usa parent_id (admin)
   const workspaceAdminId = usuario.parent_id || userId
 
-  console.log('[SEND-MSG] Debug:', { userId, workspaceAdminId, instancia_id, uazapiBase })
-
   if (!isAdmin && isAtendente) {
     const numeroSemSufixo = String(numero).split('@')[0]
     const { data: cliente } = await supabase
@@ -55,34 +49,35 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Busca token da instância: por instancia_id se passado, senão pega a conectada do workspace
+  // Busca token e URL da instância: por instancia_id se passado, senão pega a conectada do workspace
   let uazapiToken: string | null = null
+  let uazapiUrl: string | null = null
   if (instancia_id) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('instancias_whatsapp')
-      .select('token')
+      .select('token, uazapi_url')
       .eq('id', instancia_id)
       .eq('user_id', workspaceAdminId)
       .maybeSingle()
-    console.log('[SEND-MSG] Por ID:', { data, error })
     uazapiToken = data?.token ?? null
+    uazapiUrl = data?.uazapi_url ?? null
   } else {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('instancias_whatsapp')
-      .select('token')
+      .select('token, uazapi_url')
       .eq('user_id', workspaceAdminId)
       .eq('status', 'conectado')
       .limit(1)
       .maybeSingle()
-    console.log('[SEND-MSG] Por workspace:', { data, error, workspaceAdminId })
     uazapiToken = data?.token ?? null
+    uazapiUrl = data?.uazapi_url ?? null
   }
 
-  console.log('[SEND-MSG] Token encontrado:', !!uazapiToken)
-
-  if (!uazapiBase || !uazapiToken) {
-    return NextResponse.json({ error: 'Nenhuma instância WhatsApp conectada', debug: { workspaceAdminId, temToken: !!uazapiToken, temBase: !!uazapiBase } }, { status: 400 })
+  if (!uazapiUrl || !uazapiToken) {
+    return NextResponse.json({ error: 'Nenhuma instância WhatsApp conectada' }, { status: 400 })
   }
+
+  const uazapiBase = uazapiUrl.replace(/\/+$/, '').replace(/\/send\/.*$/, '')
 
   const response = await fetch(`${uazapiBase}/send/text`, {
     method: 'POST',

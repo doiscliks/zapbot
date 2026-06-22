@@ -60,12 +60,12 @@ export default function ListaClientes({ clientes, clienteSelecionadoId, onSeleci
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
+                    {cliente.nao_lido && (
+                      <div className="w-3 h-3 rounded-full shrink-0 bg-red-500" title="Mensagem não lida" />
+                    )}
                     <span className={`text-sm truncate ${cliente.nao_lido ? 'font-bold text-gray-900' : 'font-medium text-gray-900'}`}>
                       {cliente.nome}
                     </span>
-                    {cliente.nao_lido && (
-                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: '#12C6D6' }} title="Mensagem não lida" />
-                    )}
                   </div>
                   <span className={`text-xs shrink-0 ${cliente.nao_lido ? 'font-semibold text-gray-900' : 'text-gray-400'}`}>
                     {formatarData(dataLista)}

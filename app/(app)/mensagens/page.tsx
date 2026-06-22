@@ -66,7 +66,15 @@ export default function MensagensPage() {
   useEffect(() => {
     const intervalo = setInterval(async () => {
       try {
-        const res = await fetch('/api/mensagens/clientes')
+        // Monta header com info de acesso de cada cliente
+        const acessos = JSON.parse(localStorage.getItem('cliente_acessos') ?? '{}') as Record<string, number>
+        const headerValue = Object.entries(acessos)
+          .map(([tel, timestamp]) => `${tel}:${timestamp}`)
+          .join(',')
+
+        const res = await fetch('/api/mensagens/clientes', {
+          headers: { 'x-cliente-acesso': headerValue },
+        })
         const novosClientes = await res.json()
         if (Array.isArray(novosClientes)) {
           setClientes(novosClientes)
@@ -296,6 +304,11 @@ export default function MensagensPage() {
   }
 
   async function handleSelecionarCliente(cliente: ClienteComUltimaMensagem) {
+    // Salva timestamp do acesso no localStorage
+    const acessos = JSON.parse(localStorage.getItem('cliente_acessos') ?? '{}') as Record<string, number>
+    acessos[cliente.telefone ?? ''] = Date.now()
+    localStorage.setItem('cliente_acessos', JSON.stringify(acessos))
+
     setClienteSelecionado({ ...cliente, nao_lido: false })
     setMensagens([])
     setHistorico(cliente.historico || [])

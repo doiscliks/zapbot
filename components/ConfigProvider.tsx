@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { initSupabaseClient } from '@/lib/supabase'
 
-const SETUP_ROUTES = ['/setup', '/setup/login']
+const PUBLIC_ROUTES = ['/setup', '/setup/login', '/agendar']
 
 export default function ConfigProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -19,8 +19,9 @@ export default function ConfigProvider({ children }: { children: React.ReactNode
           initSupabaseClient(config.supabaseUrl, config.supabaseAnonKey)
           setReady(true)
         } else {
-          // Não configurado — redireciona para setup (exceto se já estiver lá)
-          if (!SETUP_ROUTES.some((r) => pathname.startsWith(r))) {
+          // Não configurado — redireciona para setup (exceto se for rota pública)
+          const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname.startsWith(r))
+          if (!isPublicRoute) {
             router.replace('/setup/login')
           } else {
             setReady(true)

@@ -274,6 +274,7 @@ export async function POST(request: NextRequest) {
       if (isConnected) {
         const update: Record<string, unknown> = { status: 'conectado' }
         if (telefone) update.telefone = telefone
+        else if (inst.phone) update.telefone = String(inst.phone) // Tenta salvar mesmo se não tiver @
         await supabase.from('instancias_whatsapp').update(update).eq('token', token)
         // // await log(supabase, 'connection_event', { rawState, novoStatus: 'conectado', telefone })
       } else {

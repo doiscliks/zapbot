@@ -50,21 +50,24 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Busca token da instância: por instancia_id se passado, senão pega a conectada do usuário
+  // Se usuário é sub-usuário, usa parent_id (admin) para buscar instância
+  const workspaceAdminId = usuario.parent_id || userId
+
+  // Busca token da instância: por instancia_id se passado, senão pega a conectada do workspace
   let uazapiToken: string | null = null
   if (instancia_id) {
     const { data } = await supabase
       .from('instancias_whatsapp')
       .select('token')
       .eq('id', instancia_id)
-      .eq('user_id', userId)
+      .eq('user_id', workspaceAdminId)
       .single()
     uazapiToken = data?.token ?? null
   } else {
     const { data } = await supabase
       .from('instancias_whatsapp')
       .select('token')
-      .eq('user_id', userId)
+      .eq('user_id', workspaceAdminId)
       .eq('status', 'conectado')
       .limit(1)
       .single()

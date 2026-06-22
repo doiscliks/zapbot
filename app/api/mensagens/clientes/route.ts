@@ -55,26 +55,24 @@ export async function GET(request: NextRequest) {
   }
 
   // Ordena por dt_ultima_mensagem desc
+  const clienteAcessoHeader = request.headers.get('x-cliente-acesso') ?? ''
+  const acessoInfo = clienteAcessoHeader.split(',').reduce((acc, item) => {
+    const [tel, timestamp] = item.split(':')
+    if (tel) acc[tel] = parseInt(timestamp, 10)
+    return acc
+  }, {} as Record<string, number>)
+
   const resultado = Object.values(unicosPorTelefone)
-    .map((c) => {
-      // Verifica se tem não lido consultando um header que vem do frontend
-      const clienteAcessoHeader = request.headers.get('x-cliente-acesso') ?? ''
-      const acessoInfo = clienteAcessoHeader.split(',').reduce((acc, item) => {
-        const [tel, timestamp] = item.split(':')
-        if (tel) acc[tel] = parseInt(timestamp, 10)
-        return acc
-      }, {} as Record<string, number>)
-
-      const telefone = c.telefone as string
-      const dtUltimaMensagem = c.dt_ultima_mensagem as string
-      const timestampUltimaMensagem = dtUltimaMensagem ? new Date(dtUltimaMensagem).getTime() : 0
-      const timestampAcesso = acessoInfo[telefone] ?? 0
-
-      return {
-        ...c,
-        nao_lido: timestampUltimaMensagem > timestampAcesso,
-      }
-    })
+    .map((c) => ({
+      ...c,
+      nao_lido: (() => {
+        const telefone = c.telefone as string
+        const dtUltimaMensagem = c.dt_ultima_mensagem as string
+        const timestampUltimaMensagem = dtUltimaMensagem ? new Date(dtUltimaMensagem).getTime() : 0
+        const timestampAcesso = acessoInfo[telefone] ?? 0
+        return timestampUltimaMensagem > timestampAcesso
+      })(),
+    }))
     .sort((a, b) => {
       const dataA = (a.dt_ultima_mensagem as string) ?? ''
       const dataB = (b.dt_ultima_mensagem as string) ?? ''

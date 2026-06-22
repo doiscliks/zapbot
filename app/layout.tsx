@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import './globals.css'
-import ConfigProvider from '@/components/ConfigProvider'
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -17,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className="h-full">
       <body className={`${poppins.className} h-full antialiased`} style={{ backgroundColor: '#F8FAFC' }}>
-        <ConfigProvider>{children}</ConfigProvider>
+        {children}
       </body>
     </html>
   )

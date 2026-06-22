@@ -36,22 +36,22 @@ export async function POST(request: NextRequest) {
   const isAdmin = !usuario.parent_id
   const isAtendente = usuario.is_attendant
 
+  // Se usuário é sub-usuário, usa parent_id (admin)
+  const workspaceAdminId = usuario.parent_id || userId
+
   if (!isAdmin && isAtendente) {
     const numeroSemSufixo = String(numero).split('@')[0]
     const { data: cliente } = await supabase
       .from('clientes')
       .select('assigned_user_id')
       .eq('telefone', numeroSemSufixo)
-      .eq('user_id', userId)
+      .eq('user_id', workspaceAdminId)
       .maybeSingle()
 
     if (!cliente || cliente.assigned_user_id !== userId) {
       return NextResponse.json({ error: 'Sem permissão para enviar mensagem nesta conversa' }, { status: 403 })
     }
   }
-
-  // Se usuário é sub-usuário, usa parent_id (admin) para buscar instância
-  const workspaceAdminId = usuario.parent_id || userId
 
   // Busca token da instância: por instancia_id se passado, senão pega a conectada do workspace
   let uazapiToken: string | null = null
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     .from('clientes')
     .update({ dt_ultima_mensagem: agora })
     .eq('telefone', numeroSemSufixo)
-    .eq('user_id', userId)
+    .eq('user_id', workspaceAdminId)
 
   return NextResponse.json({ ok: true, data, salvo: !insertErr, erro_salvar: insertErr?.message })
 }

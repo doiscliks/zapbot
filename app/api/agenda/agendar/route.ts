@@ -314,6 +314,11 @@ export async function POST(request: NextRequest) {
         if (whatsappDebug === 'ok') {
           await supabase.from('agendamentos').update({ whatsapp_enviado: true }).eq('id', agendamento.id)
         }
+
+        // Notifica o usuário dono da agenda no próprio WhatsApp
+        if (config.telefone_notificacao) {
+          await enviarWhatsApp(uazapiUrl, instancia.token, config.telefone_notificacao, msg)
+        }
       }
     } catch (e) {
       whatsappDebug = `excecao: ${e instanceof Error ? e.message : 'desconhecida'}`

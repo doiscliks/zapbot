@@ -472,12 +472,12 @@ export default function AgendarPage() {
                     {/* Nome */}
                     <div>
                       <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
-                        Nome completo <span style={{ color: '#12C6D6' }}>*</span>
+                        Nome completo
                       </label>
                       <div className="relative">
                         <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
                         <input
-                          type="text" required
+                          type="text"
                           value={form.nome}
                           onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
                           placeholder="Seu nome completo"
@@ -490,7 +490,7 @@ export default function AgendarPage() {
                     {/* WhatsApp com prefixo +55 */}
                     <div>
                       <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
-                        WhatsApp <span style={{ color: '#12C6D6' }}>*</span>
+                        WhatsApp
                       </label>
                       <div className="flex items-center border rounded-xl overflow-hidden focus-within:ring-2 bg-white transition-all"
                         style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}>
@@ -499,7 +499,7 @@ export default function AgendarPage() {
                           <span className="text-sm font-semibold" style={{ color: '#6B7280' }}>+55</span>
                         </div>
                         <input
-                          type="tel" required
+                          type="tel"
                           value={form.telefone}
                           onChange={e => setForm(f => ({ ...f, telefone: e.target.value.replace(/\D/g, '') }))}
                           placeholder="11999999999"

@@ -100,8 +100,8 @@ async function enviarWhatsApp(uazapiBase: string, instanceToken: string, telefon
 export async function POST(request: NextRequest) {
   const { slug, nome, telefone, email, assunto, data, hora } = await request.json()
 
-  if (!slug || !nome || !telefone || !data || !hora) {
-    return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 })
+  if (!slug || !data || !hora) {
+    return NextResponse.json({ error: 'Data e hora são obrigatórios' }, { status: 400 })
   }
 
   const supabase = getSupabase()

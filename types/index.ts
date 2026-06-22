@@ -47,6 +47,7 @@ export interface MensagemWhatsapp {
   user_id?: string
   media_url?: string | null
   media_type?: string | null
+  lido?: boolean | null
 }
 
 export interface ClienteComUltimaMensagem extends Cliente {

@@ -55,23 +55,27 @@ export async function GET(request: NextRequest) {
   }
 
   // Ordena por dt_ultima_mensagem desc
-  const clienteAcessoHeader = request.headers.get('x-cliente-acesso') ?? ''
-  const acessoInfo = clienteAcessoHeader.split(',').reduce((acc, item) => {
-    const [tel, timestamp] = item.split(':')
-    if (tel) acc[tel] = parseInt(timestamp, 10)
-    return acc
-  }, {} as Record<string, number>)
+
+  // Busca mensagens não lidas de cada cliente
+  const mensagensNaoLidas: Record<string, number> = {}
+  const { data: msgs } = await supabase
+    .from('mensagens_whatsapp')
+    .select('numero_cliente, lido')
+    .eq('user_id', tenantId)
+    .eq('quem_mandou', 'cliente')
+    .eq('lido', false)
+
+  if (msgs) {
+    for (const msg of msgs) {
+      const tel = (msg.numero_cliente as string).split('@')[0]
+      mensagensNaoLidas[tel] = (mensagensNaoLidas[tel] ?? 0) + 1
+    }
+  }
 
   const resultado = Object.values(unicosPorTelefone)
     .map((c: any) => ({
       ...c,
-      nao_lido: (() => {
-        const telefone = c.telefone as string
-        const dtUltimaMensagem = c.dt_ultima_mensagem as string
-        const timestampUltimaMensagem = dtUltimaMensagem ? new Date(dtUltimaMensagem).getTime() : 0
-        const timestampAcesso = acessoInfo[telefone] ?? 0
-        return timestampUltimaMensagem > timestampAcesso
-      })(),
+      nao_lido: mensagensNaoLidas[(c.telefone as string)] > 0,
     }))
     .sort((a: any, b: any) => {
       const dataA = (a.dt_ultima_mensagem as string) ?? ''

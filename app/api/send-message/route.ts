@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
   // Se usuário é sub-usuário, usa parent_id (admin)
   const workspaceAdminId = usuario.parent_id || userId
 
+  console.log('[SEND-MSG] Debug:', { userId, workspaceAdminId, instancia_id, uazapiBase })
+
   if (!isAdmin && isAtendente) {
     const numeroSemSufixo = String(numero).split('@')[0]
     const { data: cliente } = await supabase
@@ -56,26 +58,30 @@ export async function POST(request: NextRequest) {
   // Busca token da instância: por instancia_id se passado, senão pega a conectada do workspace
   let uazapiToken: string | null = null
   if (instancia_id) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('instancias_whatsapp')
       .select('token')
       .eq('id', instancia_id)
       .eq('user_id', workspaceAdminId)
       .maybeSingle()
+    console.log('[SEND-MSG] Por ID:', { data, error })
     uazapiToken = data?.token ?? null
   } else {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('instancias_whatsapp')
       .select('token')
       .eq('user_id', workspaceAdminId)
       .eq('status', 'conectado')
       .limit(1)
       .maybeSingle()
+    console.log('[SEND-MSG] Por workspace:', { data, error, workspaceAdminId })
     uazapiToken = data?.token ?? null
   }
 
+  console.log('[SEND-MSG] Token encontrado:', !!uazapiToken)
+
   if (!uazapiBase || !uazapiToken) {
-    return NextResponse.json({ error: 'Nenhuma instância WhatsApp conectada' }, { status: 400 })
+    return NextResponse.json({ error: 'Nenhuma instância WhatsApp conectada', debug: { workspaceAdminId, temToken: !!uazapiToken, temBase: !!uazapiBase } }, { status: 400 })
   }
 
   const response = await fetch(`${uazapiBase}/send/text`, {

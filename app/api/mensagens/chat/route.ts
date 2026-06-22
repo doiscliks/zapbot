@@ -86,12 +86,15 @@ export async function GET(request: NextRequest) {
   const mensagensClienteNaoLidas = todasMensagens.filter((m) => m.quem_mandou === 'cliente' && !m.lido)
   if (mensagensClienteNaoLidas.length > 0) {
     const idsParaMarcar = mensagensClienteNaoLidas.map((m) => m.id)
-    await supabase
+    const { error } = await supabase
       .from('mensagens_whatsapp')
       .update({ lido: true })
       .in('id', idsParaMarcar)
-      .then(() => console.log('[CHAT] Marcadas como lidas:', idsParaMarcar.length))
-      .catch((e) => console.log('[CHAT] Erro ao marcar como lidas:', e))
+    if (!error) {
+      console.log('[CHAT] Marcadas como lidas:', idsParaMarcar.length)
+    } else {
+      console.log('[CHAT] Erro ao marcar como lidas:', error)
+    }
   }
 
   return NextResponse.json(todasMensagens)

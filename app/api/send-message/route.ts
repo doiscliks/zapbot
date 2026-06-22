@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       .select('token')
       .eq('id', instancia_id)
       .eq('user_id', workspaceAdminId)
-      .single()
+      .maybeSingle()
     uazapiToken = data?.token ?? null
   } else {
     const { data } = await supabase
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       .eq('user_id', workspaceAdminId)
       .eq('status', 'conectado')
       .limit(1)
-      .single()
+      .maybeSingle()
     uazapiToken = data?.token ?? null
   }
 

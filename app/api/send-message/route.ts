@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       .eq('id', instancia_id)
       .eq('user_id', workspaceAdminId)
       .maybeSingle()
+    console.log('[SEND-MSG] Query por ID:', { instancia_id, workspaceAdminId, data })
     uazapiToken = data?.token ?? null
     uazapiUrl = data?.uazapi_url ?? null
   } else {
@@ -69,12 +70,15 @@ export async function POST(request: NextRequest) {
       .eq('status', 'conectado')
       .limit(1)
       .maybeSingle()
+    console.log('[SEND-MSG] Query por workspace:', { workspaceAdminId, data })
     uazapiToken = data?.token ?? null
     uazapiUrl = data?.uazapi_url ?? null
   }
 
+  console.log('[SEND-MSG] Resultado:', { uazapiToken, uazapiUrl })
+
   if (!uazapiUrl || !uazapiToken) {
-    return NextResponse.json({ error: 'Nenhuma instância WhatsApp conectada' }, { status: 400 })
+    return NextResponse.json({ error: 'Nenhuma instância WhatsApp conectada', debug: { workspaceAdminId, temToken: !!uazapiToken, temUrl: !!uazapiUrl } }, { status: 400 })
   }
 
   const uazapiBase = uazapiUrl.replace(/\/+$/, '').replace(/\/send\/.*$/, '')

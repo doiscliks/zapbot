@@ -459,7 +459,7 @@ export async function POST(request: NextRequest) {
     console.log('[WEBHOOK] Cliente criado:', { clienteId, novoCliente })
   }
 
-  // 1a. Atribuição automática: NOVO cliente OU cliente sem atendente
+  // 1a. Atribuição automática: NOVO cliente OU cliente sem atendente (round-robin)
   if (clienteId && (isNovoCliente || clienteSemAtendente)) {
     try {
       // Se userId é sub-usuário, usa seu parent_id
@@ -471,23 +471,9 @@ export async function POST(request: NextRequest) {
 
       const workspaceAdminId = usuarioAtual?.parent_id || userId
 
-      // Busca atendentes ativos - SIMPLES E DIRETO
-      const { data: atendentes } = await supabase
-        .from('usuarios')
-        .select('id, nome')
-        .eq('parent_id', workspaceAdminId)
-        .eq('is_attendant', true)
-        .eq('ativo', true)
-
-      // Se tem atendentes, atribui ao primeiro
-      if (atendentes?.length) {
-        await supabase
-          .from('clientes')
-          .update({ assigned_user_id: atendentes[0].id })
-          .eq('id', clienteId)
-      }
+      await atribuirClienteAAtendente(supabase, clienteId, workspaceAdminId, pushName || telefone, telefone)
     } catch (e) {
-      // Ignora erros silenciosamente
+      console.error('[WEBHOOK] Erro na atribuição automática:', e)
     }
   }
 

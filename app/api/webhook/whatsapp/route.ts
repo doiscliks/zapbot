@@ -544,6 +544,7 @@ export async function POST(request: NextRequest) {
 
   if (isAudio || isImage) {
     const msgIdMidia = (msg.messageid as string) || ''
+    console.log('[WEBHOOK][MIDIA] Pré-condições:', { msgIdMidia: !!msgIdMidia, uazapiBase: !!uazapiBase, instanciaToken: !!instanciaToken, openaiKey: !!openaiKey })
     if (msgIdMidia && uazapiBase && instanciaToken) {
       try {
         const dlRes = await fetch(`${uazapiBase}/message/download`, {
@@ -561,7 +562,7 @@ export async function POST(request: NextRequest) {
         if (dlRes.ok) {
           const dlData = await dlRes.json()
           const fileURL: string = dlData.fileURL || ''
-          // await log(supabase, '5_midia_download', { isAudio, isImage, temTranscricao: !!dlData.transcription, temURL: !!fileURL })
+          console.log('[WEBHOOK][MIDIA] Download ok:', { isAudio, isImage, temTranscricao: !!dlData.transcription, temURL: !!fileURL, dlData })
 
           if (isAudio) {
             if (fileURL) mediaUrl = fileURL
@@ -598,16 +599,19 @@ export async function POST(request: NextRequest) {
             }
           }
         } else {
-          // await log(supabase, '5_midia_download_erro', { status: dlRes.status })
+          const errBody = await dlRes.text().catch(() => '')
+          console.error('[WEBHOOK][MIDIA] Erro no download:', { status: dlRes.status, errBody })
         }
       } catch (e) {
-        // await log(supabase, '5_midia_erro', { error: String(e) })
+        console.error('[WEBHOOK][MIDIA] Exceção ao baixar mídia:', e)
       }
+    } else {
+      console.error('[WEBHOOK][MIDIA] Pré-condição faltando, não tentou baixar mídia')
     }
 
     if (!inputTexto) {
-      // await log(supabase, '5_midia_sem_texto', { messageType })
-      return NextResponse.json({ ok: true })
+      if (isAudio) inputTexto = '[cliente enviou um áudio]'
+      else if (isImage) inputTexto = '[cliente enviou uma imagem]'
     }
   }
 

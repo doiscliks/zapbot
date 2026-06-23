@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, TrendingUp, DollarSign, Eye, MousePointer, MessageSquare, ChevronUp, ChevronDown, BarChart2, Percent, CreditCard } from 'lucide-react'
+import { Loader2, TrendingUp, DollarSign, Eye, MousePointer, MessageSquare, ChevronUp, ChevronDown, BarChart2, Percent, CreditCard, Send, CheckCircle } from 'lucide-react'
 
 interface CampanhaMetrica {
   campanha: string
@@ -83,6 +83,9 @@ export default function AdsPage() {
   const [periodo, setPeriodo] = useState('last_30d')
   const [sortField, setSortField] = useState<SortField>('gasto')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [enviandoRelatorio, setEnviandoRelatorio] = useState(false)
+  const [relatorioEnviado, setRelatorioEnviado] = useState(false)
+  const [erroRelatorio, setErroRelatorio] = useState<string | null>(null)
 
   async function carregar(p: string) {
     setLoading(true)
@@ -101,6 +104,23 @@ export default function AdsPage() {
   }
 
   useEffect(() => { carregar(periodo) }, [periodo])
+
+  async function enviarRelatorioAgora() {
+    setEnviandoRelatorio(true)
+    setErroRelatorio(null)
+    setRelatorioEnviado(false)
+    try {
+      const res = await fetch('/api/relatorio/ads', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro ao enviar relatório')
+      setRelatorioEnviado(true)
+      setTimeout(() => setRelatorioEnviado(false), 4000)
+    } catch (e) {
+      setErroRelatorio(e instanceof Error ? e.message : 'Erro ao enviar relatório')
+    } finally {
+      setEnviandoRelatorio(false)
+    }
+  }
 
   function handleSort(field: SortField | null) {
     if (!field) return
@@ -139,16 +159,32 @@ export default function AdsPage() {
             <p className="text-gray-400 text-xs mt-0.5">Performance das campanhas do Facebook</p>
           </div>
         </div>
-        <select
-          value={periodo}
-          onChange={(e) => setPeriodo(e.target.value)}
-          className="px-4 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700 font-medium shadow-sm"
-        >
-          {PERIODOS.map((p) => (
-            <option key={p.value} value={p.value}>{p.label}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={enviarRelatorioAgora}
+            disabled={enviandoRelatorio}
+            title="Envia no seu WhatsApp o relatório de gastos de ontem"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60 transition-colors bg-blue-600 hover:bg-blue-700"
+          >
+            {enviandoRelatorio ? <Loader2 size={15} className="animate-spin" /> : relatorioEnviado ? <CheckCircle size={15} /> : <Send size={15} />}
+            {relatorioEnviado ? 'Enviado!' : 'Enviar relatório de ontem'}
+          </button>
+          <select
+            value={periodo}
+            onChange={(e) => setPeriodo(e.target.value)}
+            className="px-4 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700 font-medium shadow-sm"
+          >
+            {PERIODOS.map((p) => (
+              <option key={p.value} value={p.value}>{p.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
+      {erroRelatorio && (
+        <div className="shrink-0 bg-red-50 border-b border-red-100 text-red-700 text-sm px-8 py-2.5">
+          Erro ao enviar relatório: {erroRelatorio}
+        </div>
+      )}
 
       <div className="px-8 py-6 space-y-6">
         {loading && (

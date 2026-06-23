@@ -6,6 +6,7 @@ import { Settings, Loader2, CheckCircle, Eye, EyeOff, AlertCircle } from 'lucide
 const MASKED = '••••••••••••••••••••••'
 
 interface ConfigForm {
+  telefone: string
   openaiKey: string
   fbPixelId: string
   fbAccessToken: string
@@ -16,6 +17,7 @@ interface ConfigForm {
 
 export default function ConfiguracoesPage() {
   const [form, setForm] = useState<ConfigForm>({
+    telefone: '',
     openaiKey: '',
     fbPixelId: '',
     fbAccessToken: '',
@@ -36,6 +38,7 @@ export default function ConfiguracoesPage() {
       .then((r) => r.json())
       .then((data) => {
         setForm({
+          telefone: data.telefone || '',
           openaiKey: data.hasOpenaiKey ? MASKED : '',
           fbPixelId: data.fbPixelId || '',
           fbAccessToken: data.hasFbAccessToken ? MASKED : '',
@@ -93,6 +96,27 @@ export default function ConfiguracoesPage() {
       </div>
 
       <form onSubmit={handleSalvar} className="space-y-6">
+        {/* Perfil */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="mb-4">
+            <h2 className="font-semibold text-gray-900">Seu perfil</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Telefone usado para receber notificações (ex: relatório de Ads, novos agendamentos).
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Seu WhatsApp</label>
+            <input
+              type="text"
+              value={form.telefone}
+              onChange={(e) => handleChange('telefone', e.target.value)}
+              placeholder="Ex: 5511999998888"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#12C6D6] focus:border-transparent transition"
+            />
+          </div>
+        </div>
+
         {/* OpenAI */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <div className="mb-4">

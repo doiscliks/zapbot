@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { getTenantId } from '@/lib/tenant-auth'
 import { temPermissao } from '@/lib/permissoes'
 import { readTenantConfig, writeTenantConfig } from '@/lib/tenant-config'
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+  )
+}
 
 const MASKED = '••••••••••••••••••••••'
 
@@ -15,7 +23,15 @@ export async function GET(request: NextRequest) {
 
   const config = await readTenantConfig(userId)
 
+  const supabase = getSupabase()
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('telefone')
+    .eq('id', userId)
+    .maybeSingle()
+
   return NextResponse.json({
+    telefone: usuario?.telefone ?? '',
     hasOpenaiKey: !!config.openaiKey,
     fbPixelId: config.fbPixelId,
     hasFbAccessToken: !!config.fbAccessToken,
@@ -62,6 +78,14 @@ export async function POST(request: NextRequest) {
       fbAdAccountId: body.fbAdAccountId?.trim() ?? current.fbAdAccountId,
       ...(typeof body.iaAtiva === 'boolean' ? { iaAtiva: body.iaAtiva } : {}),
     })
+
+    if (body.telefone !== undefined) {
+      const supabase = getSupabase()
+      await supabase
+        .from('usuarios')
+        .update({ telefone: body.telefone?.trim() || null })
+        .eq('id', userId)
+    }
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : 'Erro ao salvar configurações.' },

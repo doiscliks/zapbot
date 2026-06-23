@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readConfig } from '@/lib/config-server'
+import { getTenantId } from '@/lib/tenant-auth'
+import { readTenantConfig } from '@/lib/tenant-config'
 
 const FB_API_VERSION = 'v21.0'
 
@@ -29,7 +30,10 @@ export async function GET(request: NextRequest) {
   const until = searchParams.get('until')
   const datePreset = searchParams.get('date_preset')
 
-  const config = await readConfig()
+  const userId = getTenantId(request)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const config = await readTenantConfig(userId)
 
   if (!config.fbAdsToken || !config.fbAdAccountId) {
     return NextResponse.json({ error: 'Marketing API não configurada' }, { status: 400 })

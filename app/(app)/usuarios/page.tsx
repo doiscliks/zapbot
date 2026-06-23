@@ -7,6 +7,9 @@ import { Usuario } from '@/types'
 
 const ACCENT = '#12C6D6'
 
+// 'configuracoes' é exclusiva do admin, não pode ser atribuída a sub-usuários
+const SCREENS_ATRIBUIVEIS = SCREENS.filter((s) => s.key !== 'configuracoes')
+
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [loading, setLoading] = useState(true)
@@ -250,7 +253,7 @@ export default function UsuariosPage() {
 
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#9CA3AF' }}>Telas que este usuário pode acessar</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-            {SCREENS.map((s) => {
+            {SCREENS_ATRIBUIVEIS.map((s) => {
               const ativo = form.permissoes.includes(s.key)
               return (
                 <button
@@ -341,7 +344,7 @@ export default function UsuariosPage() {
                     <span className="text-sm font-medium" style={{ color: '#1F2937' }}>É atendente (receberá conversas automaticamente)</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-                    {SCREENS.map((s) => {
+                    {SCREENS_ATRIBUIVEIS.map((s) => {
                       const ativo = editPermissoes.includes(s.key)
                       return (
                         <button

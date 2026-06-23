@@ -4,6 +4,7 @@ import { SCREEN_KEYS, screenKeyFromPath, podeAcessar } from '@/lib/screens'
 const PUBLIC_PATHS = ['/login', '/setup/login', '/g/', '/agendar', '/booking']
 const MASTER_PATHS = ['/setup']
 const API_PUBLIC_PREFIXES = ['/api/tenant/', '/api/master-login', '/api/webhook/']
+const ADMIN_ONLY_SCREENS = ['configuracoes']
 // /api/tenant/ já cobre sincronizar, ativar-chave, me, login, logout, entrar
 
 export function proxy(request: NextRequest) {
@@ -46,17 +47,21 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  const permCookie = request.cookies.get('permissoes')?.value
+  let permissoes: unknown = '*'
+  try { permissoes = permCookie ? JSON.parse(permCookie) : '*' } catch { permissoes = '*' }
+
+  // 'configuracoes' é exclusiva do admin, mesmo que a tela esteja marcada nas permissões do sub-usuário.
+  const key = screenKeyFromPath(pathname)
+  if (ADMIN_ONLY_SCREENS.includes(key) && permissoes !== '*') {
+    return NextResponse.redirect(new URL('/mensagens', request.url))
+  }
+
   // Permissões por tela: bloqueia acesso direto por URL a telas não permitidas.
   // Só aplica a telas conhecidas; sessões antigas (sem cookie permissoes) = libera tudo.
-  const permCookie = request.cookies.get('permissoes')?.value
-  if (permCookie) {
-    let permissoes: unknown = '*'
-    try { permissoes = JSON.parse(permCookie) } catch { permissoes = '*' }
-    const key = screenKeyFromPath(pathname)
-    if (SCREEN_KEYS.includes(key) && !podeAcessar(permissoes, key)) {
-      const primeira = Array.isArray(permissoes) && permissoes.length > 0 ? permissoes[0] : 'mensagens'
-      return NextResponse.redirect(new URL(`/${primeira}`, request.url))
-    }
+  if (permCookie && SCREEN_KEYS.includes(key) && !podeAcessar(permissoes, key)) {
+    const primeira = Array.isArray(permissoes) && permissoes.length > 0 ? permissoes[0] : 'mensagens'
+    return NextResponse.redirect(new URL(`/${primeira}`, request.url))
   }
 
   return NextResponse.next()

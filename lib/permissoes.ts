@@ -25,3 +25,16 @@ export async function temPermissao(request: NextRequest, key: string): Promise<b
   if (!data.parent_id) return true // conta de topo = admin
   return podeAcessar(data.permissoes, key)
 }
+
+// Checagem server-side: o usuário logado é o admin (dono do workspace)?
+export async function ehAdmin(request: NextRequest): Promise<boolean> {
+  const usuarioId = getUsuarioId(request)
+  if (!usuarioId) return false
+  const supabase = getSupabase()
+  const { data } = await supabase
+    .from('usuarios')
+    .select('parent_id, ativo')
+    .eq('id', usuarioId)
+    .single()
+  return !!data && data.ativo !== false && !data.parent_id
+}

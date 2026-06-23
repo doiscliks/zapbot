@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getTenantId } from '@/lib/tenant-auth'
-import { temPermissao } from '@/lib/permissoes'
+import { temPermissao, ehAdmin } from '@/lib/permissoes'
 import { readTenantConfig, writeTenantConfig } from '@/lib/tenant-config'
 
 function getSupabase() {
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
   // Este endpoint atende a tela Configurações (chaves) e o toggle de IA da tela
   // Treinamento. Exige a permissão da tela correspondente ao que está sendo alterado.
   const apenasIaAtiva = Object.keys(body).every((k) => k === 'iaAtiva')
-  const permKey = apenasIaAtiva ? 'treinamento' : 'configuracoes'
-  if (!(await temPermissao(request, permKey))) {
+  const autorizado = apenasIaAtiva ? await temPermissao(request, 'treinamento') : await ehAdmin(request)
+  if (!autorizado) {
     return NextResponse.json({ error: 'Sem permissão para esta alteração' }, { status: 403 })
   }
 

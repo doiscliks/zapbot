@@ -60,8 +60,10 @@ export default function Sidebar() {
       .catch(() => {})
   }, [])
 
-  // Sempre mostra 'fila' e 'clientes' para admins
+  // 'configuracoes' é exclusiva do admin, mesmo que um sub-usuário tenha a permissão marcada
   const itensVisiveis = navItems.filter((item) => {
+    if (item.key === 'configuracoes') return permissoes === '*'
+    // Sempre mostra 'fila' e 'clientes' para admins
     if (permissoes === '*' && (item.key === 'fila' || item.key === 'clientes')) return true
     return podeAcessar(permissoes, item.key)
   })

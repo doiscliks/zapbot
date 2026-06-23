@@ -50,10 +50,23 @@ export async function POST(request: NextRequest) {
     // Atualiza o cliente
     const jaAtribuido = cliente.assigned_user_id === atendente_id
 
-    await supabase
+    const { data: atualizado, error: erroUpdate } = await supabase
       .from('clientes')
       .update({ assigned_user_id: atendente_id })
       .eq('id', cliente_id)
+      .eq('user_id', tenantId)
+      .select('id, assigned_user_id')
+      .maybeSingle()
+
+    if (erroUpdate) {
+      console.error('[FILA] Erro ao atualizar assigned_user_id:', erroUpdate)
+      return NextResponse.json({ error: `Erro ao salvar associação: ${erroUpdate.message}` }, { status: 500 })
+    }
+
+    if (!atualizado || atualizado.assigned_user_id !== atendente_id) {
+      console.error('[FILA] Update não confirmou a associação:', { cliente_id, atendente_id, atualizado })
+      return NextResponse.json({ error: 'A associação não foi salva. Tente novamente.' }, { status: 500 })
+    }
 
     // Log da ação
     console.log(`[FILA] Cliente ${cliente.nome} associado ${jaAtribuido ? 'novamente ' : ''}ao atendente ${atendente.nome} (manual)`)

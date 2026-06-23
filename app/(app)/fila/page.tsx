@@ -74,8 +74,9 @@ export default function FilaPage() {
           atendente_id: atendenteSelecionado,
         }),
       })
+      const data = await res.json()
 
-      if (!res.ok) throw new Error('Erro ao associar cliente')
+      if (!res.ok) throw new Error(data.error || 'Erro ao associar cliente')
 
       setModalAberto(false)
       setAssociandoClienteId(null)

@@ -10,11 +10,16 @@ const ADMIN_ONLY_SCREENS = ['configuracoes']
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Static assets and Next.js internals
+  // Static assets, PWA files and Next.js internals
   if (
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/favicon') ||
-    pathname === '/'
+    pathname === '/' ||
+    pathname === '/sw.js' ||
+    pathname === '/manifest.webmanifest' ||
+    pathname === '/icon-192.png' ||
+    pathname === '/icon-512.png' ||
+    pathname === '/apple-touch-icon.png'
   ) {
     return NextResponse.next()
   }

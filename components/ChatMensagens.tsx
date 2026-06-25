@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { MensagemWhatsapp, Cliente, KanbanSecao } from '@/types'
-import { Loader2, MessageSquare, Send, ChevronDown, AlertCircle, RotateCcw, BotOff, Bot, History } from 'lucide-react'
+import { Loader2, MessageSquare, Send, ChevronDown, AlertCircle, RotateCcw, BotOff, Bot, History, ArrowLeft, Info } from 'lucide-react'
 
 import Avatar from './Avatar'
 import { getSecoes, moverClienteParaSecao } from '@/services/kanbanService'
@@ -12,6 +12,8 @@ interface Props {
   mensagens: MensagemWhatsapp[]
   loading: boolean
   onMensagemEnviada?: (msg: MensagemWhatsapp) => void
+  onVoltar?: () => void
+  onAbrirInfo?: () => void
 }
 
 function extrairTexto(mensagem: string): string | null {
@@ -39,7 +41,7 @@ function formatarDataHora(dateStr: string) {
   })
 }
 
-export default function ChatMensagens({ cliente, mensagens, loading, onMensagemEnviada }: Props) {
+export default function ChatMensagens({ cliente, mensagens, loading, onMensagemEnviada, onVoltar, onAbrirInfo }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -199,6 +201,15 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 bg-white shrink-0">
+        {onVoltar && (
+          <button
+            onClick={onVoltar}
+            className="shrink-0 p-1.5 -ml-1 rounded-lg text-gray-500 hover:bg-gray-100"
+            title="Voltar para conversas"
+          >
+            <ArrowLeft size={18} />
+          </button>
+        )}
         <Avatar nome={cliente.nome} foto={cliente.foto} size="lg" />
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 text-sm">{cliente.nome}</p>
@@ -270,6 +281,14 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
           </select>
           <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         </div>
+        {onAbrirInfo && (
+          <button
+            onClick={onAbrirInfo}
+            className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <Info size={14} /> Info
+          </button>
+        )}
       </div>
 
       {feedbackImport && (

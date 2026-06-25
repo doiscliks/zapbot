@@ -1,11 +1,32 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { ClienteComUltimaMensagem, MensagemWhatsapp, ClienteHistoricoItem } from '@/types'
 import { supabase } from '@/lib/supabase'
 import ListaClientes from '@/components/ListaClientes'
 import ChatMensagens from '@/components/ChatMensagens'
-import { Loader2, AlertCircle, Search, Plus } from 'lucide-react'
+import { Loader2, AlertCircle, Search, Plus, ArrowLeft } from 'lucide-react'
+
+function subscribePWA(callback: () => void) {
+  const mq = window.matchMedia('(display-mode: standalone)')
+  mq.addEventListener('change', callback)
+  return () => mq.removeEventListener('change', callback)
+}
+
+function getPWASnapshot() {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as unknown as { standalone?: boolean }).standalone === true
+  )
+}
+
+function getPWAServerSnapshot() {
+  return false
+}
+
+function useIsPWA() {
+  return useSyncExternalStore(subscribePWA, getPWASnapshot, getPWAServerSnapshot)
+}
 
 export default function MensagensPage() {
   const [clientes, setClientes] = useState<ClienteComUltimaMensagem[]>([])
@@ -25,6 +46,8 @@ export default function MensagensPage() {
   const [atendentes, setAtendentes] = useState<any[]>([])
   const [nomeAtendente, setNomeAtendente] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const isPWA = useIsPWA()
+  const [painelMobile, setPainelMobile] = useState<'lista' | 'chat' | 'info'>('lista')
 
   // Ref para acessar o cliente selecionado dentro do callback do realtime
   const clienteSelecionadoRef = useRef<ClienteComUltimaMensagem | null>(null)
@@ -297,6 +320,7 @@ export default function MensagensPage() {
 
   async function handleSelecionarCliente(cliente: ClienteComUltimaMensagem) {
     setClienteSelecionado({ ...cliente, nao_lido: false })
+    if (isPWA) setPainelMobile('chat')
     setMensagens([])
     setHistorico(cliente.historico || [])
     setNovaNotaTexto('')
@@ -430,68 +454,68 @@ export default function MensagensPage() {
     setMensagens((prev) => [...prev, msg])
   }
 
-  return (
-    <div className="flex h-full overflow-hidden">
-      {/* Coluna esquerda */}
-      <div className="w-80 flex flex-col border-r border-gray-200 bg-white shrink-0">
-        <div className="px-4 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900 text-base mb-3">Conversas</h2>
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar cliente..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm bg-gray-100 rounded-lg border-0 outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400"
-            />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {loadingClientes && (
-            <div className="flex items-center justify-center py-10 gap-2 text-gray-400">
-              <Loader2 size={18} className="animate-spin" />
-              <span className="text-sm">Carregando...</span>
-            </div>
-          )}
-          {erro && !loadingClientes && (
-            <div className="flex items-center gap-2 text-red-600 px-4 py-4 text-sm">
-              <AlertCircle size={16} />
-              {erro}
-            </div>
-          )}
-          {!loadingClientes && !erro && (
-            <ListaClientes
-              clientes={clientesFiltrados}
-              clienteSelecionadoId={clienteSelecionado?.id ?? null}
-              onSelecionar={handleSelecionarCliente}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Coluna central — chat */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        {erroMensagens && (
-          <div className="flex items-center gap-2 bg-red-50 border-b border-red-200 text-red-700 px-4 py-2 text-xs">
-            <AlertCircle size={14} />
-            Erro ao carregar mensagens: {erroMensagens}
-          </div>
-        )}
-        <div className="flex-1 overflow-hidden">
-          <ChatMensagens
-            cliente={clienteSelecionado}
-            mensagens={mensagens}
-            loading={loadingMensagens}
-            onMensagemEnviada={handleMensagemEnviada}
+  const listaConteudo = (
+    <>
+      <div className="px-4 py-4 border-b border-gray-100">
+        <h2 className="font-semibold text-gray-900 text-base mb-3">Conversas</h2>
+        <div className="relative">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar cliente..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-sm bg-gray-100 rounded-lg border-0 outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400"
           />
         </div>
       </div>
 
-      {/* Coluna direita — dados do cliente */}
-      {clienteSelecionado && (
-        <div className="w-80 border-l border-gray-200 bg-white overflow-y-auto shrink-0">
+      <div className="flex-1 overflow-y-auto">
+        {loadingClientes && (
+          <div className="flex items-center justify-center py-10 gap-2 text-gray-400">
+            <Loader2 size={18} className="animate-spin" />
+            <span className="text-sm">Carregando...</span>
+          </div>
+        )}
+        {erro && !loadingClientes && (
+          <div className="flex items-center gap-2 text-red-600 px-4 py-4 text-sm">
+            <AlertCircle size={16} />
+            {erro}
+          </div>
+        )}
+        {!loadingClientes && !erro && (
+          <ListaClientes
+            clientes={clientesFiltrados}
+            clienteSelecionadoId={clienteSelecionado?.id ?? null}
+            onSelecionar={handleSelecionarCliente}
+          />
+        )}
+      </div>
+    </>
+  )
+
+  const chatConteudo = (
+    <div className="flex-1 overflow-hidden flex flex-col">
+      {erroMensagens && (
+        <div className="flex items-center gap-2 bg-red-50 border-b border-red-200 text-red-700 px-4 py-2 text-xs">
+          <AlertCircle size={14} />
+          Erro ao carregar mensagens: {erroMensagens}
+        </div>
+      )}
+      <div className="flex-1 overflow-hidden">
+        <ChatMensagens
+          cliente={clienteSelecionado}
+          mensagens={mensagens}
+          loading={loadingMensagens}
+          onMensagemEnviada={handleMensagemEnviada}
+          onVoltar={isPWA ? () => setPainelMobile('lista') : undefined}
+          onAbrirInfo={isPWA ? () => setPainelMobile('info') : undefined}
+        />
+      </div>
+    </div>
+  )
+
+  const infoConteudo = clienteSelecionado && (
           <div className="p-4">
             <h3 className="font-semibold text-gray-900 mb-4 text-sm">Informações do Cliente</h3>
 
@@ -667,6 +691,46 @@ export default function MensagensPage() {
               </div>
             </div>
           </div>
+  )
+
+  if (isPWA) {
+    return (
+      <div className="flex h-full overflow-hidden">
+        {painelMobile === 'lista' && (
+          <div className="flex flex-col w-full h-full bg-white">{listaConteudo}</div>
+        )}
+        {painelMobile === 'chat' && chatConteudo}
+        {painelMobile === 'info' && clienteSelecionado && (
+          <div className="flex flex-col w-full h-full bg-white overflow-y-auto">
+            <div className="flex items-center gap-1.5 px-4 py-3 border-b border-gray-100 shrink-0">
+              <button
+                onClick={() => setPainelMobile('chat')}
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 -ml-1 p-1.5 rounded-lg hover:bg-gray-100"
+              >
+                <ArrowLeft size={16} /> Mensagens
+              </button>
+            </div>
+            {infoConteudo}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full overflow-hidden">
+      {/* Coluna esquerda */}
+      <div className="w-80 flex flex-col border-r border-gray-200 bg-white shrink-0">
+        {listaConteudo}
+      </div>
+
+      {/* Coluna central — chat */}
+      {chatConteudo}
+
+      {/* Coluna direita — dados do cliente */}
+      {clienteSelecionado && (
+        <div className="w-80 border-l border-gray-200 bg-white overflow-y-auto shrink-0">
+          {infoConteudo}
         </div>
       )}
     </div>

@@ -165,7 +165,6 @@ export default function LoginPage() {
                   <input
                     type="text"
                     required
-                    autoFocus
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     placeholder="Como quer ser chamado?"
@@ -234,7 +233,6 @@ export default function LoginPage() {
                         placeholder="seu@email.com"
                         className={inputClass}
                         style={{ ...inputStyle, paddingLeft: '2.25rem' }}
-                        autoFocus
                       />
                     </div>
                   </div>

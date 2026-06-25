@@ -78,49 +78,50 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
+      className="min-h-screen flex items-center justify-center px-4 relative"
       style={{ background: 'linear-gradient(145deg, #E8F9FB 0%, #F8FAFC 45%, #EEF4FF 100%)' }}
     >
-      {/* Background decorative "2" */}
-      <span
-        className="absolute select-none pointer-events-none font-black"
-        style={{
-          fontSize: 'clamp(200px, 45vw, 600px)',
-          color: '#12C6D6',
-          opacity: 0.04,
-          top: '-8%',
-          right: '-5%',
-          lineHeight: 1,
-          userSelect: 'none',
-        }}
-        aria-hidden
-      >
-        2
-      </span>
+      {/* Camada decorativa — overflow-hidden isolado aqui, fora do formulário.
+          (overflow-hidden num ancestral do form trava o foco de inputs no PWA iOS standalone) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        {/* Background decorative "2" */}
+        <span
+          className="absolute select-none font-black"
+          style={{
+            fontSize: 'clamp(200px, 45vw, 600px)',
+            color: '#12C6D6',
+            opacity: 0.04,
+            top: '-8%',
+            right: '-5%',
+            lineHeight: 1,
+            userSelect: 'none',
+          }}
+        >
+          2
+        </span>
 
-      {/* Decorative circles */}
-      <div
-        className="absolute pointer-events-none rounded-full"
-        style={{
-          width: 300,
-          height: 300,
-          background: 'radial-gradient(circle, rgba(18,198,214,0.08) 0%, transparent 70%)',
-          bottom: '-60px',
-          left: '-60px',
-        }}
-        aria-hidden
-      />
-      <div
-        className="absolute pointer-events-none rounded-full"
-        style={{
-          width: 200,
-          height: 200,
-          background: 'radial-gradient(circle, rgba(255,122,102,0.07) 0%, transparent 70%)',
-          top: '10%',
-          left: '8%',
-        }}
-        aria-hidden
-      />
+        {/* Decorative circles */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: 300,
+            height: 300,
+            background: 'radial-gradient(circle, rgba(18,198,214,0.08) 0%, transparent 70%)',
+            bottom: '-60px',
+            left: '-60px',
+          }}
+        />
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: 200,
+            height: 200,
+            background: 'radial-gradient(circle, rgba(255,122,102,0.07) 0%, transparent 70%)',
+            top: '10%',
+            left: '8%',
+          }}
+        />
+      </div>
 
       {/* Card */}
       <div

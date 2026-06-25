@@ -161,7 +161,9 @@ export default function LoginPage() {
                   Seu nome
                 </label>
                 <div className="relative">
-                  <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
+                  <span className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                    <User size={15} style={{ color: '#9CA3AF' }} />
+                  </span>
                   <input
                     type="text"
                     required
@@ -179,7 +181,9 @@ export default function LoginPage() {
                   Chave de acesso
                 </label>
                 <div className="relative">
-                  <Key size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
+                  <span className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                    <Key size={15} style={{ color: '#9CA3AF' }} />
+                  </span>
                   <input
                     type="text"
                     required
@@ -224,7 +228,9 @@ export default function LoginPage() {
                       Email
                     </label>
                     <div className="relative">
-                      <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
+                      <span className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                        <Mail size={15} style={{ color: '#9CA3AF' }} />
+                      </span>
                       <input
                         type="email"
                         required
@@ -242,7 +248,9 @@ export default function LoginPage() {
                       Senha
                     </label>
                     <div className="relative">
-                      <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
+                      <span className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                        <Lock size={15} style={{ color: '#9CA3AF' }} />
+                      </span>
                       <input
                         type="password"
                         required

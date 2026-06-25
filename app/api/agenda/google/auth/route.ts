@@ -6,10 +6,8 @@ export async function GET(request: NextRequest) {
   if (!userId) return NextResponse.redirect(new URL('/login', request.url))
 
   const clientId = process.env.GOOGLE_CLIENT_ID
-  const protocol = request.headers.get('x-forwarded-proto') || 'https'
-  const host = request.headers.get('host') || 'zapbot-orcin.vercel.app'
-  const appUrl = `${protocol}://${host}`
-  const redirectUri = `${appUrl}/api/agenda/google/callback`
+  // Fixo: precisa ser idêntico ao URI cadastrado no Google Cloud Console (OAuth Client).
+  const redirectUri = 'https://zapbot-2cliks.vercel.app/api/agenda/google/callback'
 
   const scopes = [
     'https://www.googleapis.com/auth/calendar',

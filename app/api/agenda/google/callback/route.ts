@@ -14,9 +14,8 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get('state')
   const error = searchParams.get('error')
 
-  const protocol = request.headers.get('x-forwarded-proto') || 'https'
-  const host = request.headers.get('host') || 'zapbot-orcin.vercel.app'
-  const appUrl = `${protocol}://${host}`
+  // Fixo: precisa ser idêntico ao domínio usado em /api/agenda/google/auth e cadastrado no Google Cloud Console.
+  const appUrl = 'https://zapbot-2cliks.vercel.app'
 
   if (error || !code || !userId) {
     const msg = encodeURIComponent(error || (!code ? 'sem_code' : 'sem_userId'))
@@ -25,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   const clientId = process.env.GOOGLE_CLIENT_ID!
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET!
-  const redirectUri = `${appUrl}/api/agenda/google/callback`
+  const redirectUri = 'https://zapbot-2cliks.vercel.app/api/agenda/google/callback'
 
   // Troca o code pelos tokens
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {

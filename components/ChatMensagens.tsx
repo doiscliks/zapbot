@@ -197,97 +197,112 @@ export default function ChatMensagens({ cliente, mensagens, loading, onMensagemE
     )
   }
 
+  const isMobileHeader = !!onVoltar
+
+  const acoesSecundarias = (
+    <>
+      <button
+        onClick={handleImportarHistorico}
+        disabled={importandoHistorico}
+        title="Importar histórico do WhatsApp"
+        className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-60"
+      >
+        {importandoHistorico ? <Loader2 size={14} className="animate-spin" /> : <History size={14} />}
+        {importandoHistorico ? 'Importando...' : 'Histórico'}
+      </button>
+      <button
+        onClick={handleToggleIa}
+        disabled={salvandoIa}
+        title={iaDesabilitada ? 'IA desabilitada — clique para habilitar' : 'IA habilitada — clique para desabilitar'}
+        className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-60 ${
+          iaDesabilitada
+            ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+            : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+        }`}
+      >
+        {iaDesabilitada ? <BotOff size={14} /> : <Bot size={14} />}
+        {iaDesabilitada ? 'IA off' : 'IA on'}
+      </button>
+      <div className="relative shrink-0">
+        <select
+          value={secaoAtual ?? ''}
+          onChange={handleMudarSecao}
+          disabled={salvandoSecao}
+          className="appearance-none pl-3 pr-7 py-1.5 text-xs bg-gray-100 border border-gray-200 rounded-lg text-gray-700 outline-none focus:ring-2 focus:ring-green-500 cursor-pointer disabled:opacity-60"
+        >
+          <option value="">Sem seção</option>
+          {secoes.map((s) => (
+            <option key={s.id} value={s.id}>{s.nome}</option>
+          ))}
+        </select>
+        <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+      </div>
+    </>
+  )
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 bg-white shrink-0">
-        {onVoltar && (
-          <button
-            onClick={onVoltar}
-            className="shrink-0 p-1.5 -ml-1 rounded-lg text-gray-500 hover:bg-gray-100"
-            title="Voltar para conversas"
-          >
-            <ArrowLeft size={18} />
-          </button>
-        )}
-        <Avatar nome={cliente.nome} foto={cliente.foto} size="lg" />
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm">{cliente.nome}</p>
-          <p className="text-xs text-gray-400">{cliente.telefone}{cliente.cidade ? ` · ${cliente.cidade}` : ''}</p>
-          {(cliente.origem_app || cliente.origem_url) && (
-            <div className="flex items-center gap-1.5 mt-0.5">
-              {cliente.origem_app && (
-                <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-medium capitalize">
-                  {cliente.origem_app}
-                </span>
-              )}
-              {cliente.origem_url && (
-                <a
-                  href={cliente.origem_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[10px] text-gray-400 hover:text-blue-500 truncate max-w-[200px]"
-                >
-                  {cliente.origem_url.replace('https://www.facebook.com/', 'fb.com/')}
-                </a>
-              )}
-            </div>
+      <div className="border-b border-gray-200 bg-white shrink-0">
+        <div className="flex items-center gap-3 px-5 py-4">
+          {onVoltar && (
+            <button
+              onClick={onVoltar}
+              className="shrink-0 p-1.5 -ml-1 rounded-lg text-gray-500 hover:bg-gray-100"
+              title="Voltar para conversas"
+            >
+              <ArrowLeft size={18} />
+            </button>
           )}
-          {cliente.dados_coletados && Object.entries(cliente.dados_coletados).filter(([, v]) => v && String(v).trim()).length > 0 && (
-            <div className="flex flex-wrap items-center gap-1 mt-1">
-              {Object.entries(cliente.dados_coletados)
-                .filter(([, v]) => v && String(v).trim())
-                .map(([k, v]) => (
-                  <span key={k} className="text-[10px] bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded font-medium">
-                    <span className="capitalize opacity-70">{k.replace(/_/g, ' ')}:</span> {v}
+          <Avatar nome={cliente.nome} foto={cliente.foto} size="lg" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 text-sm truncate">{cliente.nome}</p>
+            <p className="text-xs text-gray-400 truncate">{cliente.telefone}{cliente.cidade ? ` · ${cliente.cidade}` : ''}</p>
+            {!isMobileHeader && (cliente.origem_app || cliente.origem_url) && (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                {cliente.origem_app && (
+                  <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-medium capitalize">
+                    {cliente.origem_app}
                   </span>
-                ))}
-            </div>
+                )}
+                {cliente.origem_url && (
+                  <a
+                    href={cliente.origem_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-gray-400 hover:text-blue-500 truncate max-w-[200px]"
+                  >
+                    {cliente.origem_url.replace('https://www.facebook.com/', 'fb.com/')}
+                  </a>
+                )}
+              </div>
+            )}
+            {!isMobileHeader && cliente.dados_coletados && Object.entries(cliente.dados_coletados).filter(([, v]) => v && String(v).trim()).length > 0 && (
+              <div className="flex flex-wrap items-center gap-1 mt-1">
+                {Object.entries(cliente.dados_coletados)
+                  .filter(([, v]) => v && String(v).trim())
+                  .map(([k, v]) => (
+                    <span key={k} className="text-[10px] bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded font-medium">
+                      <span className="capitalize opacity-70">{k.replace(/_/g, ' ')}:</span> {v}
+                    </span>
+                  ))}
+              </div>
+            )}
+          </div>
+          {!isMobileHeader && acoesSecundarias}
+          {onAbrirInfo && (
+            <button
+              onClick={onAbrirInfo}
+              className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <Info size={14} /> Info
+            </button>
           )}
         </div>
-        <button
-          onClick={handleImportarHistorico}
-          disabled={importandoHistorico}
-          title="Importar histórico do WhatsApp"
-          className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-60"
-        >
-          {importandoHistorico ? <Loader2 size={14} className="animate-spin" /> : <History size={14} />}
-          {importandoHistorico ? 'Importando...' : 'Histórico'}
-        </button>
-        <button
-          onClick={handleToggleIa}
-          disabled={salvandoIa}
-          title={iaDesabilitada ? 'IA desabilitada — clique para habilitar' : 'IA habilitada — clique para desabilitar'}
-          className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-60 ${
-            iaDesabilitada
-              ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-              : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-          }`}
-        >
-          {iaDesabilitada ? <BotOff size={14} /> : <Bot size={14} />}
-          {iaDesabilitada ? 'IA off' : 'IA on'}
-        </button>
-        <div className="relative shrink-0">
-          <select
-            value={secaoAtual ?? ''}
-            onChange={handleMudarSecao}
-            disabled={salvandoSecao}
-            className="appearance-none pl-3 pr-7 py-1.5 text-xs bg-gray-100 border border-gray-200 rounded-lg text-gray-700 outline-none focus:ring-2 focus:ring-green-500 cursor-pointer disabled:opacity-60"
-          >
-            <option value="">Sem seção</option>
-            {secoes.map((s) => (
-              <option key={s.id} value={s.id}>{s.nome}</option>
-            ))}
-          </select>
-          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-        </div>
-        {onAbrirInfo && (
-          <button
-            onClick={onAbrirInfo}
-            className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
-          >
-            <Info size={14} /> Info
-          </button>
+        {isMobileHeader && (
+          <div className="flex items-center gap-2 px-5 pb-3 overflow-x-auto">
+            {acoesSecundarias}
+          </div>
         )}
       </div>
 

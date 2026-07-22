@@ -47,8 +47,8 @@ export default function TopBar() {
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
           style={{
-            background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)',
-            boxShadow: '0 2px 6px rgba(18,198,214,0.3)',
+            background: 'var(--brand-gradient)',
+            boxShadow: 'var(--brand-shadow-sm)',
           }}
         >
           {initials}

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
 import RegisterSW from '@/components/RegisterSW'
+import { brand, brandCssVars } from '@/lib/brand'
 import './globals.css'
 
 const poppins = Poppins({
@@ -9,13 +10,13 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: '2Cliks Contabilidade',
-  description: 'Plataforma de atendimento inteligente — 2Cliks Contabilidade Digital',
+  title: brand.name,
+  description: `Plataforma de atendimento inteligente — ${brand.name}`,
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: '2Cliks',
+    title: brand.shortName,
   },
   icons: {
     icon: [{ url: '/icon-512.png', sizes: '512x512', type: 'image/png' }],
@@ -26,12 +27,12 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#12C6D6',
+  themeColor: brand.primary,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="h-full">
+    <html lang="pt-BR" className="h-full" style={brandCssVars()}>
       <body className={`${poppins.className} h-full antialiased`} style={{ backgroundColor: '#F8FAFC' }}>
         <RegisterSW />
         {children}

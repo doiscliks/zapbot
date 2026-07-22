@@ -5,7 +5,7 @@ import { Users, Search, Edit2, Loader2, AlertCircle, Phone, Mail } from 'lucide-
 import { Cliente } from '@/types'
 import EditClienteModal from '@/components/EditClienteModal'
 
-const ACCENT = '#12C6D6'
+const ACCENT = 'var(--brand-primary)'
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -99,7 +99,7 @@ export default function ClientesPage() {
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(18,198,214,0.12)' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--brand-alpha-12)' }}>
             <Users size={20} style={{ color: ACCENT }} />
           </div>
           <div>

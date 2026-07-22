@@ -8,6 +8,7 @@ import {
   Users, Menu, X, Filter, Send, Bell, Smartphone, Settings, Zap, CalendarDays, UserCog, Building2, TrendingDown,
 } from 'lucide-react'
 import { SCREENS, podeAcessar } from '@/lib/screens'
+import { brand } from '@/lib/brand'
 
 const ICONS: Record<string, React.ElementType> = {
   dashboard: LayoutDashboard,
@@ -30,18 +31,18 @@ const ICONS: Record<string, React.ElementType> = {
 
 const navItems = SCREENS.map((s) => ({ href: `/${s.key}`, label: s.label, key: s.key, icon: ICONS[s.key] }))
 
-function Logo2Cliks() {
+function BrandLogo() {
   return (
     <div className="flex items-center gap-3">
       <div
         className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
-        style={{ background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)', boxShadow: '0 2px 8px rgba(18,198,214,0.35)' }}
+        style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow-sm)' }}
       >
-        2C
+        {brand.logoChar}
       </div>
       <div className="leading-none">
-        <p className="font-semibold text-sm tracking-tight" style={{ color: '#1F2937' }}>2Cliks</p>
-        <p className="text-[10px] mt-0.5 font-medium" style={{ color: '#12C6D6' }}>Contabilidade</p>
+        <p className="font-semibold text-sm tracking-tight" style={{ color: '#1F2937' }}>{brand.shortName}</p>
+        <p className="text-[10px] mt-0.5 font-medium" style={{ color: 'var(--brand-primary)' }}>{brand.logoSubtitle}</p>
       </div>
     </div>
   )
@@ -84,7 +85,7 @@ export default function Sidebar() {
         className="flex items-center justify-between px-5 py-4 border-b"
         style={{ borderColor: '#E9EEF2' }}
       >
-        <Logo2Cliks />
+        <BrandLogo />
         <button
           onClick={fechar}
           className="md:hidden p-1.5 rounded-lg transition-colors hover:bg-gray-100"
@@ -118,8 +119,8 @@ export default function Sidebar() {
               style={
                 active
                   ? {
-                      background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)',
-                      boxShadow: '0 2px 8px rgba(18,198,214,0.3)',
+                      background: 'var(--brand-gradient)',
+                      boxShadow: 'var(--brand-shadow-sm)',
                     }
                   : {}
               }

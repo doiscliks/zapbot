@@ -595,7 +595,7 @@ export default function MensagensPage() {
                   <button
                     onClick={criarNovaEtiqueta}
                     className="flex-1 px-3 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90"
-                    style={{ background: '#12C6D6' }}
+                    style={{ background: 'var(--brand-primary)' }}
                   >
                     Criar
                   </button>
@@ -670,7 +670,7 @@ export default function MensagensPage() {
                 <button
                   onClick={adicionarNota}
                   className="p-2 rounded-lg text-white hover:opacity-90 transition-opacity"
-                  style={{ background: '#12C6D6' }}
+                  style={{ background: 'var(--brand-primary)' }}
                 >
                   <Plus size={16} />
                 </button>

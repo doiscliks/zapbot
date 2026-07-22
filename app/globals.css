@@ -10,12 +10,27 @@ body {
 }
 
 :root {
+  /* Valores padrão — sobrescritos pelo brandCssVars() injetado no <html> via layout.tsx */
   --brand-primary: #12C6D6;
+  --brand-primary-dark: #0FBDCC;
   --brand-secondary: #FF7A66;
+  --brand-gradient: linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%);
+  --brand-shadow: 0 4px 14px #12C6D659;
+  --brand-shadow-lg: 0 8px 24px #12C6D659;
+  --brand-shadow-sm: 0 2px 8px #12C6D64d;
+  --brand-glow: 0 25px 60px #12C6D61a, 0 8px 24px rgba(0,0,0,0.06);
+  --brand-border-card: 1px solid #12C6D61f;
+  --brand-ring-08: #12C6D614;
+  --brand-ring-07: #12C6D612;
   --brand-bg: #F8FAFC;
   --brand-border: #E9EEF2;
   --brand-text: #1F2937;
   --brand-muted: #6B7280;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 /* ── Scrollbar premium ── */
@@ -62,8 +77,3 @@ body {
   animation: fadeIn 0.25s ease-out forwards;
 }
 
-/* ── Focus ring brand ── */
-:focus-visible {
-  outline: 2px solid #12C6D6;
-  outline-offset: 2px;
-}

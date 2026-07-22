@@ -167,8 +167,8 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated: (id: s
             <p className="text-xs text-gray-400">Etapa {step} de 2</p>
           </div>
           <div className="flex gap-1">
-            <div className={`w-8 h-1.5 rounded-full ${step >= 1 ? 'bg-[#12C6D6]' : 'bg-gray-200'}`} />
-            <div className={`w-8 h-1.5 rounded-full ${step >= 2 ? 'bg-[#12C6D6]' : 'bg-gray-200'}`} />
+            <div className={`w-8 h-1.5 rounded-full ${step >= 1 ? 'bg-[var(--brand-primary)]' : 'bg-gray-200'}`} />
+            <div className={`w-8 h-1.5 rounded-full ${step >= 2 ? 'bg-[var(--brand-primary)]' : 'bg-gray-200'}`} />
           </div>
         </div>
 
@@ -179,7 +179,7 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated: (id: s
                 <label className="text-xs font-medium text-gray-600 block mb-1">Nome do fluxo *</label>
                 <input
                   autoFocus
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#12C6D6]"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
                   placeholder="Ex: Atendimento Vendas"
                   value={data.name}
                   onChange={e => set('name', e.target.value)}
@@ -190,7 +190,7 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated: (id: s
                 <label className="text-xs font-medium text-gray-600 block mb-1">Descrição (opcional)</label>
                 <textarea
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#12C6D6] resize-none"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] resize-none"
                   placeholder="Qual é o objetivo deste fluxo?"
                   value={data.description}
                   onChange={e => set('description', e.target.value)}
@@ -202,7 +202,7 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated: (id: s
                   {FLOW_TYPES.map(ft => (
                     <label
                       key={ft.value}
-                      className={`flex flex-col gap-1 p-3 rounded-xl border-2 cursor-pointer transition-colors ${data.flow_type === ft.value ? 'border-[#12C6D6] bg-[#E8F9FB]' : 'border-gray-200 hover:border-gray-300'}`}
+                      className={`flex flex-col gap-1 p-3 rounded-xl border-2 cursor-pointer transition-colors ${data.flow_type === ft.value ? 'border-[var(--brand-primary)] bg-[#E8F9FB]' : 'border-gray-200 hover:border-gray-300'}`}
                     >
                       <input type="radio" name="flow_type" value={ft.value} checked={data.flow_type === ft.value} onChange={() => set('flow_type', ft.value)} className="sr-only" />
                       <span className="text-lg">{ft.icon}</span>
@@ -222,9 +222,9 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated: (id: s
                 {triggers.map(t => (
                   <label
                     key={t.value}
-                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${data.trigger_type === t.value ? 'border-[#12C6D6] bg-[#E8F9FB]' : 'border-gray-200 hover:border-gray-300'}`}
+                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${data.trigger_type === t.value ? 'border-[var(--brand-primary)] bg-[#E8F9FB]' : 'border-gray-200 hover:border-gray-300'}`}
                   >
-                    <input type="radio" name="trigger_type" value={t.value} checked={data.trigger_type === t.value} onChange={() => set('trigger_type', t.value)} className="mt-1 accent-[#12C6D6]" />
+                    <input type="radio" name="trigger_type" value={t.value} checked={data.trigger_type === t.value} onChange={() => set('trigger_type', t.value)} className="mt-1 accent-[var(--brand-primary)]" />
                     <span>
                       <span className="text-sm font-semibold text-gray-800 block">{t.label}</span>
                       <span className="text-xs text-gray-400">{t.desc}</span>
@@ -237,7 +237,7 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated: (id: s
                   <label className="text-xs font-medium text-gray-600 block mb-1">Palavra-chave</label>
                   <input
                     autoFocus
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#12C6D6]"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
                     placeholder="Ex: oi, olá, quero"
                     value={data.keyword}
                     onChange={e => set('keyword', e.target.value)}
@@ -248,7 +248,7 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated: (id: s
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Coluna do Kanban que dispara o fluxo</label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#12C6D6]"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
                     value={data.kanban_secao_id}
                     onChange={e => {
                       const selected = kanbanSecoes.find(s => String(s.id) === e.target.value)
@@ -283,7 +283,7 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated: (id: s
             <button
               onClick={() => setStep(2)}
               disabled={!data.name.trim()}
-              className="flex items-center gap-1.5 px-5 py-2 bg-[#12C6D6] hover:bg-[#0FBDCC] disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+              className="flex items-center gap-1.5 px-5 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-dark)] disabled:opacity-50 text-white text-sm font-medium rounded-lg"
             >
               Próximo <ChevronRight size={15} />
             </button>
@@ -291,7 +291,7 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated: (id: s
             <button
               onClick={criar}
               disabled={creating || (data.trigger_type === 'kanban_status_change' && !data.kanban_secao_id)}
-              className="flex items-center gap-1.5 px-5 py-2 bg-[#12C6D6] hover:bg-[#0FBDCC] disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+              className="flex items-center gap-1.5 px-5 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-dark)] disabled:opacity-50 text-white text-sm font-medium rounded-lg"
             >
               {creating ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
               {creating ? 'Criando...' : 'Criar e editar fluxo'}
@@ -356,7 +356,7 @@ export default function FluxosPage() {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center">
-            <Zap size={18} className="text-[#12C6D6]" />
+            <Zap size={18} className="text-[var(--brand-primary)]" />
           </div>
           <div className="flex-1">
             <h1 className="text-lg font-semibold text-gray-900">Fluxos de Automação</h1>
@@ -364,7 +364,7 @@ export default function FluxosPage() {
           </div>
           <button
             onClick={() => setShowWizard(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#12C6D6] hover:bg-[#0FBDCC] text-white text-sm font-medium rounded-xl transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-dark)] text-white text-sm font-medium rounded-xl transition-colors"
           >
             <Plus size={16} /> Criar Fluxo
           </button>
@@ -402,14 +402,14 @@ export default function FluxosPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={28} className="animate-spin text-[#12C6D6]" />
+            <Loader2 size={28} className="animate-spin text-[var(--brand-primary)]" />
           </div>
         ) : flows.length === 0 ? (
           <div className="text-center py-20">
             <Zap size={40} className="mx-auto mb-3 text-gray-300" />
             <p className="text-gray-500 font-medium">Nenhum fluxo criado ainda</p>
             <p className="text-sm text-gray-400 mt-1">Clique em &quot;Criar Fluxo&quot; para começar</p>
-            <button onClick={() => setShowWizard(true)} className="mt-4 flex items-center gap-2 mx-auto px-4 py-2 bg-[#12C6D6] hover:bg-[#0FBDCC] text-white text-sm font-medium rounded-xl">
+            <button onClick={() => setShowWizard(true)} className="mt-4 flex items-center gap-2 mx-auto px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-dark)] text-white text-sm font-medium rounded-xl">
               <Plus size={15} /> Criar meu primeiro fluxo
             </button>
           </div>
@@ -435,7 +435,7 @@ export default function FluxosPage() {
                           {FLOW_TYPE_LABELS[flow.flow_type] ?? flow.flow_type}
                         </span>
                       )}
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#E8F9FB] text-[#12C6D6] font-medium">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#E8F9FB] text-[var(--brand-primary)] font-medium">
                         {TRIGGER_LABELS[flow.trigger_type] ?? flow.trigger_type}
                       </span>
                     </div>
@@ -460,7 +460,7 @@ export default function FluxosPage() {
                     <button
                       onClick={() => router.push(`/fluxos/${flow.id}`)}
                       title="Editar"
-                      className="p-2 rounded-lg text-gray-400 hover:text-[#12C6D6] hover:bg-[#E8F9FB] transition-colors"
+                      className="p-2 rounded-lg text-gray-400 hover:text-[var(--brand-primary)] hover:bg-[#E8F9FB] transition-colors"
                     >
                       <Edit2 size={15} />
                     </button>

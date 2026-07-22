@@ -241,7 +241,7 @@ export default function KanbanPage() {
       {fbNotif && (
         <div
           className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 transition-all text-white"
-          style={{ background: fbNotif.ok ? '#12C6D6' : '#ef4444', boxShadow: fbNotif.ok ? '0 4px 20px rgba(18,198,214,0.4)' : '0 4px 20px rgba(239,68,68,0.4)' }}
+          style={{ background: fbNotif.ok ? 'var(--brand-primary)' : '#ef4444', boxShadow: fbNotif.ok ? 'var(--brand-shadow)' : '0 4px 20px rgba(239,68,68,0.4)' }}
         >
           {fbNotif.ok ? '✓' : '✗'} {fbNotif.msg}
         </div>
@@ -250,16 +250,16 @@ export default function KanbanPage() {
       <div className="shrink-0 px-8 py-6 border-b bg-white flex items-center justify-between" style={{ borderColor: '#E9EEF2' }}>
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#1F2937' }}>
-            <Kanban size={22} style={{ color: '#12C6D6' }} /> Kanban
+            <Kanban size={22} style={{ color: 'var(--brand-primary)' }} /> Kanban
           </h1>
           <p className="text-sm mt-0.5" style={{ color: '#6B7280' }}>{secoes.length} seções · {Object.values(clientes).flat().length} clientes</p>
           {/* Abas */}
-          <div className="flex gap-1 mt-3 p-1 rounded-xl" style={{ backgroundColor: '#F0FAFB' }}>
+          <div className="flex gap-1 mt-3 p-1 rounded-xl" style={{ backgroundColor: 'var(--brand-tint-bg)' }}>
             <button
               onClick={() => setAba('personalizado')}
               className="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-150"
               style={aba === 'personalizado'
-                ? { background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)', color: 'white', boxShadow: '0 2px 8px rgba(18,198,214,0.3)' }
+                ? { background: 'var(--brand-gradient)', color: 'white', boxShadow: 'var(--brand-shadow-sm)' }
                 : { color: '#6B7280' }}
             >
               Personalizado
@@ -268,7 +268,7 @@ export default function KanbanPage() {
               onClick={() => setAba('por_status')}
               className="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-150"
               style={aba === 'por_status'
-                ? { background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)', color: 'white', boxShadow: '0 2px 8px rgba(18,198,214,0.3)' }
+                ? { background: 'var(--brand-gradient)', color: 'white', boxShadow: 'var(--brand-shadow-sm)' }
                 : { color: '#6B7280' }}
             >
               Por Status
@@ -290,12 +290,12 @@ export default function KanbanPage() {
                   value={novaSecao}
                   onChange={(e) => setNovaSecao(e.target.value)}
                   placeholder="Nome da seção..."
-                  className="px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 w-48" style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}
+                  className="px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 w-48" style={{ borderColor: '#E9EEF2', '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties}
                 />
                 <button
                   type="submit"
                   disabled={criando || !novaSecao.trim()}
-                  className="px-4 py-2 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-all" style={{ background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)' }}
+                  className="px-4 py-2 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-all" style={{ background: 'var(--brand-gradient)' }}
                 >
                   {criando ? <Loader2 size={14} className="animate-spin" /> : 'Criar'}
                 </button>
@@ -353,7 +353,7 @@ export default function KanbanPage() {
             <button
               onClick={() => setMostrarInput(true)}
               className="flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-xl transition-all"
-              style={{ background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)', boxShadow: '0 2px 8px rgba(18,198,214,0.3)' }}
+              style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow-sm)' }}
             >
               <Plus size={16} /> Nova seção
             </button>
@@ -372,7 +372,7 @@ export default function KanbanPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: cor }} />
                     <span className="font-semibold text-sm" style={{ color: '#1F2937' }}>{label}</span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F0FAFB', color: '#12C6D6' }}>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--brand-tint-bg)', color: 'var(--brand-primary)' }}>
                       {cards.length}
                     </span>
                   </div>
@@ -502,7 +502,7 @@ export default function KanbanPage() {
                       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: corAtiva }} />
                     )}
                     <span className="font-semibold text-sm" style={{ color: '#1F2937' }}>{nome}</span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F0FAFB', color: '#12C6D6' }}>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--brand-tint-bg)', color: 'var(--brand-primary)' }}>
                       {cards.length}
                     </span>
                     {facebookEvento && (
@@ -537,8 +537,8 @@ export default function KanbanPage() {
                   style={{
                     minHeight: '200px',
                     maxHeight: 'calc(100vh - 240px)',
-                    backgroundColor: isDragOver ? 'rgba(18,198,214,0.04)' : '#F8FAFC',
-                    borderColor: isDragOver ? '#12C6D6' : 'transparent',
+                    backgroundColor: isDragOver ? 'var(--brand-alpha-04)' : '#F8FAFC',
+                    borderColor: isDragOver ? 'var(--brand-primary)' : 'transparent',
                   }}
                 >
                   {cards.length === 0 && (
@@ -554,7 +554,7 @@ export default function KanbanPage() {
                       onDragStart={(e) => handleDragStart(e, cliente.id)}
                       className="bg-white rounded-xl p-3 cursor-grab active:cursor-grabbing select-none transition-all hover:-translate-y-0.5"
                       style={{ border: '1px solid #E9EEF2', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(18,198,214,0.12)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--brand-shadow-xs)' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)' }}
                     >
                       <div className="flex items-center gap-3">

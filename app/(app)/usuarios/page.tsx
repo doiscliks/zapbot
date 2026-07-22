@@ -5,7 +5,7 @@ import { UserCog, Plus, Trash2, Loader2, Check, X, KeyRound, ShieldCheck, Mail, 
 import { SCREENS } from '@/lib/screens'
 import { Usuario } from '@/types'
 
-const ACCENT = '#12C6D6'
+const ACCENT = 'var(--brand-primary)'
 
 // 'configuracoes' é exclusiva do admin, não pode ser atribuída a sub-usuários
 const SCREENS_ATRIBUIVEIS = SCREENS.filter((s) => s.key !== 'configuracoes')
@@ -204,7 +204,7 @@ export default function UsuariosPage() {
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(18,198,214,0.12)' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--brand-alpha-12)' }}>
             <UserCog size={20} style={{ color: ACCENT }} />
           </div>
           <div>
@@ -215,7 +215,7 @@ export default function UsuariosPage() {
         <button
           onClick={() => setFormAberto((v) => !v)}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white"
-          style={{ background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 3px 10px rgba(18,198,214,0.3)' }}
+          style={{ background: 'var(--brand-gradient)', boxShadow: '0 3px 10px rgba(18,198,214,0.3)' }}
         >
           <Plus size={16} /> Novo usuário
         </button>
@@ -237,7 +237,7 @@ export default function UsuariosPage() {
             <input className={inputCls} style={inputStyle} placeholder="Telefone (opcional)" value={form.telefone} onChange={(e) => setForm((f) => ({ ...f, telefone: e.target.value }))} />
           </div>
 
-          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg" style={{ background: 'rgba(18,198,214,0.05)' }}>
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg" style={{ background: 'var(--brand-alpha-05)' }}>
             <button
               type="button"
               onClick={() => setForm((f) => ({ ...f, is_attendant: !f.is_attendant }))}
@@ -261,7 +261,7 @@ export default function UsuariosPage() {
                   onClick={() => togglePermForm(s.key)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors"
                   style={ativo
-                    ? { borderColor: ACCENT, background: 'rgba(18,198,214,0.08)', color: '#1F2937' }
+                    ? { borderColor: ACCENT, background: 'var(--brand-alpha-08)', color: '#1F2937' }
                     : { borderColor: '#E9EEF2', color: '#6B7280' }}
                 >
                   <span className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: ativo ? ACCENT : '#E9EEF2' }}>
@@ -305,7 +305,7 @@ export default function UsuariosPage() {
                       {u.ativo ? 'Ativo' : 'Inativo'}
                     </span>
                     {u.is_attendant && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(18,198,214,0.12)', color: ACCENT }}>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'var(--brand-alpha-12)', color: ACCENT }}>
                         Atendente
                       </span>
                     )}
@@ -330,7 +330,7 @@ export default function UsuariosPage() {
               {/* Edição de permissões */}
               {editando === u.id && (
                 <div className="mt-3 pt-3 border-t" style={{ borderColor: '#F1F5F9' }}>
-                  <div className="flex items-center gap-2 mb-4 p-3 rounded-lg" style={{ background: 'rgba(18,198,214,0.05)' }}>
+                  <div className="flex items-center gap-2 mb-4 p-3 rounded-lg" style={{ background: 'var(--brand-alpha-05)' }}>
                     <button
                       type="button"
                       onClick={() => setEditAtendente((prev) => !prev)}
@@ -351,7 +351,7 @@ export default function UsuariosPage() {
                           key={s.key}
                           onClick={() => toggleEditPerm(s.key)}
                           className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors"
-                          style={ativo ? { borderColor: ACCENT, background: 'rgba(18,198,214,0.08)', color: '#1F2937' } : { borderColor: '#E9EEF2', color: '#6B7280' }}
+                          style={ativo ? { borderColor: ACCENT, background: 'var(--brand-alpha-08)', color: '#1F2937' } : { borderColor: '#E9EEF2', color: '#6B7280' }}
                         >
                           <span className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: ativo ? ACCENT : '#E9EEF2' }}>
                             {ativo && <Check size={12} className="text-white" />}

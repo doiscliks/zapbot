@@ -51,7 +51,7 @@ export default function EditClienteModal({
   if (!cliente) return null
 
   const inputCls = 'w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-offset-1'
-  const inputStyle = { borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties
+  const inputStyle = { borderColor: '#E9EEF2', '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties
 
   function adicionarNota() {
     if (!novaNotaTexto.trim()) return
@@ -191,7 +191,7 @@ export default function EditClienteModal({
                   <button
                     onClick={adicionarNota}
                     className="px-3 py-2.5 rounded-lg text-white text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-                    style={{ background: '#12C6D6' }}
+                    style={{ background: 'var(--brand-primary)' }}
                   >
                     <Plus size={18} />
                   </button>
@@ -224,7 +224,7 @@ export default function EditClienteModal({
               onClick={handleSave}
               disabled={loading}
               className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-60 transition-all"
-              style={{ background: '#12C6D6' }}
+              style={{ background: 'var(--brand-primary)' }}
             >
               {loading ? 'Salvando...' : 'Salvar'}
             </button>

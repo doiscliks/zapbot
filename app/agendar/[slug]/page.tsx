@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Loader2, Clock, Video, ChevronLeft, ChevronRight, CheckCircle, Calendar, Mail, Phone, User, FileText } from 'lucide-react'
+import { brand } from '@/lib/brand'
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const DIAS_SEMANA_CURTO = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
@@ -138,12 +139,12 @@ export default function AgendarPage() {
       {/* Logo */}
       <div className="flex items-center gap-3 mb-10">
         <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-black text-xl shrink-0"
-          style={{ background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 4px 14px rgba(18,198,214,0.4)' }}>
-          2
+          style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow)' }}>
+          {brand.logoChar}
         </div>
         <div>
-          <p className="font-bold text-sm" style={{ color: '#1F2937' }}>2Cliks</p>
-          <p className="text-xs" style={{ color: '#12C6D6' }}>Contabilidade</p>
+          <p className="font-bold text-sm" style={{ color: '#1F2937' }}>{brand.shortName}</p>
+          <p className="text-xs" style={{ color: 'var(--brand-primary)' }}>{brand.logoSubtitle}</p>
         </div>
       </div>
 
@@ -160,8 +161,8 @@ export default function AgendarPage() {
       {/* Detalhes */}
       <div className="space-y-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0FAFB' }}>
-            <Clock size={15} style={{ color: '#12C6D6' }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--brand-tint-bg)' }}>
+            <Clock size={15} style={{ color: 'var(--brand-primary)' }} />
           </div>
           <div>
             <p className="text-xs font-medium" style={{ color: '#9CA3AF' }}>Duração</p>
@@ -170,8 +171,8 @@ export default function AgendarPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0FAFB' }}>
-            <Video size={15} style={{ color: '#12C6D6' }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--brand-tint-bg)' }}>
+            <Video size={15} style={{ color: 'var(--brand-primary)' }} />
           </div>
           <div>
             <p className="text-xs font-medium" style={{ color: '#9CA3AF' }}>Formato</p>
@@ -181,8 +182,8 @@ export default function AgendarPage() {
 
         {config && config.dias_semana.length > 0 && (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0FAFB' }}>
-              <Calendar size={15} style={{ color: '#12C6D6' }} />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--brand-tint-bg)' }}>
+              <Calendar size={15} style={{ color: 'var(--brand-primary)' }} />
             </div>
             <div>
               <p className="text-xs font-medium" style={{ color: '#9CA3AF' }}>Disponível</p>
@@ -196,14 +197,14 @@ export default function AgendarPage() {
 
       {/* Seleção atual */}
       {(dataSel || horaSel) && step !== 'confirmado' && (
-        <div className="mt-8 p-4 rounded-xl" style={{ backgroundColor: '#F0FAFB', border: '1px solid rgba(18,198,214,0.2)' }}>
+        <div className="mt-8 p-4 rounded-xl" style={{ backgroundColor: 'var(--brand-tint-bg)', border: 'var(--brand-border-20)' }}>
           {dataSel && (
-            <p className="text-sm font-semibold" style={{ color: '#12C6D6' }}>
+            <p className="text-sm font-semibold" style={{ color: 'var(--brand-primary)' }}>
               📅 {formatDataLonga(dataSel)}
             </p>
           )}
           {horaSel && (
-            <p className="text-sm font-semibold mt-1" style={{ color: '#12C6D6' }}>
+            <p className="text-sm font-semibold mt-1" style={{ color: 'var(--brand-primary)' }}>
               ⏰ {horaSel}
             </p>
           )}
@@ -211,14 +212,14 @@ export default function AgendarPage() {
       )}
 
       <div className="mt-auto pt-8">
-        <p className="text-xs" style={{ color: '#D1D5DB' }}>© {new Date().getFullYear()} 2Cliks Contabilidade</p>
+        <p className="text-xs" style={{ color: '#D1D5DB' }}>© {new Date().getFullYear()} {brand.name}</p>
       </div>
     </div>
   )
 
   if (loadingConfig) return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8FAFC' }}>
-      <Loader2 size={28} className="animate-spin" style={{ color: '#12C6D6' }} />
+      <Loader2 size={28} className="animate-spin" style={{ color: 'var(--brand-primary)' }} />
     </div>
   )
 
@@ -235,13 +236,13 @@ export default function AgendarPage() {
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(145deg, #E8F9FB 0%, #F8FAFC 50%, #EEF4FF 100%)' }}>
       {/* Fundo decorativo */}
       <span className="fixed select-none pointer-events-none font-black" aria-hidden
-        style={{ fontSize: 'clamp(300px, 50vw, 700px)', color: '#12C6D6', opacity: 0.03, top: '-10%', right: '-8%', lineHeight: 1 }}>
+        style={{ fontSize: 'clamp(300px, 50vw, 700px)', color: 'var(--brand-primary)', opacity: 0.03, top: '-10%', right: '-8%', lineHeight: 1 }}>
         2
       </span>
 
       <div className="w-full max-w-4xl relative z-10">
         <div className="bg-white rounded-3xl overflow-hidden"
-          style={{ boxShadow: '0 32px 80px rgba(18,198,214,0.12), 0 8px 32px rgba(0,0,0,0.06)', border: '1px solid rgba(18,198,214,0.1)' }}>
+          style={{ boxShadow: 'var(--brand-glow)', border: 'var(--brand-border-10)' }}>
 
           <div className="flex flex-col lg:flex-row min-h-[580px]">
             {/* Painel esquerdo */}
@@ -256,24 +257,24 @@ export default function AgendarPage() {
               {step === 'confirmado' && confirmadoInfo && (
                 <div className="flex flex-col items-center justify-center h-full text-center py-8">
                   <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-                    style={{ background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 8px 24px rgba(18,198,214,0.4)' }}>
+                    style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow-lg)' }}>
                     <CheckCircle size={38} className="text-white" />
                   </div>
                   <h2 className="text-2xl font-bold mb-2" style={{ color: '#1F2937' }}>Confirmado!</h2>
                   <p className="text-sm mb-1" style={{ color: '#6B7280' }}>
                     {formatDataLonga(confirmadoInfo.data)}
                   </p>
-                  <p className="text-lg font-bold mb-6" style={{ color: '#12C6D6' }}>às {confirmadoInfo.hora}</p>
+                  <p className="text-lg font-bold mb-6" style={{ color: 'var(--brand-primary)' }}>às {confirmadoInfo.hora}</p>
 
                   {meetLink && (
                     <a href={meetLink} target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl text-white font-semibold text-sm mb-4"
-                      style={{ background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 4px 16px rgba(18,198,214,0.4)' }}>
+                      style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow)' }}>
                       <Video size={17} /> Entrar no Google Meet
                     </a>
                   )}
 
-                  <div className="mt-2 px-5 py-3 rounded-xl text-sm" style={{ backgroundColor: '#F0FAFB', color: '#6B7280' }}>
+                  <div className="mt-2 px-5 py-3 rounded-xl text-sm" style={{ backgroundColor: 'var(--brand-tint-bg)', color: '#6B7280' }}>
                     Você receberá a confirmação e o link do Meet via WhatsApp.
                   </div>
                 </div>
@@ -320,11 +321,11 @@ export default function AgendarPage() {
                         className="relative aspect-square rounded-xl text-sm font-medium transition-all disabled:cursor-not-allowed flex items-center justify-center"
                         style={!cell.dia ? {} :
                           dataSel === cell.data
-                          ? { background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', color: 'white', boxShadow: '0 4px 12px rgba(18,198,214,0.4)' }
+                          ? { background: 'var(--brand-gradient)', color: 'white', boxShadow: 'var(--brand-shadow)' }
                           : cell.disabled
                           ? { color: '#E5E7EB' }
                           : cell.isToday
-                          ? { color: '#12C6D6', fontWeight: 700, backgroundColor: '#F0FAFB', border: '1.5px solid rgba(18,198,214,0.4)' }
+                          ? { color: 'var(--brand-primary)', fontWeight: 700, backgroundColor: 'var(--brand-tint-bg)', border: 'var(--brand-border-40)' }
                           : { color: '#1F2937', backgroundColor: '#F8FAFC' }
                         }
                       >
@@ -354,7 +355,7 @@ export default function AgendarPage() {
 
                   {loadingSlots && (
                     <div className="flex justify-center py-10">
-                      <Loader2 size={22} className="animate-spin" style={{ color: '#12C6D6' }} />
+                      <Loader2 size={22} className="animate-spin" style={{ color: 'var(--brand-primary)' }} />
                     </div>
                   )}
 
@@ -396,15 +397,15 @@ export default function AgendarPage() {
                                 className="w-full flex items-stretch rounded-xl overflow-hidden transition-all duration-150"
                                 style={{
                                   ...(selecionado
-                                    ? { background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 4px 14px rgba(18,198,214,0.35)' }
+                                    ? { background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow)' }
                                     : disponivel
-                                    ? { backgroundColor: '#F0FAFB', border: '1.5px solid rgba(18,198,214,0.25)' }
+                                    ? { backgroundColor: 'var(--brand-tint-bg)', border: 'var(--brand-border-25)' }
                                     : { backgroundColor: '#F8FAFC', border: '1px solid #F1F5F9', cursor: 'not-allowed', opacity: 0.6 }),
                                 }}
                               >
                                 {/* Barra lateral colorida */}
                                 <div className="w-1 shrink-0 rounded-l-xl"
-                                  style={{ backgroundColor: selecionado ? 'rgba(255,255,255,0.4)' : disponivel ? '#12C6D6' : '#D1D5DB' }}
+                                  style={{ backgroundColor: selecionado ? 'rgba(255,255,255,0.4)' : disponivel ? 'var(--brand-primary)' : '#D1D5DB' }}
                                 />
 
                                 <div className="flex items-center gap-4 px-4 py-3 flex-1">
@@ -421,7 +422,7 @@ export default function AgendarPage() {
                                   {/* Status */}
                                   <div className="flex-1 text-left">
                                     {disponivel ? (
-                                      <span className="text-sm font-semibold" style={{ color: selecionado ? 'white' : '#12C6D6' }}>
+                                      <span className="text-sm font-semibold" style={{ color: selecionado ? 'white' : 'var(--brand-primary)' }}>
                                         {selecionado ? '✓ Selecionado' : 'Disponível'}
                                       </span>
                                     ) : (
@@ -442,7 +443,7 @@ export default function AgendarPage() {
                         {slots.length === 0 && (
                           <div className="mt-4 text-center">
                             <p className="text-sm" style={{ color: '#9CA3AF' }}>Todos os horários já estão agendados.</p>
-                            <button onClick={() => setStep('data')} className="mt-2 text-sm font-semibold" style={{ color: '#12C6D6' }}>
+                            <button onClick={() => setStep('data')} className="mt-2 text-sm font-semibold" style={{ color: 'var(--brand-primary)' }}>
                               Escolher outra data
                             </button>
                           </div>
@@ -482,7 +483,7 @@ export default function AgendarPage() {
                           onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
                           placeholder="Seu nome completo"
                           className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 bg-white transition-all"
-                          style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}
+                          style={{ borderColor: '#E9EEF2', '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties}
                         />
                       </div>
                     </div>
@@ -493,7 +494,7 @@ export default function AgendarPage() {
                         WhatsApp
                       </label>
                       <div className="flex items-center border rounded-xl overflow-hidden focus-within:ring-2 bg-white transition-all"
-                        style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}>
+                        style={{ borderColor: '#E9EEF2', '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties}>
                         <div className="flex items-center gap-1.5 px-3 py-3 shrink-0 border-r" style={{ borderColor: '#E9EEF2', backgroundColor: '#F8FAFC' }}>
                           <Phone size={14} style={{ color: '#9CA3AF' }} />
                           <span className="text-sm font-semibold" style={{ color: '#6B7280' }}>+55</span>
@@ -524,7 +525,7 @@ export default function AgendarPage() {
                           onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                           placeholder="seu@email.com"
                           className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 bg-white transition-all"
-                          style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}
+                          style={{ borderColor: '#E9EEF2', '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties}
                         />
                       </div>
                     </div>
@@ -541,7 +542,7 @@ export default function AgendarPage() {
                           onChange={e => setForm(f => ({ ...f, assunto: e.target.value }))}
                           placeholder="Ex: Abertura de empresa, consultoria fiscal..."
                           className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 bg-white resize-none transition-all"
-                          style={{ borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties}
+                          style={{ borderColor: '#E9EEF2', '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties}
                         />
                       </div>
                     </div>
@@ -556,7 +557,7 @@ export default function AgendarPage() {
                       type="submit"
                       disabled={enviando}
                       className="w-full flex items-center justify-center gap-2.5 text-white font-semibold py-3.5 rounded-xl disabled:opacity-60 transition-all"
-                      style={{ background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 4px 16px rgba(18,198,214,0.4)' }}
+                      style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow)' }}
                     >
                       {enviando ? <Loader2 size={17} className="animate-spin" /> : <CheckCircle size={17} />}
                       {enviando ? 'Confirmando...' : 'Confirmar agendamento'}

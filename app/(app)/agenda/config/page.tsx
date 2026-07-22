@@ -11,7 +11,7 @@ const DIAS = [
 
 const cardStyle = { backgroundColor: '#fff', border: '1px solid #E9EEF2', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', borderRadius: '1rem' }
 const inputClass = 'w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 bg-white'
-const inputStyle = { borderColor: '#E9EEF2', '--tw-ring-color': '#12C6D6' } as React.CSSProperties
+const inputStyle = { borderColor: '#E9EEF2', '--tw-ring-color': 'var(--brand-primary)' } as React.CSSProperties
 
 export default function AgendaConfigPage() {
   const searchParams = useSearchParams()
@@ -95,7 +95,7 @@ export default function AgendaConfigPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[400px]">
-      <Loader2 size={24} className="animate-spin" style={{ color: '#12C6D6' }} />
+      <Loader2 size={24} className="animate-spin" style={{ color: 'var(--brand-primary)' }} />
     </div>
   )
 
@@ -107,7 +107,7 @@ export default function AgendaConfigPage() {
       </div>
 
       {googleStatus === 'ok' && (
-        <div className="flex items-center gap-2 text-sm px-4 py-3 rounded-xl mb-5" style={{ backgroundColor: '#E8F9FB', color: '#0FBDCC', border: '1px solid rgba(18,198,214,0.25)' }}>
+        <div className="flex items-center gap-2 text-sm px-4 py-3 rounded-xl mb-5" style={{ backgroundColor: 'var(--brand-tint-subtle)', color: 'var(--brand-primary-dark)', border: 'var(--brand-border-25)' }}>
           <CheckCircle size={15} /> Google Calendar conectado com sucesso!
         </div>
       )}
@@ -121,13 +121,13 @@ export default function AgendaConfigPage() {
         {/* Link público */}
         <div className="p-5" style={cardStyle}>
           <div className="flex items-center gap-2 mb-3">
-            <Link2 size={16} style={{ color: '#12C6D6' }} />
+            <Link2 size={16} style={{ color: 'var(--brand-primary)' }} />
             <h2 className="font-semibold text-sm" style={{ color: '#1F2937' }}>Link de agendamento</h2>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-mono" style={{ backgroundColor: '#F0FAFB', border: '1px solid rgba(18,198,214,0.2)', color: '#0FBDCC' }}>
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-mono" style={{ backgroundColor: 'var(--brand-tint-bg)', border: 'var(--brand-border-20)', color: 'var(--brand-primary-dark)' }}>
             <span className="flex-1 truncate">{linkPublico}</span>
             <a href={linkPublico} target="_blank" rel="noopener noreferrer">
-              <ExternalLink size={14} style={{ color: '#12C6D6' }} />
+              <ExternalLink size={14} style={{ color: 'var(--brand-primary)' }} />
             </a>
           </div>
           <div className="mt-3">
@@ -171,7 +171,7 @@ export default function AgendaConfigPage() {
                     onClick={() => toggleDia(d.value)}
                     className="w-12 h-10 rounded-xl text-sm font-semibold transition-all"
                     style={form.dias_semana.includes(d.value)
-                      ? { background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', color: 'white', boxShadow: '0 2px 8px rgba(18,198,214,0.3)' }
+                      ? { background: 'var(--brand-gradient)', color: 'white', boxShadow: 'var(--brand-shadow-sm)' }
                       : { backgroundColor: '#F8FAFC', color: '#6B7280', border: '1px solid #E9EEF2' }}
                   >
                     {d.label}
@@ -226,7 +226,7 @@ export default function AgendaConfigPage() {
                 type="button"
                 onClick={() => setForm(f => ({ ...f, periodos: [...f.periodos, { inicio: '14:00', fim: '18:00' }] }))}
                 className="mt-2 flex items-center gap-1.5 text-xs font-semibold transition-colors"
-                style={{ color: '#12C6D6' }}
+                style={{ color: 'var(--brand-primary)' }}
               >
                 <Plus size={14} /> Adicionar período
               </button>
@@ -248,7 +248,7 @@ export default function AgendaConfigPage() {
         {/* WhatsApp */}
         <div className="p-5" style={cardStyle}>
           <div className="flex items-center gap-2 mb-3">
-            <Smartphone size={16} style={{ color: '#12C6D6' }} />
+            <Smartphone size={16} style={{ color: 'var(--brand-primary)' }} />
             <h2 className="font-semibold text-sm" style={{ color: '#1F2937' }}>Confirmação via WhatsApp</h2>
           </div>
           <p className="text-xs mb-3" style={{ color: '#6B7280' }}>Instância que enviará a mensagem de confirmação ao cliente após o agendamento.</p>
@@ -290,7 +290,7 @@ export default function AgendaConfigPage() {
         {/* Lembrete antecedência */}
         <div className="p-5" style={cardStyle}>
           <div className="flex items-center gap-2 mb-3">
-            <Bell size={16} style={{ color: '#12C6D6' }} />
+            <Bell size={16} style={{ color: 'var(--brand-primary)' }} />
             <h2 className="font-semibold text-sm" style={{ color: '#1F2937' }}>Lembrete automático via WhatsApp</h2>
           </div>
           <p className="text-xs mb-3" style={{ color: '#6B7280' }}>
@@ -310,7 +310,7 @@ export default function AgendaConfigPage() {
             <option value={48}>48 horas antes (2 dias)</option>
           </select>
           {form.lembrete_antecedencia_horas > 0 && (
-            <p className="text-xs mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: '#F0FAFB', color: '#12C6D6' }}>
+            <p className="text-xs mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--brand-tint-bg)', color: 'var(--brand-primary)' }}>
               ✓ O cliente receberá um lembrete {form.lembrete_antecedencia_horas}h antes da reunião com o link do Google Meet.
             </p>
           )}
@@ -320,7 +320,7 @@ export default function AgendaConfigPage() {
         <div className="p-5" style={cardStyle}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar size={16} style={{ color: '#12C6D6' }} />
+              <Calendar size={16} style={{ color: 'var(--brand-primary)' }} />
               <div>
                 <h2 className="font-semibold text-sm" style={{ color: '#1F2937' }}>Google Calendar + Meet</h2>
                 <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>
@@ -331,7 +331,7 @@ export default function AgendaConfigPage() {
             <a
               href="/api/agenda/google/auth"
               className="px-4 py-2 text-sm font-semibold rounded-xl text-white transition-all"
-              style={{ background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 2px 8px rgba(18,198,214,0.3)' }}
+              style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow-sm)' }}
             >
               {googleConectado ? 'Reconectar' : 'Conectar Google'}
             </a>
@@ -344,7 +344,7 @@ export default function AgendaConfigPage() {
           </div>
         )}
         {sucesso && (
-          <div className="flex items-center gap-2 text-sm px-4 py-3 rounded-xl" style={{ backgroundColor: '#E8F9FB', color: '#0FBDCC', border: '1px solid rgba(18,198,214,0.25)' }}>
+          <div className="flex items-center gap-2 text-sm px-4 py-3 rounded-xl" style={{ backgroundColor: 'var(--brand-tint-subtle)', color: 'var(--brand-primary-dark)', border: 'var(--brand-border-25)' }}>
             <CheckCircle size={14} /> Configurações salvas!
           </div>
         )}
@@ -353,7 +353,7 @@ export default function AgendaConfigPage() {
           type="submit"
           disabled={salvando}
           className="w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-xl disabled:opacity-60"
-          style={{ background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 4px 14px rgba(18,198,214,0.3)' }}
+          style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow)' }}
         >
           {salvando ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {salvando ? 'Salvando...' : 'Salvar configurações'}

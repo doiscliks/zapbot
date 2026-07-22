@@ -73,7 +73,7 @@ export default function ListaClientes({ clientes, clienteSelecionadoId, onSeleci
                 </div>
                 <p className="text-xs text-gray-500 truncate mt-0.5">{telefoneExibido}</p>
                 {cliente.assigned_user && (
-                  <p className="text-xs mt-1" style={{ color: '#12C6D6' }}>
+                  <p className="text-xs mt-1" style={{ color: 'var(--brand-primary)' }}>
                     👤 {cliente.assigned_user.nome}
                   </p>
                 )}

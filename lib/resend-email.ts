@@ -40,7 +40,7 @@ export async function enviarEmailConfirmacaoAgendamento(
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
       <div style="background-color: white; border-radius: 12px; padding: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <div style="text-align: center; margin-bottom: 30px;">
-          <div style="display: inline-block; background: linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%); color: white; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">
+          <div style="display: inline-block; background: var(--brand-gradient); color: white; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">
             2C
           </div>
         </div>

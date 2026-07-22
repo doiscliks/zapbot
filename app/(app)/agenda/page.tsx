@@ -72,7 +72,7 @@ function addMinutos(iso: string, min: number) {
 
 const HOURS = Array.from({ length: GRID_END - GRID_START }, (_, i) => GRID_START + i)
 const STATUS_COLOR: Record<string,string> = {
-  confirmado: 'linear-gradient(135deg,#12C6D6,#0FBDCC)',
+  confirmado: 'linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark))',
   realizado:  'linear-gradient(135deg,#22c55e,#16a34a)',
   cancelado:  'linear-gradient(135deg,#9CA3AF,#6B7280)',
 }
@@ -124,7 +124,7 @@ export default function AgendaPage() {
       {/* ── Header ── */}
       <div className="shrink-0 px-5 py-3 bg-white border-b flex items-center gap-3 flex-wrap" style={{ borderColor: '#E9EEF2' }}>
         <div className="flex items-center gap-2">
-          <CalendarDays size={19} style={{ color: '#12C6D6' }} />
+          <CalendarDays size={19} style={{ color: 'var(--brand-primary)' }} />
           <span className="font-bold" style={{ color: '#1F2937' }}>Agenda</span>
         </div>
 
@@ -140,11 +140,11 @@ export default function AgendaPage() {
         <span className="flex-1"/>
 
         {/* View toggle */}
-        <div className="flex rounded-xl p-0.5" style={{ backgroundColor:'#F0FAFB' }}>
+        <div className="flex rounded-xl p-0.5" style={{ backgroundColor:'var(--brand-tint-bg)' }}>
           {(['semana','lista'] as const).map(v=>(
             <button key={v} onClick={()=>setView(v)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all capitalize"
-              style={view===v ? { background:'linear-gradient(135deg,#12C6D6,#0FBDCC)', color:'white', boxShadow:'0 2px 6px rgba(18,198,214,0.3)' } : { color:'#6B7280' }}>
+              style={view===v ? { background:'linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark))', color:'white', boxShadow:'var(--brand-shadow-sm)' } : { color:'#6B7280' }}>
               {v==='semana' ? <CalendarDays size={13}/> : <List size={13}/>} {v}
             </button>
           ))}
@@ -152,12 +152,12 @@ export default function AgendaPage() {
 
         <button onClick={()=>router.push('/agenda/config')}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white"
-          style={{ background:'linear-gradient(135deg,#12C6D6,#0FBDCC)', boxShadow:'0 2px 6px rgba(18,198,214,0.25)' }}>
+          style={{ background:'linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark))', boxShadow:'var(--brand-shadow-xs)' }}>
           <Settings size={13}/> Configurar
         </button>
       </div>
 
-      {loading && <div className="flex items-center justify-center flex-1"><Loader2 size={22} className="animate-spin" style={{ color:'#12C6D6' }}/></div>}
+      {loading && <div className="flex items-center justify-center flex-1"><Loader2 size={22} className="animate-spin" style={{ color:'var(--brand-primary)' }}/></div>}
 
       {/* ── Vista Semana ── */}
       {!loading && view==='semana' && (
@@ -169,7 +169,7 @@ export default function AgendaPage() {
               <div key={i} className="flex-1 text-center py-2.5 border-r" style={{ borderColor:'#F1F5F9' }}>
                 <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color:'#9CA3AF' }}>{DIAS_CURTOS[day.getDay()]}</p>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center mx-auto mt-0.5 text-sm font-bold"
-                  style={isToday(day) ? { background:'linear-gradient(135deg,#12C6D6,#0FBDCC)', color:'white', boxShadow:'0 2px 8px rgba(18,198,214,0.4)' } : { color:'#1F2937' }}>
+                  style={isToday(day) ? { background:'linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark))', color:'white', boxShadow:'var(--brand-shadow-sm)' } : { color:'#1F2937' }}>
                   {day.getDate()}
                 </div>
               </div>
@@ -207,8 +207,8 @@ export default function AgendaPage() {
                   const top = (br.getHours()-GRID_START+br.getMinutes()/60)*HOUR_HEIGHT
                   if(top>=0 && top<=HOURS.length*HOUR_HEIGHT) return (
                     <div className="absolute w-full flex items-center z-20" style={{ top }}>
-                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor:'#12C6D6', marginLeft:'-5px' }}/>
-                      <div className="flex-1 h-px" style={{ backgroundColor:'#12C6D6' }}/>
+                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor:'var(--brand-primary)', marginLeft:'-5px' }}/>
+                      <div className="flex-1 h-px" style={{ backgroundColor:'var(--brand-primary)' }}/>
                     </div>
                   )
                 })()}
@@ -230,7 +230,7 @@ export default function AgendaPage() {
                           left:`${colIdx*colW+0.3}%`,
                           width:`${colW-0.6}%`,
                           background: STATUS_COLOR[ag.status] ?? STATUS_COLOR.confirmado,
-                          boxShadow: isSelected ? '0 4px 16px rgba(18,198,214,0.45)' : '0 1px 4px rgba(0,0,0,0.15)',
+                          boxShadow: isSelected ? 'var(--brand-shadow)' : '0 1px 4px rgba(0,0,0,0.15)',
                           transform: isSelected ? 'scale(1.03)' : 'scale(1)',
                           zIndex: isSelected ? 10 : 1,
                           opacity: ag.status==='cancelado' ? 0.5 : 1,
@@ -251,11 +251,11 @@ export default function AgendaPage() {
       {/* ── Vista Lista ── */}
       {!loading && view==='lista' && (
         <div className="flex-1 overflow-y-auto p-5">
-          <div className="flex gap-1 p-1 rounded-xl mb-5 w-fit" style={{ backgroundColor:'#F0FAFB' }}>
+          <div className="flex gap-1 p-1 rounded-xl mb-5 w-fit" style={{ backgroundColor:'var(--brand-tint-bg)' }}>
             {(['proximos','todos','cancelados'] as const).map(f=>(
               <button key={f} onClick={()=>setFiltro(f)}
                 className="px-4 py-1.5 text-sm font-semibold rounded-lg transition-all capitalize"
-                style={filtro===f ? { background:'linear-gradient(135deg,#12C6D6,#0FBDCC)', color:'white', boxShadow:'0 2px 6px rgba(18,198,214,0.3)' } : { color:'#6B7280' }}>
+                style={filtro===f ? { background:'linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark))', color:'white', boxShadow:'var(--brand-shadow-sm)' } : { color:'#6B7280' }}>
                 {f==='proximos'?'Próximos':f==='todos'?'Todos':'Cancelados'}
               </button>
             ))}
@@ -284,7 +284,7 @@ export default function AgendaPage() {
       {/* ── Popup de detalhe ── */}
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm" onClick={()=>setSelected(null)}>
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-fade-in-up" style={{ border:'1px solid rgba(18,198,214,0.15)' }} onClick={e=>e.stopPropagation()}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-fade-in-up" style={{ border:'var(--brand-border-15)' }} onClick={e=>e.stopPropagation()}>
             {/* Topo */}
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -306,16 +306,16 @@ export default function AgendaPage() {
             {/* Detalhes */}
             <div className="space-y-2 mb-4">
               <div className="flex items-center gap-2 text-sm" style={{ color:'#6B7280' }}>
-                <Phone size={14} style={{ color:'#12C6D6' }}/> {selected.telefone}
+                <Phone size={14} style={{ color:'var(--brand-primary)' }}/> {selected.telefone}
               </div>
               {selected.email && (
                 <div className="flex items-center gap-2 text-sm" style={{ color:'#6B7280' }}>
-                  <Mail size={14} style={{ color:'#12C6D6' }}/> {selected.email}
+                  <Mail size={14} style={{ color:'var(--brand-primary)' }}/> {selected.email}
                 </div>
               )}
               {selected.assunto && (
                 <div className="flex items-start gap-2 text-sm" style={{ color:'#6B7280' }}>
-                  <FileText size={14} className="mt-0.5 shrink-0" style={{ color:'#12C6D6' }}/> {selected.assunto}
+                  <FileText size={14} className="mt-0.5 shrink-0" style={{ color:'var(--brand-primary)' }}/> {selected.assunto}
                 </div>
               )}
             </div>
@@ -324,7 +324,7 @@ export default function AgendaPage() {
             {selected.meet_link && (
               <a href={selected.meet_link} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white text-sm font-semibold mb-4"
-                style={{ background:'linear-gradient(135deg,#12C6D6,#0FBDCC)', boxShadow:'0 3px 10px rgba(18,198,214,0.35)' }}>
+                style={{ background:'linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark))', boxShadow:'var(--brand-shadow-md)' }}>
                 <Video size={15}/> Entrar no Google Meet
               </a>
             )}

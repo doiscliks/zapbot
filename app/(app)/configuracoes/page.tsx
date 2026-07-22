@@ -112,7 +112,7 @@ export default function ConfiguracoesPage() {
               value={form.telefone}
               onChange={(e) => handleChange('telefone', e.target.value)}
               placeholder="Ex: 5511999998888"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#12C6D6] focus:border-transparent transition"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent transition"
             />
           </div>
         </div>
@@ -137,7 +137,7 @@ export default function ConfiguracoesPage() {
                 onChange={(e) => handleChange('openaiKey', e.target.value)}
                 onFocus={() => { if (form.openaiKey === MASKED) handleChange('openaiKey', '') }}
                 placeholder="sk-..."
-                className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#12C6D6] focus:border-transparent transition"
+                className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent transition"
               />
               <button
                 type="button"
@@ -173,7 +173,7 @@ export default function ConfiguracoesPage() {
                 value={form.fbPixelId}
                 onChange={(e) => handleChange('fbPixelId', e.target.value)}
                 placeholder="123456789012345"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#12C6D6] focus:border-transparent transition"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent transition"
               />
               <p className="text-xs text-gray-400 mt-1">Events Manager → Pixel → Configurações</p>
             </div>
@@ -187,7 +187,7 @@ export default function ConfiguracoesPage() {
                   onChange={(e) => handleChange('fbAccessToken', e.target.value)}
                   onFocus={() => { if (form.fbAccessToken === MASKED) handleChange('fbAccessToken', '') }}
                   placeholder="EAAxxxxxxxx..."
-                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#12C6D6] focus:border-transparent transition"
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent transition"
                 />
                 <button
                   type="button"
@@ -212,7 +212,7 @@ export default function ConfiguracoesPage() {
                 value={form.fbTestEventCode}
                 onChange={(e) => handleChange('fbTestEventCode', e.target.value)}
                 placeholder="TEST12345"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#12C6D6] focus:border-transparent transition"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent transition"
               />
             </div>
 
@@ -231,7 +231,7 @@ export default function ConfiguracoesPage() {
                 value={form.fbAdAccountId}
                 onChange={(e) => handleChange('fbAdAccountId', e.target.value)}
                 placeholder="act_907365004373512"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#12C6D6] focus:border-transparent transition"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent transition"
               />
               <p className="text-xs text-gray-400 mt-1">Gerenciador de Anúncios → URL da conta</p>
             </div>
@@ -248,7 +248,7 @@ export default function ConfiguracoesPage() {
                   onChange={(e) => handleChange('fbAdsToken', e.target.value)}
                   onFocus={() => { if (form.fbAdsToken === MASKED) handleChange('fbAdsToken', '') }}
                   placeholder="EAAbi47F8h7g..."
-                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#12C6D6] focus:border-transparent transition"
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent transition"
                 />
                 <button
                   type="button"
@@ -272,7 +272,7 @@ export default function ConfiguracoesPage() {
         )}
 
         {sucesso && (
-          <div className="flex items-center gap-2 text-sm px-4 py-3 rounded-xl" style={{ backgroundColor: '#E8F9FB', borderColor: 'rgba(18,198,214,0.25)', border: '1px solid', color: '#0FBDCC' }}>
+          <div className="flex items-center gap-2 text-sm px-4 py-3 rounded-xl" style={{ backgroundColor: 'var(--brand-tint-subtle)', borderColor: 'var(--brand-alpha-20)', border: '1px solid', color: 'var(--brand-primary-dark)' }}>
             <CheckCircle size={15} /> Configurações salvas com sucesso!
           </div>
         )}
@@ -281,7 +281,7 @@ export default function ConfiguracoesPage() {
           type="submit"
           disabled={salvando}
           className="w-full flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all"
-        style={{ background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)', boxShadow: '0 4px 14px rgba(18,198,214,0.3)' }}
+        style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow)' }}
         >
           {salvando ? (
             <><Loader2 size={18} className="animate-spin" /> Salvando...</>

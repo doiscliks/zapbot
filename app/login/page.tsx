@@ -3,14 +3,15 @@
 import { useState } from 'react'
 import { Loader2, Mail, Lock, Key, AlertCircle, User, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
+import { brand } from '@/lib/brand'
 
 type Step = 'auth' | 'chave'
 
 const inputClass =
   'w-full pl-10 pr-4 py-3 border rounded-xl text-sm text-gray-800 placeholder-gray-400 bg-white transition-all duration-150 focus:outline-none focus:ring-2 focus:border-transparent'
 const inputStyle = {
-  borderColor: '#E9EEF2',
-  '--tw-ring-color': '#12C6D6',
+  borderColor: 'var(--brand-border)',
+  '--tw-ring-color': 'var(--brand-primary)',
 } as React.CSSProperties
 
 export default function LoginPage() {
@@ -84,12 +85,12 @@ export default function LoginPage() {
       {/* Camada decorativa — overflow-hidden isolado aqui, fora do formulário.
           (overflow-hidden num ancestral do form trava o foco de inputs no PWA iOS standalone) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        {/* Background decorative "2" */}
+        {/* Caractere decorativo de fundo */}
         <span
           className="absolute select-none font-black"
           style={{
             fontSize: 'clamp(200px, 45vw, 600px)',
-            color: '#12C6D6',
+            color: 'var(--brand-primary)',
             opacity: 0.04,
             top: '-8%',
             right: '-5%',
@@ -97,16 +98,15 @@ export default function LoginPage() {
             userSelect: 'none',
           }}
         >
-          2
+          {brand.logoChar}
         </span>
 
-        {/* Decorative circles */}
         <div
           className="absolute rounded-full"
           style={{
             width: 300,
             height: 300,
-            background: 'radial-gradient(circle, rgba(18,198,214,0.08) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, var(--brand-ring-08) 0%, transparent 70%)',
             bottom: '-60px',
             left: '-60px',
           }}
@@ -116,7 +116,7 @@ export default function LoginPage() {
           style={{
             width: 200,
             height: 200,
-            background: 'radial-gradient(circle, rgba(255,122,102,0.07) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, var(--brand-ring-07) 0%, transparent 70%)',
             top: '10%',
             left: '8%',
           }}
@@ -131,8 +131,8 @@ export default function LoginPage() {
         <div
           className="bg-white rounded-3xl p-8"
           style={{
-            boxShadow: '0 25px 60px rgba(18,198,214,0.1), 0 8px 24px rgba(0,0,0,0.06)',
-            border: '1px solid rgba(18,198,214,0.12)',
+            boxShadow: 'var(--brand-glow)',
+            border: 'var(--brand-border-card)',
           }}
         >
           {/* Brand header */}
@@ -140,17 +140,17 @@ export default function LoginPage() {
             <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl mb-4"
               style={{
-                background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)',
-                boxShadow: '0 8px 24px rgba(18,198,214,0.35)',
+                background: 'var(--brand-gradient)',
+                boxShadow: 'var(--brand-shadow-lg)',
               }}
             >
-              2
+              {brand.logoChar}
             </div>
             <h1 className="text-2xl font-bold tracking-tight" style={{ color: '#1F2937' }}>
-              2Cliks
+              {brand.shortName}
             </h1>
-            <p className="text-sm font-medium mt-0.5" style={{ color: '#12C6D6' }}>
-              {step === 'chave' ? 'Insira sua chave de acesso' : 'Contabilidade Digital Inteligente'}
+            <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--brand-primary)' }}>
+              {step === 'chave' ? 'Insira sua chave de acesso' : brand.tagline}
             </p>
           </div>
 
@@ -207,7 +207,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={ativando}
                 className="w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-xl transition-all duration-150 disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)', boxShadow: '0 4px 14px rgba(18,198,214,0.35)' }}
+                style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow)' }}
               >
                 {ativando ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
                 {ativando ? 'Verificando...' : 'Ativar chave'}
@@ -224,75 +224,75 @@ export default function LoginPage() {
             </form>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
-                      Email
-                    </label>
-                    <div className="relative">
-                      <span className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-                        <Mail size={15} style={{ color: '#9CA3AF' }} />
-                      </span>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="seu@email.com"
-                        className={inputClass}
-                        style={{ ...inputStyle, paddingLeft: '2.25rem' }}
-                      />
-                    </div>
-                  </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
+                  Email
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                    <Mail size={15} style={{ color: '#9CA3AF' }} />
+                  </span>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    className={inputClass}
+                    style={{ ...inputStyle, paddingLeft: '2.25rem' }}
+                  />
+                </div>
+              </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
-                      Senha
-                    </label>
-                    <div className="relative">
-                      <span className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-                        <Lock size={15} style={{ color: '#9CA3AF' }} />
-                      </span>
-                      <input
-                        type="password"
-                        required
-                        value={senha}
-                        onChange={(e) => setSenha(e.target.value)}
-                        placeholder="••••••••"
-                        className={inputClass}
-                        style={{ ...inputStyle, paddingLeft: '2.25rem' }}
-                      />
-                    </div>
-                  </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#6B7280' }}>
+                  Senha
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                    <Lock size={15} style={{ color: '#9CA3AF' }} />
+                  </span>
+                  <input
+                    type="password"
+                    required
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    placeholder="••••••••"
+                    className={inputClass}
+                    style={{ ...inputStyle, paddingLeft: '2.25rem' }}
+                  />
+                </div>
+              </div>
 
-                  {erro && (
-                    <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-xl">
-                      <AlertCircle size={14} className="shrink-0" /> {erro}
-                    </div>
-                  )}
+              {erro && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-xl">
+                  <AlertCircle size={14} className="shrink-0" /> {erro}
+                </div>
+              )}
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-xl transition-all duration-150 disabled:opacity-60 mt-2"
-                    style={{
-                      background: 'linear-gradient(135deg, #12C6D6 0%, #0FBDCC 100%)',
-                      boxShadow: '0 4px 14px rgba(18,198,214,0.35)',
-                    }}
-                  >
-                    {loading ? (
-                      <Loader2 size={17} className="animate-spin" />
-                    ) : (
-                      <ArrowRight size={17} />
-                    )}
-                    {loading ? 'Aguarde...' : 'Entrar na plataforma'}
-                  </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-xl transition-all duration-150 disabled:opacity-60 mt-2"
+                style={{
+                  background: 'var(--brand-gradient)',
+                  boxShadow: 'var(--brand-shadow)',
+                }}
+              >
+                {loading ? (
+                  <Loader2 size={17} className="animate-spin" />
+                ) : (
+                  <ArrowRight size={17} />
+                )}
+                {loading ? 'Aguarde...' : 'Entrar na plataforma'}
+              </button>
             </form>
           )}
         </div>
 
         {/* Footer */}
         <p className="text-center text-xs mt-5" style={{ color: '#9CA3AF' }}>
-          © {new Date().getFullYear()} 2Cliks Contabilidade · Todos os direitos reservados
+          © {new Date().getFullYear()} {brand.name} · Todos os direitos reservados
         </p>
       </div>
     </div>

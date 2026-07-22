@@ -28,7 +28,7 @@ export default function BookingPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8FAFC' }}>
-        <Loader2 size={28} className="animate-spin" style={{ color: '#12C6D6' }} />
+        <Loader2 size={28} className="animate-spin" style={{ color: 'var(--brand-primary)' }} />
       </div>
     )
   }
@@ -48,7 +48,7 @@ export default function BookingPage() {
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#F8FAFC' }}>
       <div className="text-center">
         <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-          style={{ background: 'linear-gradient(135deg, #12C6D6, #0FBDCC)', boxShadow: '0 8px 24px rgba(18,198,214,0.4)' }}>
+          style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--brand-shadow-lg)' }}>
           <CheckCircle size={38} className="text-white" />
         </div>
         <h1 className="text-2xl font-bold mb-2" style={{ color: '#1F2937' }}>{config.titulo}</h1>

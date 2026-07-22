@@ -38,7 +38,7 @@ function useMaxDias() {
 }
 
 // Brand chart colors
-const BRAND_COLORS = ['#12C6D6', '#FF7A66', '#6366f1', '#22c55e', '#f59e0b', '#3b82f6', '#ec4899', '#14b8a6']
+const BRAND_COLORS = ['var(--brand-primary)', '#FF7A66', '#6366f1', '#22c55e', '#f59e0b', '#3b82f6', '#ec4899', '#14b8a6']
 
 export default function DashboardPage() {
   const MAX_DIAS = useMaxDias()
@@ -129,7 +129,7 @@ export default function DashboardPage() {
           className="flex items-center gap-2 rounded-xl px-4 py-2.5 animate-fade-in-up"
           style={{ ...cardStyle, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
         >
-          <Calendar size={15} style={{ color: '#12C6D6' }} className="shrink-0" />
+          <Calendar size={15} style={{ color: 'var(--brand-primary)' }} className="shrink-0" />
           <input
             type="date"
             value={startDate}
@@ -153,7 +153,7 @@ export default function DashboardPage() {
       </div>
 
       {loading && (
-        <div className="flex items-center gap-3" style={{ color: '#12C6D6' }}>
+        <div className="flex items-center gap-3" style={{ color: 'var(--brand-primary)' }}>
           <Loader2 size={20} className="animate-spin" />
           <span className="text-sm" style={{ color: '#6B7280' }}>Carregando dados...</span>
         </div>
@@ -181,12 +181,12 @@ export default function DashboardPage() {
                 </div>
                 <div
                   className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, rgba(18,198,214,0.15) 0%, rgba(18,198,214,0.08) 100%)' }}
+                  style={{ background: 'var(--brand-gradient-light)' }}
                 >
-                  <Users size={22} style={{ color: '#12C6D6' }} />
+                  <Users size={22} style={{ color: 'var(--brand-primary)' }} />
                 </div>
               </div>
-              <div className="mt-4 h-1 rounded-full" style={{ background: 'linear-gradient(90deg, #12C6D6, #A5F3FC)' }} />
+              <div className="mt-4 h-1 rounded-full" style={{ background: 'linear-gradient(90deg, var(--brand-primary), #A5F3FC)' }} />
             </div>
 
             {/* Dias com cadastros */}
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                     <svg width="72" height="72" viewBox="0 0 72 72">
                       <circle cx="36" cy="36" r={r} fill="none" stroke="#E9EEF2" strokeWidth="8" />
                       <circle cx="36" cy="36" r={r} fill="none"
-                        stroke={taxa >= 50 ? '#12C6D6' : '#FF7A66'}
+                        stroke={taxa >= 50 ? 'var(--brand-primary)' : '#FF7A66'}
                         strokeWidth="8" strokeLinecap="round"
                         strokeDasharray={`${dash} ${circ}`}
                         transform="rotate(-90 36 36)"
@@ -322,7 +322,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex gap-6 text-sm shrink-0" style={{ color: '#6B7280' }}>
                     <span className="flex flex-col">
-                      <span className="font-bold text-xl" style={{ color: '#12C6D6' }}>{totalResp}</span>
+                      <span className="font-bold text-xl" style={{ color: 'var(--brand-primary)' }}>{totalResp}</span>
                       Responderam
                     </span>
                     <span className="flex flex-col">
@@ -358,7 +358,7 @@ export default function DashboardPage() {
                               className="w-full rounded-t-lg transition-all duration-500"
                               style={{
                                 height: h,
-                                background: 'linear-gradient(180deg, #12C6D6 0%, #A5F3FC 100%)',
+                                background: 'linear-gradient(180deg, var(--brand-primary) 0%, #A5F3FC 100%)',
                                 opacity: 0.85,
                               }}
                             />
@@ -383,7 +383,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-3 text-xs" style={{ color: '#6B7280' }}>
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#12C6D6' }} /> Responderam
+                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: 'var(--brand-primary)' }} /> Responderam
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#FF7A66' }} /> Sem resposta
@@ -406,7 +406,7 @@ export default function DashboardPage() {
                             <div className="w-full transition-all duration-500 flex items-center justify-center" style={{ height: hVermelho, backgroundColor: '#FFB5A9' }}>
                               {hVermelho >= 16 && <span className="text-[10px] font-semibold text-white leading-none">{item.semResposta}</span>}
                             </div>
-                            <div className="w-full transition-all duration-500 flex items-center justify-center" style={{ height: hVerde, backgroundColor: '#12C6D6' }}>
+                            <div className="w-full transition-all duration-500 flex items-center justify-center" style={{ height: hVerde, backgroundColor: 'var(--brand-primary)' }}>
                               {hVerde >= 16 && <span className="text-[10px] font-semibold text-white leading-none">{item.comResposta}</span>}
                             </div>
                           </div>
